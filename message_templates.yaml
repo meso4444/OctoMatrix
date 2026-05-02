@@ -1,0 +1,301 @@
+# OctoMatrix 多平臺訊息模板
+# 定義三平臺的統一訊息版型：Telegram (HTML), Discord (Markdown), Slack (Plain Text)
+
+# ============================================
+# 版型定義原則
+# ============================================
+# - telegram: HTML 格式 (<b>, <i>, <code>, <pre>)
+# - discord: Markdown 格式 (**, *, `, ````)
+# - slack: Plain Text 格式 (簡樸文本)
+#
+# 所有模板都基於同一結構，但使用平臺特定的格式化
+
+templates:
+
+  # 【系統啟動】
+  system_startup:
+    telegram: |
+      <b>🚀 OctoMatrix  系統啟動</b>
+
+      <i>時間:</i> <code>{timestamp}</code>
+      <i>狀態:</i> <code>正常</code>
+      <i>版本:</i> <code>5.2</code>
+
+    discord: |
+      **🚀 OctoMatrix  系統啟動**
+
+      *時間:* `{timestamp}`
+      *狀態:* `正常`
+      *版本:* `5.2`
+
+    slack: |
+      🚀 OctoMatrix  系統啟動
+
+      時間: {timestamp}
+      狀態: 正常
+      版本: 5.2
+
+  # 【消息接收確認】
+  message_received:
+    telegram: |
+      <b>✅ 消息已接收</b>
+
+      <i>來源:</i> <code>{source}</code>
+      <i>用戶:</i> <code>{username}</code>
+      <i>內容:</i> <pre>{content}</pre>
+
+    discord: |
+      **✅ 消息已接收**
+
+      *來源:* `{source}`
+      *用戶:* `{username}`
+      *內容:* ```
+      {content}
+      ```
+
+    slack: |
+      ✅ 消息已接收
+
+      來源: {source}
+      用戶: {username}
+      內容: {content}
+
+  # 【Router 連接狀態】
+  router_status:
+    telegram: |
+      <b>🔀 Router 狀態</b>
+
+      <i>連接:</i> <code>{status}</code>
+      <i>地址:</i> <code>{url}</code>
+      <i>檢查時間:</i> <code>{timestamp}</code>
+
+    discord: |
+      **🔀 Router 狀態**
+
+      *連接:* `{status}`
+      *地址:* `{url}`
+      *檢查時間:* `{timestamp}`
+
+    slack: |
+      🔀 Router 狀態
+
+      連接: {status}
+      地址: {url}
+      檢查時間: {timestamp}
+
+  # 【錯誤通知】
+  error_notification:
+    telegram: |
+      <b>❌ 系統錯誤</b>
+
+      <i>類型:</i> <code>{error_type}</code>
+      <i>消息:</i> <pre>{error_message}</pre>
+      <i>時間:</i> <code>{timestamp}</code>
+
+      <b>建議:</b> 請檢查日誌並重試
+
+    discord: |
+      **❌ 系統錯誤**
+
+      *類型:* `{error_type}`
+      *消息:* ```
+      {error_message}
+      ```
+      *時間:* `{timestamp}`
+
+      **建議:** 請檢查日誌並重試
+
+    slack: |
+      ❌ 系統錯誤
+
+      類型: {error_type}
+      消息: {error_message}
+      時間: {timestamp}
+
+      建議: 請檢查日誌並重試
+
+  # 【任務完成】
+  task_completed:
+    telegram: |
+      <b>✨ 任務完成</b>
+
+      <i>任務:</i> <code>{task_name}</code>
+      <i>耗時:</i> <code>{duration}</code>
+      <i>結果:</i> <code>{result}</code>
+      <i>完成時間:</i> <code>{timestamp}</code>
+
+      {details}
+
+    discord: |
+      **✨ 任務完成**
+
+      *任務:* `{task_name}`
+      *耗時:* `{duration}`
+      *結果:* `{result}`
+      *完成時間:* `{timestamp}`
+
+      {details}
+
+    slack: |
+      ✨ 任務完成
+
+      任務: {task_name}
+      耗時: {duration}
+      結果: {result}
+      完成時間: {timestamp}
+
+      {details}
+
+  # 【警告通知】
+  warning_notification:
+    telegram: |
+      <b>⚠️ 警告</b>
+
+      <i>級別:</i> <code>{severity}</code>
+      <i>標題:</i> <code>{title}</code>
+      <i>描述:</i> <pre>{description}</pre>
+      <i>時間:</i> <code>{timestamp}</code>
+
+    discord: |
+      **⚠️ 警告**
+
+      *級別:* `{severity}`
+      *標題:* `{title}`
+      *描述:* ```
+      {description}
+      ```
+      *時間:* `{timestamp}`
+
+    slack: |
+      ⚠️ 警告
+
+      級別: {severity}
+      標題: {title}
+      描述: {description}
+      時間: {timestamp}
+
+  # 【喚醒任務開始】
+  scheduled_job_start:
+    telegram: |
+      <b>⏰ 喚醒任務開始</b>
+
+      <i>任務:</i> <code>{job_name}</code>
+      <i>代理:</i> <code>{agent_name}</code>
+      <i>開始時間:</i> <code>{timestamp}</code>
+
+      <pre>{command}</pre>
+
+    discord: |
+      **⏰ 喚醒任務開始**
+
+      *任務:* `{job_name}`
+      *代理:* `{agent_name}`
+      *開始時間:* `{timestamp}`
+
+      ```
+      {command}
+      ```
+
+    slack: |
+      ⏰ 喚醒任務開始
+
+      任務: {job_name}
+      代理: {agent_name}
+      開始時間: {timestamp}
+
+      命令: {command}
+
+  # 【Agent 狀態】
+  agent_status:
+    telegram: |
+      <b>🤖 Agent 狀態</b>
+
+      <i>名稱:</i> <code>{agent_name}</code>
+      <i>引擎:</i> <code>{engine}</code>
+      <i>狀態:</i> <code>{status}</code>
+      <i>更新時間:</i> <code>{timestamp}</code>
+
+    discord: |
+      **🤖 Agent 狀態**
+
+      *名稱:* `{agent_name}`
+      *引擎:* `{engine}`
+      *狀態:* `{status}`
+      *更新時間:* `{timestamp}`
+
+    slack: |
+      🤖 Agent 狀態
+
+      名稱: {agent_name}
+      引擎: {engine}
+      狀態: {status}
+      更新時間: {timestamp}
+
+  # 【自定義訊息】(Agent 直接輸出)
+  custom:
+    telegram: |
+      {content}
+
+    discord: |
+      {content}
+
+    slack: |
+      {content}
+
+# ============================================
+# 變數說明
+# ============================================
+# 通用變數:
+# - {timestamp}: 時間戳記
+# - {source}: 消息來源 (telegram/discord/slack)
+# - {username}: 用戶名稱
+# - {content}: 消息內容
+#
+# Router 狀態:
+# - {status}: 連接狀態 (connected/disconnected)
+# - {url}: Router URL
+#
+# 錯誤:
+# - {error_type}: 錯誤類型
+# - {error_message}: 錯誤消息
+#
+# 任務:
+# - {task_name}: 任務名稱
+# - {duration}: 耗時
+# - {result}: 結果
+# - {details}: 詳細信息
+#
+# 警告:
+# - {severity}: 嚴重程度 (low/medium/high)
+# - {title}: 警告標題
+# - {description}: 警告描述
+#
+# 喚醒:
+# - {job_name}: 任務名稱
+# - {agent_name}: Agent 名稱
+# - {command}: 執行的命令
+#
+# Agent:
+# - {agent_name}: Agent 名稱
+# - {engine}: 引擎類型 (claude/gemini)
+# - {status}: Agent 狀態
+
+  # 【自定義訊息】
+  custom:
+    telegram: |
+      {content}
+    discord: |
+      {content}
+    slack: |
+      {content}
+
+  # 【矩陣連線確認】
+  matrix_connected:
+    telegram: |
+      🐙 <b>[{timestamp}]</b> > Matrix Connected :: <b>[{agent_name}]</b>
+
+    discord: |
+      🐙 **[{timestamp}]** > Matrix Connected :: **[{agent_name}]**
+
+    slack: |
+      🐙 [{timestamp}] > Matrix Connected :: [{agent_name}]
