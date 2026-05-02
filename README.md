@@ -18,12 +18,40 @@
 
 這不僅是一個對話機器人，而是一個完整的 **AI 團隊生態系統**。作為「矩陣操作員 (Matrix Operator)」，可隨時隨地透過手機或電腦，指揮多個具備獨特職責的 AI Agent。透過專屬的工作區隔離、動態配置的團隊協作，以及基於 **Cyberbrain (電子腦)** 的長期狀態維持機制，AI 助手將如同真實團隊般在背景持續執行任務。
 
+## 🧩 概念架構 (Concept Architecture)
+
+```mermaid
+graph LR
+    Operator([矩陣操作員 Operator]) -- "指令/訊息" --> Channels
+    
+    subgraph Channels [通訊通道 Gateway]
+        TG[Telegram]
+        DC[Discord]
+        SL[Slack]
+    end
+    
+    Channels -- "解碼轉發" --> Router{Octo-Router}
+    
+    subgraph Core [OctoMatrix 核心運作層]
+        Router -- "任務分發" --> Agents
+        Awake[Awake 喚醒系統] -- "定時指令" --> Router
+        
+        subgraph Sandbox [Agent 獨立沙盒環境]
+            Agents[Agent 軍團]
+            Cyberbrain[[Cyberbrain 電子腦]]
+            Agents <--> Cyberbrain
+        end
+    end
+    
+    Agents -- "回報執行結果" --> Channels
+    Channels -- "即時回應" --> Operator
+```
+
 ### ✨ 核心特色
 *   **對話即操作 (Command-Driven)**：只要在通訊軟體發送訊息，即可直接指揮遠端 AI 執行複雜指令與任務。
 *   **多代理軍團 (Multi-Agent)**：支援同時配置多個具備不同專長（如資料檢索、程式編寫、邏輯分析）的 Agent。
 *   **跨平臺不中斷 (Tri-Channel)**：支援 Telegram、Discord 與 Slack。當常用的通訊平臺不穩定時，隨時切換到另一個平臺，AI 團隊與任務進度依然保持同步。
-*   **電子腦系統 (Cyberbrain)**：獨創「GHOST in the SHELL」的長期狀態維持機制。透過每次任務後的GHOST「收攝」與「刻印」，將 Agent 行為脈絡轉化為高密度的 GHOST 索引；系統會自動觸發淨化積壓的上下文並「深潛 (Deep Dive)」到 SHELL 紀錄將關鍵任務細節重新注入，讓 Agent 不被關在上下文窗口的牢籠而能具備理論上無限延伸的對話流及超越人類記憶的精準追溯能力。
-*   **電子腦系統 (Cyberbrain)**：致敬「GHOST in the SHELL」概念的長期記憶機制。AI 會將對話重點「收攝」與「刻印」為高密度的 GHOST 索引，系統會自動淨化積壓的上下文並「深潛 (Deep Dive)」至 SHELL 紀錄提煉真實軌跡，而不依賴必然失憶的上下文壓縮機制，賦予 Agent 突破上下文窗口的牢籠的新生。
+*   **電子腦系統 (Cyberbrain)**：基於「GHOST in the SHELL」概念的長期記憶機制。AI 會將對話重點「收攝」與「刻印」為高密度的 GHOST 索引；當上下文重置時，系統會自動「深潛 (Deep Dive)」至 SHELL 紀錄提取歷史脈絡重新注入，賦予 Agent 突破記憶限制的高效追溯能力。
 *   **零門檻設定精靈**：提供 100% 互動式的安裝精靈，無需手動修改複雜的程式碼或設定檔，即可輕鬆建立專屬的 AI 團隊。
 
 ---
