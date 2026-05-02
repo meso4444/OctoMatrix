@@ -5,7 +5,7 @@
 
 
 <div align="center">
-  <img src="assets/Aleister_style.png" alt="OctoMatrix" width="100%" style="max-width: 900px; height: auto; margin-bottom: 20px;" />
+  <img src="assets/Aleister_style_v2.png" alt="OctoMatrix" width="100%" style="max-width: 900px; height: auto; margin-bottom: 20px;" />
 </div>
 
 # 🐙 OctoMatrix: The Autonomous Agent Matrix ☀️🌙
