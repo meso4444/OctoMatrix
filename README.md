@@ -4,6 +4,7 @@
 
 
 
+
 <div align="center">
   <img src="assets/Aleister_style_v2.png" alt="OctoMatrix" width="100%" style="max-width: 900px; height: auto; margin-bottom: 20px;" />
 </div>
@@ -18,7 +19,7 @@
 
 這不僅是一個對話機器人，而是一個完整的 **AI 團隊生態系統**。作為「矩陣操作員 (Matrix Operator)」，可隨時隨地透過手機或電腦，指揮多個具備獨特職責的 AI Agent。透過專屬的工作區隔離、動態配置的團隊協作，以及基於 **Cyberbrain (電子腦)** 的長期狀態維持機制，AI 助手將如同真實團隊般在背景持續執行任務。
 
-## 🧩 概念架構 (Concept Architecture)
+## 🧩 概念架構
 
 ```mermaid
 graph TD
@@ -46,8 +47,8 @@ graph TD
     Agents -- "回報執行結果" --> Channels
     Channels -- "即時回應" --> Operator
 ```
-
-### ✨ 核心特色
+---
+## ✨ 核心特色
 *   **對話即操作 (Command-Driven)**：只要在通訊軟體發送訊息，即可直接指揮遠端 AI 執行複雜指令與任務。
 *   **多代理軍團 (Multi-Agent)**：支援同時配置多個具備不同專長（如資料檢索、程式編寫、邏輯分析）的 Agent。
 *   **跨平臺不中斷 (Tri-Channel)**：支援 Telegram、Discord 與 Slack。當常用的通訊平臺不穩定時，隨時切換到另一個平臺，AI 團隊與任務進度依然保持同步。
@@ -144,9 +145,7 @@ graph TD
     4. **Workspace ID** 為網址中的 `T` 開頭字串。
     5. **Channel ID** 為網址中的 `C` 開頭字串。
     6. *注意：必須在目標頻道輸入 `/invite @機器人名稱` 邀請機器人加入，機器人才能發送訊息。*
-
-
-
+---
 
 ## 🚀 快速開始
 
