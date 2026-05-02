@@ -5,7 +5,7 @@
 
 
 <div align="center">
-  <img src="assets/logo-banner.png" alt="OctoMatrix" width="100%" style="max-width: 900px; height: auto; margin-bottom: 20px;" />
+  <img src="assets/Aleister_style.png" alt="OctoMatrix" width="100%" style="max-width: 900px; height: auto; margin-bottom: 20px;" />
 </div>
 
 # 🐙 OctoMatrix: The Autonomous Agent Matrix ☀️🌙
@@ -51,7 +51,7 @@ graph TD
 *   **對話即操作 (Command-Driven)**：只要在通訊軟體發送訊息，即可直接指揮遠端 AI 執行複雜指令與任務。
 *   **多代理軍團 (Multi-Agent)**：支援同時配置多個具備不同專長（如資料檢索、程式編寫、邏輯分析）的 Agent。
 *   **跨平臺不中斷 (Tri-Channel)**：支援 Telegram、Discord 與 Slack。當常用的通訊平臺不穩定時，隨時切換到另一個平臺，AI 團隊與任務進度依然保持同步。
-*   **電子腦系統 (Cyberbrain)**：致敬「GHOST in the SHELL」概念的長期記憶機制。AI 會將對話重點「收攝」與「刻印」為高密度的 GHOST 索引，系統會自動淨化積壓的上下文並「深潛 (Deep Dive)」至 SHELL 紀錄提煉真實軌跡，而不依賴必然失憶的上下文壓縮機制，賦予 Agent 突破上下文窗口的牢籠的新生。
+*   **電子腦系統 (Cyberbrain)**：致敬「GHOST in the SHELL」概念的長期記憶機制。AI 會將對話重點「收攝」與「刻印」為高密度的 GHOST 索引，系統會自動淨化積壓的上下文並「深潛 (Deep Dive)」至 SHELL 紀錄提煉真實軌跡，而不依賴必然失憶的上下文壓縮機制，賦予 Agent 突破上下文窗口牢籠的新生。
 *   **零門檻設定精靈**：提供 100% 互動式的安裝精靈，無需手動修改複雜的程式碼或設定檔，即可輕鬆建立專屬的 AI 團隊。
 
 ---
