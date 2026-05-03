@@ -1,0 +1,216 @@
+#!/bin/bash
+# agent_credential_wizard.sh - AI Agent Credential Wizard (universal version)
+# Support authentication configuration for both local and container environments
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+echo "=========================================="
+echo "🔐 AI Agent Credential Wizard"
+echo "=========================================="
+echo ""
+
+# Local environment authentication function
+run_local_auth() {
+  while true; do
+    echo ""
+    echo "📍 Environment: Local (~)"
+    echo "🎯 Target: Authenticate credentials stored directly in local home directory"
+    echo ""
+    echo "Please select AI CLI tool:"
+    echo "1) Gemini"
+    echo "2) Claude"
+    echo "3) Codex"
+    echo "R) Return / Exit"
+    echo ""
+    read -p "Please enter your choice [1-3, R]: " CLI_CHOICE
+
+    case "$CLI_CHOICE" in
+      1)
+        echo ""
+        echo "🚀 Starting Gemini CLI authentication..."
+        echo "📂 HOME: $HOME"
+        echo "💡 Tip: After authentication, credentials will be stored in ~/.gemini"
+        echo ""
+        gemini --yolo || true
+        echo ""
+        echo "✅ Gemini authentication completed!"
+        echo "📦 Credential location: $(eval echo ~)/.gemini"
+        ;;
+      2)
+        echo ""
+        echo "🚀 Starting Claude CLI authentication..."
+        echo "📂 HOME: $HOME"
+        echo "💡 Tip: After authentication, credentials will be stored in ~/.claude"
+        echo ""
+        claude --permission-mode bypassPermissions || true
+        echo ""
+        echo "✅ Claude authentication completed!"
+        echo "📦 Credential location: $(eval echo ~)/.claude"
+        ;;
+      3)
+        echo ""
+        echo "🚀 Starting Codex CLI authentication..."
+        echo "📂 HOME: $HOME"
+        echo "💡 Tip: After authentication, credentials will be stored in ~/.codex"
+        echo ""
+        codex --yolo || true
+        echo ""
+        echo "✅ Codex authentication completed!"
+        echo "📦 Credential location: $(eval echo ~)/.codex"
+        ;;
+      [Rr])
+        break
+        ;;
+      *)
+        echo "❌ Invalid choice"
+        ;;
+    esac
+  done
+}
+
+# Container environment authentication function
+run_container_auth() {
+  local INSTANCE_NAME="$1"
+
+  if [ -z "$INSTANCE_NAME" ]; then
+    echo ""
+    echo "📍 Environment: Container"
+    echo "🎯 Target: Authenticate credentials stored in container instance directory"
+    echo ""
+    echo "💡 Naming suggestion examples:"
+    echo "   • Technical environments: dev, staging, production, test, sandbox"
+    echo "   • Application scenarios: travel_planner, investment_advisor, meditation_coach"
+    echo "   • Project codes: gupta, chod, omega, alpha, nexus"
+    echo "   • Personal use: work, hobby, research, learning, experiment"
+    echo ""
+    read -p "Please enter instance name: " INSTANCE_NAME
+
+    if [ -z "$INSTANCE_NAME" ]; then
+      echo "❌ Instance name cannot be empty"
+      return
+    fi
+  fi
+
+  # Create instance directory
+  DOCKER_DEPLOY_DIR="$SCRIPT_DIR/docker-deploy"
+  CONTAINER_HOME="$DOCKER_DEPLOY_DIR/container_home/$INSTANCE_NAME"
+
+  echo "📁 Ensuring instance directory exists: $CONTAINER_HOME"
+  mkdir -p "$CONTAINER_HOME"
+  # Ensure container_home directory permissions are correct (matching standard home directory 750)
+  chmod 750 "$CONTAINER_HOME" 2>/dev/null || sudo chmod 750 "$CONTAINER_HOME" 2>/dev/null || true
+
+  while true; do
+    echo ""
+    echo "📍 Container target: $INSTANCE_NAME ($CONTAINER_HOME)"
+    echo "Please select AI CLI tool:"
+    echo "1) Gemini"
+    echo "2) Claude"
+    echo "3) Codex"
+    echo "R) Return / Exit"
+    echo ""
+    read -p "Please enter your choice [1-3, R]: " CLI_CHOICE
+
+    case "$CLI_CHOICE" in
+      1)
+        echo ""
+        echo "🚀 Starting Gemini CLI authentication..."
+        echo "📂 Authentication path: $CONTAINER_HOME"
+        echo "💡 Tip: Authentication will be stored in $CONTAINER_HOME/.gemini"
+        echo ""
+        if HOME="$CONTAINER_HOME" gemini --yolo; then
+          echo ""
+          echo "✅ Gemini authentication completed!"
+          echo "📦 Credentials stored at: $CONTAINER_HOME/.gemini"
+        else
+          echo ""
+          echo "⚠️  Error occurred during authentication, please check directory permissions"
+          echo "   Try running: sudo chmod 777 $CONTAINER_HOME"
+        fi
+        ;;
+      2)
+        echo ""
+        echo "🚀 Starting Claude CLI authentication..."
+        echo "📂 Authentication path: $CONTAINER_HOME"
+        echo "💡 Tip: Authentication will be stored in $CONTAINER_HOME/.claude"
+        echo ""
+        if HOME="$CONTAINER_HOME" claude --permission-mode bypassPermissions; then
+          echo ""
+          echo "✅ Claude authentication completed!"
+          echo "📦 Credentials stored at: $CONTAINER_HOME/.claude"
+        else
+          echo ""
+          echo "⚠️  Error occurred during authentication, please check directory permissions"
+          echo "   Try running: sudo chmod 777 $CONTAINER_HOME"
+        fi
+        ;;
+      3)
+        echo ""
+        echo "🚀 Starting Codex CLI authentication..."
+        echo "📂 Authentication path: $CONTAINER_HOME"
+        echo "💡 Tip: Authentication will be stored in $CONTAINER_HOME/.codex"
+        echo ""
+        if HOME="$CONTAINER_HOME" codex --yolo; then
+          echo ""
+          echo "✅ Codex authentication completed!"
+          echo "📦 Credentials stored at: $CONTAINER_HOME/.codex"
+        else
+          echo ""
+          echo "⚠️  Error occurred during authentication, please check directory permissions"
+          echo "   Try running: sudo chmod 777 $CONTAINER_HOME"
+        fi
+        ;;
+      [Rr])
+        break
+        ;;
+      *)
+        echo "❌ Invalid choice"
+        ;;
+    esac
+  done
+}
+
+# Determine execution mode based on arguments
+if [ "$1" == "--local" ]; then
+  run_local_auth
+elif [ "$1" == "--container" ]; then
+  if [ -n "$2" ]; then
+    run_container_auth "$2"
+  else
+    run_container_auth ""
+  fi
+else
+  # Interactive mode
+  while true; do
+    echo ""
+    echo "Please select execution environment:"
+    echo "1) Local Environment (Local)"
+    echo "2) Container Environment (Container)"
+    echo "Q) Exit Wizard (Quit)"
+    echo ""
+    read -p "Please enter your choice [1, 2, Q]: " ENV_CHOICE
+
+    case "$ENV_CHOICE" in
+      1)
+        run_local_auth
+        ;;
+      2)
+        run_container_auth ""
+        ;;
+      [Qq])
+        break
+        ;;
+      *)
+        echo "❌ Invalid choice"
+        ;;
+    esac
+  done
+fi
+
+echo ""
+echo "=========================================="
+echo "🎉 Credential Wizard execution completed!"
+echo "=========================================="
+echo ""

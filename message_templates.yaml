@@ -1,0 +1,301 @@
+# OctoMatrix Multi-Platform Message Templates
+# Define unified message templates for three platforms: Telegram (HTML), Discord (Markdown), Slack (Plain Text)
+
+# ============================================
+# Template Definition Principles
+# ============================================
+# - telegram: HTML format (<b>, <i>, <code>, <pre>)
+# - discord: Markdown format (**, *, `, ````)
+# - slack: Plain Text format (simple text)
+#
+# All templates are based on the same structure but use platform-specific formatting
+
+templates:
+
+  # 【System Startup】
+  system_startup:
+    telegram: |
+      <b>🚀 OctoMatrix System Started</b>
+
+      <i>Time:</i> <code>{timestamp}</code>
+      <i>Status:</i> <code>Normal</code>
+      <i>Version:</i> <code>5.2</code>
+
+    discord: |
+      **🚀 OctoMatrix System Started**
+
+      *Time:* `{timestamp}`
+      *Status:* `Normal`
+      *Version:* `5.2`
+
+    slack: |
+      🚀 OctoMatrix System Started
+
+      Time: {timestamp}
+      Status: Normal
+      Version: 5.2
+
+  # 【Message Received Confirmation】
+  message_received:
+    telegram: |
+      <b>✅ Message Received</b>
+
+      <i>Source:</i> <code>{source}</code>
+      <i>User:</i> <code>{username}</code>
+      <i>Content:</i> <pre>{content}</pre>
+
+    discord: |
+      **✅ Message Received**
+
+      *Source:* `{source}`
+      *User:* `{username}`
+      *Content:* ```
+      {content}
+      ```
+
+    slack: |
+      ✅ Message Received
+
+      Source: {source}
+      User: {username}
+      Content: {content}
+
+  # 【Router Connection Status】
+  router_status:
+    telegram: |
+      <b>🔀 Router Status</b>
+
+      <i>Connection:</i> <code>{status}</code>
+      <i>Address:</i> <code>{url}</code>
+      <i>Check Time:</i> <code>{timestamp}</code>
+
+    discord: |
+      **🔀 Router Status**
+
+      *Connection:* `{status}`
+      *Address:* `{url}`
+      *Check Time:* `{timestamp}`
+
+    slack: |
+      🔀 Router Status
+
+      Connection: {status}
+      Address: {url}
+      Check Time: {timestamp}
+
+  # 【Error Notification】
+  error_notification:
+    telegram: |
+      <b>❌ System Error</b>
+
+      <i>Type:</i> <code>{error_type}</code>
+      <i>Message:</i> <pre>{error_message}</pre>
+      <i>Time:</i> <code>{timestamp}</code>
+
+      <b>Suggestion:</b> Please check logs and retry
+
+    discord: |
+      **❌ System Error**
+
+      *Type:* `{error_type}`
+      *Message:* ```
+      {error_message}
+      ```
+      *Time:* `{timestamp}`
+
+      **Suggestion:** Please check logs and retry
+
+    slack: |
+      ❌ System Error
+
+      Type: {error_type}
+      Message: {error_message}
+      Time: {timestamp}
+
+      Suggestion: Please check logs and retry
+
+  # 【Task Completed】
+  task_completed:
+    telegram: |
+      <b>✨ Task Completed</b>
+
+      <i>Task:</i> <code>{task_name}</code>
+      <i>Duration:</i> <code>{duration}</code>
+      <i>Result:</i> <code>{result}</code>
+      <i>Completion Time:</i> <code>{timestamp}</code>
+
+      {details}
+
+    discord: |
+      **✨ Task Completed**
+
+      *Task:* `{task_name}`
+      *Duration:* `{duration}`
+      *Result:* `{result}`
+      *Completion Time:* `{timestamp}`
+
+      {details}
+
+    slack: |
+      ✨ Task Completed
+
+      Task: {task_name}
+      Duration: {duration}
+      Result: {result}
+      Completion Time: {timestamp}
+
+      {details}
+
+  # 【Warning Notification】
+  warning_notification:
+    telegram: |
+      <b>⚠️ Warning</b>
+
+      <i>Level:</i> <code>{severity}</code>
+      <i>Title:</i> <code>{title}</code>
+      <i>Description:</i> <pre>{description}</pre>
+      <i>Time:</i> <code>{timestamp}</code>
+
+    discord: |
+      **⚠️ Warning**
+
+      *Level:* `{severity}`
+      *Title:* `{title}`
+      *Description:* ```
+      {description}
+      ```
+      *Time:* `{timestamp}`
+
+    slack: |
+      ⚠️ Warning
+
+      Level: {severity}
+      Title: {title}
+      Description: {description}
+      Time: {timestamp}
+
+  # 【Scheduled Job Started】
+  scheduled_job_start:
+    telegram: |
+      <b>⏰ Scheduled Job Started</b>
+
+      <i>Task:</i> <code>{job_name}</code>
+      <i>Agent:</i> <code>{agent_name}</code>
+      <i>Start Time:</i> <code>{timestamp}</code>
+
+      <pre>{command}</pre>
+
+    discord: |
+      **⏰ Scheduled Job Started**
+
+      *Task:* `{job_name}`
+      *Agent:* `{agent_name}`
+      *Start Time:* `{timestamp}`
+
+      ```
+      {command}
+      ```
+
+    slack: |
+      ⏰ Scheduled Job Started
+
+      Task: {job_name}
+      Agent: {agent_name}
+      Start Time: {timestamp}
+
+      Command: {command}
+
+  # 【Agent Status】
+  agent_status:
+    telegram: |
+      <b>🤖 Agent Status</b>
+
+      <i>Name:</i> <code>{agent_name}</code>
+      <i>Engine:</i> <code>{engine}</code>
+      <i>Status:</i> <code>{status}</code>
+      <i>Update Time:</i> <code>{timestamp}</code>
+
+    discord: |
+      **🤖 Agent Status**
+
+      *Name:* `{agent_name}`
+      *Engine:* `{engine}`
+      *Status:* `{status}`
+      *Update Time:* `{timestamp}`
+
+    slack: |
+      🤖 Agent Status
+
+      Name: {agent_name}
+      Engine: {engine}
+      Status: {status}
+      Update Time: {timestamp}
+
+  # 【Custom Message】(Agent direct output)
+  custom:
+    telegram: |
+      {content}
+
+    discord: |
+      {content}
+
+    slack: |
+      {content}
+
+# ============================================
+# Variable Explanations
+# ============================================
+# Universal variables:
+# - {timestamp}: Timestamp
+# - {source}: Message source (telegram/discord/slack)
+# - {username}: Username
+# - {content}: Message content
+#
+# Router status:
+# - {status}: Connection status (connected/disconnected)
+# - {url}: Router URL
+#
+# Errors:
+# - {error_type}: Error type
+# - {error_message}: Error message
+#
+# Tasks:
+# - {task_name}: Task name
+# - {duration}: Duration
+# - {result}: Result
+# - {details}: Details
+#
+# Warnings:
+# - {severity}: Severity level (low/medium/high)
+# - {title}: Warning title
+# - {description}: Warning description
+#
+# Scheduled jobs:
+# - {job_name}: Task name
+# - {agent_name}: Agent name
+# - {command}: Command executed
+#
+# Agent:
+# - {agent_name}: Agent name
+# - {engine}: Engine type (claude/gemini)
+# - {status}: Agent status
+
+  # 【Custom Message】
+  custom:
+    telegram: |
+      {content}
+    discord: |
+      {content}
+    slack: |
+      {content}
+
+  # 【Matrix Connection Confirmation】
+  matrix_connected:
+    telegram: |
+      🐙 <b>[{timestamp}]</b> > Matrix Connected :: <b>[{agent_name}]</b>
+
+    discord: |
+      🐙 **[{timestamp}]** > Matrix Connected :: **[{agent_name}]**
+
+    slack: |
+      🐙 [{timestamp}] > Matrix Connected :: [{agent_name}]

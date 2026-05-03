@@ -1,0 +1,24 @@
+# Auto-generated exclusions from test environment
+/.env
+/.flask_port
+/.last_source
+/.ngrok.pid
+/.router_port
+/.runtime_state
+/__pycache__/
+/agent_home/
+/docker-deploy/.env*
+/docker-deploy/__pycache__/
+/docker-deploy/awake.*.yaml
+/docker-deploy/config.*.yaml
+/docker-deploy/container_home/
+/docker-deploy/docker-compose.*.yml
+/ngrok.log
+/tools/avatar/__pycache__/
+/tools/cyberbrain/__pycache__/
+/tools/notification/__pycache__/
+/webhook_secret.token
+/config.yaml*
+/awake.yaml*
+/*token*
+/*secret*
