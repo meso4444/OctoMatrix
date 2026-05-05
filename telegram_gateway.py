@@ -152,7 +152,7 @@ def telegram_webhook():
             local_path = image_manager.download_telegram_photo(file_id, current_agent)
             if local_path:
                 caption = msg_data.get('caption', '').strip()
-                img_prompt = f"請處理這張圖片，檔案位於: {local_path}"
+                img_prompt = f"【系統提示】請處理這張圖片，檔案位於: {local_path}"
                 
                 if caption:
                     img_prompt += f"\n\n用戶的說明/提問：\n{caption}"
@@ -175,7 +175,7 @@ def telegram_webhook():
             local_path = image_manager.download_telegram_photo(file_id, current_agent)
             if local_path:
                 caption = msg_data.get('caption', '').strip()
-                doc_prompt = f"請處理這個檔案，檔案位於: {local_path}"
+                doc_prompt = f"【系統提示】請處理這個檔案，檔案位於: {local_path}"
                 
                 if caption:
                     doc_prompt += f"\n\n用戶的說明/提問：\n{caption}"
