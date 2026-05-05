@@ -63,11 +63,11 @@ install_homebrew_if_needed() {
 
 # ===== 基礎工具安裝 =====
 install_basic_tools() {
-    echo "📦 正在檢查並安裝基礎工具 (curl, wget, jq, tmux)..."
+    echo "📦 正在檢查並安裝基礎工具 (curl, wget, jq, tmux, zstd)..."
 
     if [[ "$ENVIRONMENT" == "macOS" ]]; then
         # macOS: 使用 brew
-        TOOLS="curl wget jq tmux"
+        TOOLS="curl wget jq tmux zstd"
         for tool in $TOOLS; do
             if ! command -v $tool &> /dev/null; then
                 echo "   安裝 $tool..."
@@ -80,11 +80,11 @@ install_basic_tools() {
         # Linux/WSL: 使用 apt-get 或 yum
         if command -v apt-get &> /dev/null; then
             sudo apt-get update
-            sudo apt-get install -y curl wget jq tmux
+            sudo apt-get install -y curl wget jq tmux zstd
         elif command -v yum &> /dev/null; then
-            sudo yum install -y curl wget jq tmux
+            sudo yum install -y curl wget jq tmux zstd
         else
-            echo "⚠️  無法自動安裝基礎工具，請手動確認已安裝: curl, wget, jq, tmux"
+            echo "⚠️  無法自動安裝基礎工具，請手動確認已安裝: curl, wget, jq, tmux, zstd"
         fi
     fi
 }
@@ -288,6 +288,7 @@ print_summary() {
     fi
     echo "   • tmux:    $(tmux -V 2>/dev/null || echo '未安裝')"
     echo "   • jq:      $(jq --version 2>/dev/null || echo '未安裝')"
+    echo "   • zstd:    $(zstd --version 2>/dev/null | head -n 1 || echo '未安裝')"
     echo "   • ngrok:   $(ngrok --version 2>/dev/null || echo '未安裝')"
     echo "   • Python:  $(python3 --version 2>/dev/null || echo '未安裝')"
     echo "   • Node.js: $(node --version 2>/dev/null || echo '未安裝')"
