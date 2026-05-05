@@ -339,18 +339,6 @@ try:
 
             # 確保完全就緒，等待 3 秒
             time.sleep(3)
-
-            # 📋 注入 prompt：檢查規範是否完備
-            print(f"     📋 注入規範檢查 prompt…")
-            check_prompt = f"【系統提示】此任務不發送通知給用戶。檢視AGENT_PROTOCOL.md內容,確認{engine_doc_name}的規範是否完備,並更新"
-
-            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '-l', check_prompt]), check=True)
-            time.sleep(0.5)
-            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
-
-            # 🔒 雙重保險: 確保 prompt 被正確接收
-            time.sleep(0.2)
-            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
         else:
             # 觸發 Agent 規範文件構建
             print(f"     ✨ 觸發 {name} 自我建構規範文件中…")

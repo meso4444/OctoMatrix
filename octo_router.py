@@ -176,6 +176,24 @@ class CommandHandler:
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'Escape'], check=False)
             self.notifier.notify(msg.source, 'custom', {'content': f'🧠 已嘗試恢復 <b>[{target_agent}]</b> 最近一次對話'})
             return True
+        elif cmd_content == '/sys_refresh':
+            if not check_cooldown(target_agent, 'sys_refresh'):
+                self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> 操作冷卻中，請稍後再試。'})
+                return True
+            target_info = get_agent_info(target_agent)
+            engine = target_info.get('engine', '').lower() if target_info else 'gemini'
+            if engine == "claude":
+                engine_doc_name = "CLAUDE.md"
+            elif engine == "codex":
+                engine_doc_name = "AGENTS.md"
+            else:
+                engine_doc_name = "GEMINI.md"
+            check_prompt = f"【系統提示】此任務不發送通知給用戶。檢視AGENT_PROTOCOL.md內容,確認{engine_doc_name}的規範是否完備,並更新"
+            subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '-l', check_prompt], check=False)
+            time.sleep(0.5)
+            subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'Enter'], check=False)
+            self.notifier.notify(msg.source, 'custom', {'content': f'🔄 已向 <b>[{target_agent}]</b> 發送規範更新指令'})
+            return True
         elif cmd_content.startswith('/inspect'):
             parts = content.split()
             if len(parts) > 1:
@@ -304,7 +322,8 @@ tmux send-keys -t target 您的訊息內容 && sleep 1 && tmux send-keys -t targ
         help_text += "• <code>/interrupt</code>：向活躍 Agent 發送 Ctrl+C 強制中斷卡死的程序。\n"
         help_text += "• <code>/clear</code>：清除視窗畫面與 Agent 的當前上下文。\n"
         help_text += "• <code>/resume_latest</code>：嘗試從 CLI 本地快取恢復最近一次的對話紀錄。\n"
-        help_text += "• <code>/fix [名稱]</code>：執行「重啟序列」（Quit + Start）嘗試修復崩潰的 Agent。\n\n"
+        help_text += "• <code>/fix [名稱]</code>：執行「重啟序列」（Quit + Start）嘗試修復崩潰的 Agent。\n"
+        help_text += "• <code>/sys_refresh</code>：檢查並更新 Agent 的系統協定與規範。\n\n"
         help_text += "<b>⏰ 自動化喚醒</b>\n"
         help_text += "• 請直接透過對話「要求 Agent 建立喚醒任務」，即可實現定時喚醒任務。可透過 <code>/status</code> 監控現有喚醒任務。\n\n"
         help_text += "───────────────────────────────\n"
