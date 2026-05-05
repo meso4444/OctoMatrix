@@ -154,7 +154,7 @@ OctoMatrix simplifies the tedious manual editing of configuration files and prov
 ### 1. Get Source Code and Install Dependencies
 First, obtain the project source code and run the built-in installation script. The system will automatically install the required Python packages, Node.js, and various AI CLI tools.
 ```bash
-git clone -b zh-version https://github.com/meso4444/OctoMatrix.git
+git clone https://github.com/meso4444/OctoMatrix.git
 cd OctoMatrix
 
 # Install basic environment dependencies (required for local environment)

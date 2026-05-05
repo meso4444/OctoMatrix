@@ -178,11 +178,14 @@ install_python_packages() {
     echo "📦 Installing Python packages: $ALL_PACKAGES"
     if pip3 install $ALL_PACKAGES; then
         echo "✅ Python packages installed successfully"
-        echo "   - Basic: flask requests pyyaml apscheduler pillow"
-        echo "   - MC: discord.py slack-sdk websockets aiohttp"
     else
-        echo "⚠️  Attempting to install with --user..."
-        pip3 install --user $ALL_PACKAGES
+        echo "⚠️  Detected protected Python environment (PEP 668), attempting --break-system-packages..."
+        if pip3 install $ALL_PACKAGES --break-system-packages; then
+            echo "✅ Python packages installed successfully (forced mode)"
+        else
+            echo "⚠️  Attempting to install with --user..."
+            pip3 install --user $ALL_PACKAGES || echo "❌ Python package installation failed, please try manual installation in a virtual environment (venv)"
+        fi
     fi
 }
 
