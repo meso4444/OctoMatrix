@@ -178,11 +178,14 @@ install_python_packages() {
     echo "📦 安裝 Python 套件: $ALL_PACKAGES"
     if pip3 install $ALL_PACKAGES; then
         echo "✅ Python 套件安裝成功"
-        echo "   - 基礎: flask requests pyyaml apscheduler pillow"
-        echo "   - MC: discord.py slack-sdk websockets aiohttp"
     else
-        echo "⚠️  嘗試使用 --user 安裝..."
-        pip3 install --user $ALL_PACKAGES
+        echo "⚠️  偵測到受保護的 Python 環境 (PEP 668)，嘗試使用 --break-system-packages 強制安裝..."
+        if pip3 install $ALL_PACKAGES --break-system-packages; then
+            echo "✅ Python 套件安裝成功 (強制模式)"
+        else
+            echo "⚠️  嘗試使用 --user 安裝..."
+            pip3 install --user $ALL_PACKAGES || echo "❌ Python 套件安裝失敗，請嘗試手動建立虛擬環境 (venv) 安裝"
+        fi
     fi
 }
 
