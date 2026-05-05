@@ -339,18 +339,6 @@ try:
 
             # Ensure fully ready, wait 3 seconds
             time.sleep(3)
-
-            # 📋 Inject prompt: Check if specification is complete
-            print(f"     📋 Injecting specification check prompt…")
-            check_prompt = f"【System Prompt】This task does not send notification to user. Check AGENT_PROTOCOL.md content, confirm whether {engine_doc_name} specification is complete, and update"
-
-            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '-l', check_prompt]), check=True)
-            time.sleep(0.5)
-            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
-
-            # 🔒 Double insurance: Ensure prompt is correctly received
-            time.sleep(0.2)
-            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
         else:
             # Trigger Agent specification file construction
             print(f"     ✨ Triggering {name} self-construction of specification file…")

@@ -176,6 +176,24 @@ class CommandHandler:
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'Escape'], check=False)
             self.notifier.notify(msg.source, 'custom', {'content': f'🧠 Attempted to resume <b>[{target_agent}]</b> latest conversation'})
             return True
+        elif cmd_content == '/sys_refresh':
+            if not check_cooldown(target_agent, 'sys_refresh'):
+                self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> Operation cooling down, please try again later.'})
+                return True
+            target_info = get_agent_info(target_agent)
+            engine = target_info.get('engine', '').lower() if target_info else 'gemini'
+            if engine == "claude":
+                engine_doc_name = "CLAUDE.md"
+            elif engine == "codex":
+                engine_doc_name = "AGENTS.md"
+            else:
+                engine_doc_name = "GEMINI.md"
+            check_prompt = f"[System Prompt]This task does not send notification to user. Check AGENT_PROTOCOL.md content, confirm whether {engine_doc_name} specification is complete, and update"
+            subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '-l', check_prompt], check=False)
+            time.sleep(0.5)
+            subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'Enter'], check=False)
+            self.notifier.notify(msg.source, 'custom', {'content': f'🔄 Sent specification update command to <b>[{target_agent}]</b>'})
+            return True
         elif cmd_content.startswith('/inspect'):
             parts = content.split()
             if len(parts) > 1:
@@ -304,7 +322,8 @@ tmux send-keys -t target Your message content && sleep 1 && tmux send-keys -t ta
         help_text += "• <code>/interrupt</code>: Send Ctrl+C to the active Agent to forcefully interrupt a frozen process.\n"
         help_text += "• <code>/clear</code>: Clear the window display and the Agent's current context.\n"
         help_text += "• <code>/resume_latest</code>: Attempt to restore the last conversation record from CLI local cache.\n"
-        help_text += "• <code>/fix [name]</code>: Execute the \"restart sequence\" (Quit + Start) to attempt to fix a crashed Agent.\n\n"
+        help_text += "• <code>/fix [name]</code>: Execute the \"restart sequence\" (Quit + Start) to attempt to fix a crashed Agent.\n"
+        help_text += "• <code>/sys_refresh</code>: Check and update the Agent's system protocol and specification.\n\n"
         help_text += "<b>⏰ Automated Awakening</b>\n"
         help_text += "• Directly request through conversation \"ask Agent to create awake tasks\" to implement scheduled awake tasks. Monitor existing awake tasks through <code>/status</code>.\n\n"
         help_text += "───────────────────────────────\n"

@@ -22,19 +22,28 @@ def load_env():
                     env[k] = v
     return env
 
-def get_config():
+def get_config(agent_name=None):
     # Search upward for config.py
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     if os.path.basename(base_dir) == 'agent_home':
         base_dir = os.path.dirname(base_dir)
     sys.path.append(base_dir)
+    engine_doc_name = "GEMINI.md"
     try:
         import config
         limit = int(getattr(config, 'CYBERBRAIN_ROLLING_MERGE_LIMIT', 12))
         context_size = int(getattr(config, 'CYBERBRAIN_DIVE_CONTEXT_SIZE', 50))
-        return limit, context_size
+        if agent_name:
+            for a in getattr(config, 'AGENTS', []):
+                if a['name'] == agent_name:
+                    if a.get('engine', '').lower() == 'claude':
+                        engine_doc_name = "CLAUDE.md"
+                    elif a.get('engine', '').lower() == 'codex':
+                        engine_doc_name = "AGENTS.md"
+                    break
+        return limit, context_size, engine_doc_name
     except Exception:
-        return 12, 50
+        return 12, 50, "GEMINI.md"
 
 # 🔍 Environment adaptation: auto-locate Tmux Socket
 def get_tmux_cmd():
@@ -91,7 +100,7 @@ def main():
         sys.exit(1)
 
     TMUX_TARGET = f"{TMUX_SESSION_NAME}:{AGENT_NAME}"
-    LIMIT, CONTEXT_SIZE = get_config()
+    LIMIT, CONTEXT_SIZE, ENGINE_DOC_NAME = get_config(AGENT_NAME)
     TS = datetime.now().strftime("%Y-%m-%d_%H%M")
     MONTH_TS = datetime.now().strftime("%Y-%m")
     YEAR_TS = datetime.now().strftime("%Y")
@@ -209,7 +218,7 @@ def main():
     # ==========================================
     # Step 4: Soul reincarnation injection (Neural Reset Injection)
     # ==========================================
-    prompt = f"[System Prompt]Please execute python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot to get keywords, then execute `python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"keyword1\" \"keyword2\"` in one go to perform Shell GHOST deep-dive, no need to send message to user"
+    prompt = f"[System Prompt]Please execute python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot to get keywords, then execute `python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"keyword1\" \"keyword2\"` in one go to perform Shell GHOST deep-dive, and re-promote adherence to {ENGINE_DOC_NAME} upon completion. This task does not need to send message to user"
 
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", prompt])
     time.sleep(2.0) # Long prompt needs longer input wait time
