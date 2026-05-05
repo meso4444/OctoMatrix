@@ -111,7 +111,7 @@ class AwakeManager:
         payload = {
             "source": "awake",
             "user_id": "system",
-            "content": f"【Awake System Command】{prompt}",
+            "content": f"[System Prompt] (Awake System Command){prompt}",
             "metadata": {"target_agent": target_agent}
         }
         try:

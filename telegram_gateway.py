@@ -152,7 +152,7 @@ def telegram_webhook():
             local_path = image_manager.download_telegram_photo(file_id, current_agent)
             if local_path:
                 caption = msg_data.get('caption', '').strip()
-                img_prompt = f"Please process this image, file path: {local_path}"
+                img_prompt = f"[System Prompt] Please process this image, file path: {local_path}"
 
                 if caption:
                     img_prompt += f"\n\nUser explanation/question:\n{caption}"
@@ -175,7 +175,7 @@ def telegram_webhook():
             local_path = image_manager.download_telegram_photo(file_id, current_agent)
             if local_path:
                 caption = msg_data.get('caption', '').strip()
-                doc_prompt = f"Please process this file, file path: {local_path}"
+                doc_prompt = f"[System Prompt] Please process this file, file path: {local_path}"
 
                 if caption:
                     doc_prompt += f"\n\nUser explanation/question:\n{caption}"

@@ -182,7 +182,7 @@ class CommandHandler:
                 target = parts[1]
                 prompt = (
                     f"Enter the '{target}' window via tmux, view the first 50 lines of status and analyze.\n\n"
-                    f"【System Prompt】This command is from Matrix user. After task completion, complete the following [SOP]:\n"
+                    f"[System Prompt]This command is from Matrix user. After task completion, complete the following [SOP]:\n"
                     f"[Step 1 - Report]: Execute `python3 toolbox/matrix_notifier.py` to send task message or file to user with Avatar emoji.\n"
                     f"[Step 2 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.\n"
                     f"[Step 3 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"Semantic Outline\" --keywords \"Keyword1,Keyword2\" --paths \"/FilePath1,/FilePath2\"` to imprint task status to GHOST."
@@ -214,7 +214,7 @@ After waiting 5 seconds for startup to complete, please enter `/resume`, press E
 Must use the "text -> delay -> Enter" trilogy:
 tmux send-keys -t target Your message content && sleep 1 && tmux send-keys -t target Enter
 
-【System Prompt】This command is from Matrix user. After task completion, complete the following [SOP]:
+[System Prompt]This command is from Matrix user. After task completion, complete the following [SOP]:
 [Step 1 - Report]: Execute `python3 toolbox/matrix_notifier.py` to send task message or file to user with Avatar emoji.
 [Step 2 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
 [Step 3 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Semantic Outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST."""
@@ -241,8 +241,8 @@ tmux send-keys -t target Your message content && sleep 1 && tmux send-keys -t ta
             except: pass
 
         final_message = content
-        if msg.source != 'awake' and '【System Prompt】' not in content:
-            final_message += f"\n\n【System Prompt】This command is from Matrix user. After task completion, complete the following [SOP]:\n[Step 1 - Report]: Execute `python3 toolbox/matrix_notifier.py` to send task message or file to user with Avatar emoji.\n[Step 2 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.\n[Step 3 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"Semantic Outline\" --keywords \"Keyword1,Keyword2\" --paths \"/FilePath1,/FilePath2\"` to imprint task status to GHOST."
+        if msg.source != 'awake' and '[System Prompt]' not in content:
+            final_message += f"\n\n[System Prompt]This command is from Matrix user. After task completion, complete the following [SOP]:\n[Step 1 - Report]: Execute `python3 toolbox/matrix_notifier.py` to send task message or file to user with Avatar emoji.\n[Step 2 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.\n[Step 3 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"Semantic Outline\" --keywords \"Keyword1,Keyword2\" --paths \"/FilePath1,/FilePath2\"` to imprint task status to GHOST."
         
         success = self.injector.inject(final_message, target_agent)
         if success and msg.source != 'awake':
