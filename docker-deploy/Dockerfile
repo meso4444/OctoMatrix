@@ -41,7 +41,7 @@ RUN mkdir -p /app/octomatrix/docker-deploy/scripts
 WORKDIR /app/octomatrix
 
 # 安裝 Python 依賴
-RUN pip install --no-cache-dir flask requests pyyaml apscheduler discord.py slack-sdk websockets aiohttp
+RUN pip install --no-cache-dir flask requests pyyaml apscheduler pillow discord.py slack-sdk websockets aiohttp
 
 # 複製 Python 腳本
 COPY config.py /app/octomatrix/
