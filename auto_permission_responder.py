@@ -21,6 +21,10 @@ monitoring = False
 DEBUG = os.getenv('DEBUG', '0') == '1'
 log_file = f"/tmp/monitor_{TARGET.replace(':', '_')}.log"
 
+# 🚀 增加：追蹤最後一次收到系統指令的時間
+last_gateway_msg_time = 0
+GATEWAY_MARKER = "【系統提示】"  # 精確定位來自網關的指令標記
+
 def log(msg):
     if not DEBUG: return
     with open(log_file, 'a') as f:
@@ -69,7 +73,7 @@ def has_stuck_command_pattern(text):
 
 def stuck_monitor_thread():
     """異步監控卡住的指令，不阻塞主程序的 stdin 讀取"""
-    global monitoring
+    global monitoring, last_gateway_msg_time
     last_screen_hash = None
     last_change_time = time.time()
     
@@ -86,18 +90,23 @@ def stuck_monitor_thread():
             last_screen_hash = current_hash
             last_change_time = time.time()
         else:
-            # 畫面超過 30 秒沒變，且符合卡住的指令特徵 (提供給用戶的輸入緩衝時間)
+            # 🚀 雙重驗證：
+            # 1. 畫面超過 30 秒沒變，且符合卡住的指令特徵
+            # 2. 必須是在最近 60 秒內有收到網關訊息的情況下 (避免 Claude 灰字幻覺)
             if time.time() - last_change_time >= 30:
-                if has_stuck_command_pattern(screen):
-                    monitoring = True
-                    try:
-                        log("🔨 Screen stuck for 30s, forcing Enter to resolve missed input...")
-                        send_enter()
-                        # 給予 5 秒冷卻，避免連續觸發
-                        time.sleep(5)
-                    finally:
-                        last_change_time = time.time()
-                        monitoring = False
+                if time.time() - last_gateway_msg_time < 60:
+                    if has_stuck_command_pattern(screen):
+                        monitoring = True
+                        try:
+                            log("🔨 Intent confirmed by gateway log. Resolving missed Enter...")
+                            send_enter()
+                            time.sleep(5)
+                        finally:
+                            last_change_time = time.time()
+                            monitoring = False
+                else:
+                    if has_stuck_command_pattern(screen):
+                        log("ℹ️ Screen matches pattern but no recent gateway activity. Ignoring (likely Claude hint).")
 
 # 啟動異步監控執行緒
 stuck_thread = threading.Thread(target=stuck_monitor_thread, daemon=True)
@@ -107,6 +116,12 @@ try:
     log(f"🚀 Monitor started for {TARGET} (Waiting for input...)")
     for line in sys.stdin:
         clean_line = clean(line)
+        
+        # 🚀 只要看到網關標記，就更新最後活動時間
+        if GATEWAY_MARKER in line:
+            last_gateway_msg_time = time.time()
+            log("📡 Gateway activity detected, arming auto-enter.")
+
         if monitoring: continue
 
         if contains_keyword(clean_line):
