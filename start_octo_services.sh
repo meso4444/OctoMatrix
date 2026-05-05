@@ -489,7 +489,7 @@ try:
     session_name = os.environ['TMUX_SESSION_NAME']
     for agent in AGENTS:
         name = agent['name']
-        test_msg = "Send test message and identify yourself"
+        test_msg = "[System Prompt] Send test message and identify yourself"
         subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:{name}', test_msg], check=True)
         time.sleep(0.5)
         subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:{name}', 'Enter'], check=True)
