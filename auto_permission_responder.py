@@ -21,6 +21,10 @@ monitoring = False
 DEBUG = os.getenv('DEBUG', '0') == '1'
 log_file = f"/tmp/monitor_{TARGET.replace(':', '_')}.log"
 
+# 🚀 Track last time a system command was received
+last_gateway_msg_time = 0
+GATEWAY_MARKER = "[System Prompt]"  # Accurately target command markers from the gateway
+
 def log(msg):
     if not DEBUG: return
     with open(log_file, 'a') as f:
@@ -69,7 +73,7 @@ def has_stuck_command_pattern(text):
 
 def stuck_monitor_thread():
     """Asynchronously monitor stuck commands without blocking main program's stdin reading"""
-    global monitoring
+    global monitoring, last_gateway_msg_time
     last_screen_hash = None
     last_change_time = time.time()
 
@@ -86,18 +90,23 @@ def stuck_monitor_thread():
             last_screen_hash = current_hash
             last_change_time = time.time()
         else:
-            # Screen unchanged for over 30 seconds and matches stuck command pattern (provide input buffer time for user)
+            # 🚀 Double verification:
+            # 1. Screen unchanged for over 30s and matches stuck command pattern
+            # 2. Must be within 60s of receiving a system command (avoids Claude ghost hints)
             if time.time() - last_change_time >= 30:
-                if has_stuck_command_pattern(screen):
-                    monitoring = True
-                    try:
-                        log("🔨 Screen stuck for 30s, forcing Enter to resolve missed input...")
-                        send_enter()
-                        # Provide 5 second cooldown to avoid continuous triggering
-                        time.sleep(5)
-                    finally:
-                        last_change_time = time.time()
-                        monitoring = False
+                if time.time() - last_gateway_msg_time < 60:
+                    if has_stuck_command_pattern(screen):
+                        monitoring = True
+                        try:
+                            log("🔨 Intent confirmed by system prompt log. Resolving missed Enter...")
+                            send_enter()
+                            time.sleep(5)
+                        finally:
+                            last_change_time = time.time()
+                            monitoring = False
+                else:
+                    if has_stuck_command_pattern(screen):
+                        log("ℹ️ Screen matches pattern but no recent system command activity. Ignoring (likely Claude hint).")
 
 # Start asynchronous monitoring thread
 stuck_thread = threading.Thread(target=stuck_monitor_thread, daemon=True)
@@ -107,6 +116,12 @@ try:
     log(f"🚀 Monitor started for {TARGET} (Waiting for input...)")
     for line in sys.stdin:
         clean_line = clean(line)
+        
+        # 🚀 Whenever a system prompt marker is seen, update the activity timestamp
+        if GATEWAY_MARKER in line:
+            last_gateway_msg_time = time.time()
+            log("📡 System prompt activity detected, arming auto-enter.")
+            
         if monitoring: continue
 
         if contains_keyword(clean_line):
