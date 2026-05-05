@@ -21,9 +21,8 @@ monitoring = False
 DEBUG = os.getenv('DEBUG', '0') == '1'
 log_file = f"/tmp/monitor_{TARGET.replace(':', '_')}.log"
 
-# 🚀 Track last time a system command was received
-last_gateway_msg_time = 0
-GATEWAY_MARKER = "[System Prompt]"  # Accurately target command markers from the gateway
+# 🚀 Accurately target command markers from the gateway
+GATEWAY_MARKER = "[System Prompt]"
 
 def log(msg):
     if not DEBUG: return
@@ -67,13 +66,26 @@ def contains_keyword(text):
             return True
     return False
 
-def has_stuck_command_pattern(text):
-    pattern = r'^\s*[*❯›]\s+\S'
-    return bool(re.search(pattern, text, re.MULTILINE))
+def is_remote_stuck_command(text, marker):
+    # Find all prompt markers on screen
+    matches = list(re.finditer(r'^\s*[*❯›]\s+', text, re.MULTILINE))
+    if not matches:
+        return False
+    
+    # Extract text from the last prompt marker to the end of the screen (the current stuck command block)
+    last_prompt_idx = matches[-1].start()
+    last_cmd_text = text[last_prompt_idx:]
+    
+    # 1. Ensure there is actual input text after the prompt (exclude empty prompts)
+    if not re.search(r'^\s*[*❯›]\s+\S', last_cmd_text, re.MULTILINE):
+        return False
+        
+    # 2. Ensure the "System Prompt" marker exists within this LAST command block
+    return marker.lower() in last_cmd_text.lower()
 
 def stuck_monitor_thread():
     """Asynchronously monitor stuck commands without blocking main program's stdin reading"""
-    global monitoring, last_gateway_msg_time
+    global monitoring
     last_screen_hash = None
     last_change_time = time.time()
 
@@ -91,22 +103,20 @@ def stuck_monitor_thread():
             last_change_time = time.time()
         else:
             # 🚀 Double verification:
-            # 1. Screen unchanged for over 30s and matches stuck command pattern
-            # 2. Must be within 60s of receiving a system command (avoids Claude ghost hints)
+            # 1. Screen unchanged for over 30s
+            # 2. The current "last input block" must match the stuck pattern AND contain the gateway marker
             if time.time() - last_change_time >= 30:
-                if time.time() - last_gateway_msg_time < 60:
-                    if has_stuck_command_pattern(screen):
-                        monitoring = True
-                        try:
-                            log("🔨 Intent confirmed by system prompt log. Resolving missed Enter...")
-                            send_enter()
-                            time.sleep(5)
-                        finally:
-                            last_change_time = time.time()
-                            monitoring = False
-                else:
-                    if has_stuck_command_pattern(screen):
-                        log("ℹ️ Screen matches pattern but no recent system command activity. Ignoring (likely Claude hint).")
+                if is_remote_stuck_command(screen, GATEWAY_MARKER):
+                    monitoring = True
+                    try:
+                        log("🔨 Intent confirmed by screen marker. Resolving missed Enter...")
+                        send_enter()
+                        time.sleep(5)
+                    finally:
+                        last_change_time = time.time()
+                        monitoring = False
+                elif re.search(r'^\s*[*❯›]\s+\S', screen, re.MULTILINE):
+                    log("ℹ️ Screen matches pattern but no system prompt marker found in the current command block. Ignoring (likely local manual input or Claude hint).")
 
 # Start asynchronous monitoring thread
 stuck_thread = threading.Thread(target=stuck_monitor_thread, daemon=True)
@@ -116,12 +126,7 @@ try:
     log(f"🚀 Monitor started for {TARGET} (Waiting for input...)")
     for line in sys.stdin:
         clean_line = clean(line)
-        
-        # 🚀 Whenever a system prompt marker is seen, update the activity timestamp
-        if GATEWAY_MARKER in line:
-            last_gateway_msg_time = time.time()
-            log("📡 System prompt activity detected, arming auto-enter.")
-            
+
         if monitoring: continue
 
         if contains_keyword(clean_line):
