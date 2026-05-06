@@ -17,13 +17,9 @@ def convert_legacy_ghost():
     
     print(f"🔄 Starting to merge {len(md_files)} .md files chronologically into Shell compressed log...")
     
-    # Create target directory
-    target_dir = "octo_cyberbrain/shell"
-    os.makedirs(target_dir, exist_ok=True)
-    
     # Generate standard filename date
     ts = datetime.now().strftime("%Y-%m-%d_%H%M")
-    target_file = os.path.join(target_dir, f"octo_shell.log.{ts}.zst")
+    target_file = f"octo_shell.log.{ts}.zst"
     
     # Merge and compress
     try:
