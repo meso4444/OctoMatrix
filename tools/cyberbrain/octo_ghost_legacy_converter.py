@@ -17,13 +17,9 @@ def convert_legacy_ghost():
     
     print(f"🔄 開始依新舊順序整併 {len(md_files)} 個 .md 檔案至 Shell 壓縮日誌...")
     
-    # 建立目標資料夾
-    target_dir = "octo_cyberbrain/shell"
-    os.makedirs(target_dir, exist_ok=True)
-    
     # 產生標準檔名日期
     ts = datetime.now().strftime("%Y-%m-%d_%H%M")
-    target_file = os.path.join(target_dir, f"octo_shell.log.{ts}.zst")
+    target_file = f"octo_shell.log.{ts}.zst"
     
     # 整併與壓縮
     try:
