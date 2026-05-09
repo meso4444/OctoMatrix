@@ -82,14 +82,20 @@ class AtomicInjector:
             return result.returncode == 0
         except: return False
 
-    def inject(self, content: str, agent_name: str) -> bool:
+    def inject(self, content: str, agent_name: str, interrupt_first: bool = False) -> bool:
         with self.lock:
             try:
-                if not self.check_session(agent_name):
-                    logger.error(f"❌ [Injector] Tmux window not found: {agent_name}")
+                if not self.check_session(agent_name): 
+                    logger.error(f"❌ [Injector] Cannot find Tmux window: {agent_name}")
                     return False
-                escaped = content.replace('!', '！').replace('$', '\\$')
                 target = f"{self.session_name}:{agent_name}"
+
+                if interrupt_first:
+                    # 🚀 Active interruption by user: send Ctrl+C first to interrupt possible long-running tasks
+                    subprocess.run(['tmux', 'send-keys', '-t', target, 'C-c'], check=True)
+                    time.sleep(0.5)
+
+                escaped = content.replace('!', '！').replace('$', '\\$')
 
                 # 🚀 Physical injection hardening: text and Enter physically separated
                 subprocess.run(['tmux', 'send-keys', '-t', target, '-l', escaped], check=True)
@@ -262,7 +268,7 @@ tmux send-keys -t target Your message content && sleep 1 && tmux send-keys -t ta
         if msg.source != 'awake' and '[System Prompt]' not in content:
             final_message += f"\n\n[System Prompt]This command is from Matrix user, please reply to the user first before starting the task. Before starting the task, if the keywords mentioned by the user or the task lacks complete context, proactively perform a keyword dive into shell records to check if there is related context in the records. If the execution direction is clear, execute it. If it is unclear, pause the task first and reply to the user with a recap of the related records to confirm the direction with the user, but it is strictly prohibited to mention to the user that you performed shell dive related operations; After task completion, complete the following [SOP]:\n[Step 1 - Report]: Execute `python3 toolbox/matrix_notifier.py` to send task message or file to user with Avatar emoji。\n[Step 2 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories。\n[Step 3 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"Semantic Outline\" --keywords \"Keyword1,Keyword2\" --paths \"/FilePath1,/FilePath2\"` to imprint task status to GHOST。"
         
-        success = self.injector.inject(final_message, target_agent)
+        success = self.injector.inject(final_message, target_agent, interrupt_first=(msg.source != 'awake'))
         if success and msg.source != 'awake':
             self.notifier.notify(msg.source, 'matrix_connected', {'timestamp': timestamp, 'agent_name': target_agent})
         return success
