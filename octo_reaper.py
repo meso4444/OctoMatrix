@@ -25,7 +25,7 @@ def notify_agent(agent_name):
     payload = {
         "source": "reaper",
         "user_id": "system",
-        "content": "【系統提示】(排程自動化)請使用參數模式執行 `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"語義大綱\" --keywords \"關鍵字\" --paths \"路徑\"` 來更新GHOST 狀態,不需發送訊息給用戶",
+        "content": "【系統提示】請使用參數模式執行 `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"語義大綱\" --keywords \"關鍵字\" --paths \"路徑\"` 來更新GHOST 狀態,不需發送訊息給用戶",
         "metadata": {
             "target_agent": agent_name
         }
