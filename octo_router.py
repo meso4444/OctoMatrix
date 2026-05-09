@@ -75,6 +75,7 @@ class AtomicInjector:
     def __init__(self, session_name: str):
         self.session_name = session_name
         self.lock = threading.Lock()
+        self.last_inject_time = 0.0
 
     def check_session(self, window_name: str) -> bool:
         try:
@@ -85,6 +86,11 @@ class AtomicInjector:
     def inject(self, content: str, agent_name: str, interrupt_first: bool = False) -> bool:
         with self.lock:
             try:
+                now = time.time()
+                elapsed = now - self.last_inject_time
+                if elapsed < 3.0:
+                    time.sleep(3.0 - elapsed)
+
                 if not self.check_session(agent_name): 
                     logger.error(f"❌ [Injector] Cannot find Tmux window: {agent_name}")
                     return False
@@ -408,11 +414,6 @@ def inject():
 
     success = handler.handle(msg)
     return jsonify({"status": "success" if success else "failed"}), 200
-
-if __name__ == '__main__':
-    awake.start()
-    app.run(host=ROUTER_HOST, port=ROUTER_PORT)
-s else "failed"}), 200
 
 if __name__ == '__main__':
     awake.start()
