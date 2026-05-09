@@ -105,6 +105,7 @@ class AtomicInjector:
                 # 🚀 強制執行雙重 Enter 協議
                 time.sleep(0.3)
                 subprocess.run(['tmux', 'send-keys', '-t', target, 'Enter'], check=True)
+                self.last_inject_time = time.time()
                 return True
             except Exception as e:
                 logger.error(f"❌ [Injector] 物理注入失敗: {e}")
@@ -407,6 +408,11 @@ def inject():
         
     success = handler.handle(msg)
     return jsonify({"status": "success" if success else "failed"}), 200
+
+if __name__ == '__main__':
+    awake.start()
+    app.run(host=ROUTER_HOST, port=ROUTER_PORT)
+s else "failed"}), 200
 
 if __name__ == '__main__':
     awake.start()
