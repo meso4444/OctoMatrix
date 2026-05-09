@@ -138,7 +138,18 @@ graph TD
     1. Go to **Settings > Socket Mode** in the left menu.
     2. Toggle **Enable Socket Mode** to on.
 
-*   **F. SLACK_WORKSPACE_ID & SLACK_CHANNEL_ID**
+*   **F. Set up Event Subscriptions (Required for Socket Mode)**
+    1. Go to **Features > Event Subscriptions** in the left menu.
+    2. Toggle **Enable Events** to on.
+    3. Expand the **Subscribe to bot events** section and add the following permissions:
+       *   `app_mention`
+       *   `file_shared`
+       *   `message.channels`
+       *   `message.im`
+       *   `message.mpim`
+    4. Click **Save Changes**.
+
+*   **G. SLACK_WORKSPACE_ID & SLACK_CHANNEL_ID**
     1. Create a dedicated channel in the Workspace (since it's within a closed workspace, you can directly use a public channel).
     2. Log in to the web version [app.slack.com](https://app.slack.com/) and enter the target channel.
     3. Observe the address bar; the structure is usually `https://app.slack.com/client/T.../C...`.
