@@ -138,7 +138,18 @@ graph TD
     1. 在左側選單進入 **Settings > Socket Mode**。
     2. 將 **Enable Socket Mode** 切換為開啟。
 
-*   **F. SLACK_WORKSPACE_ID & SLACK_CHANNEL_ID**
+*   **F. 設定 Event Subscriptions (Socket Mode 必備)**
+    1. 在左側選單進入 **Features > Event Subscriptions**。
+    2. 將 **Enable Events** 切換為開啟。
+    3. 展開 **Subscribe to bot events** 區塊，加入以下權限：
+       *   `app_mention`
+       *   `file_shared`
+       *   `message.channels`
+       *   `message.im`
+       *   `message.mpim`
+    4. 點擊 **Save Changes**。
+
+*   **G. SLACK_WORKSPACE_ID & SLACK_CHANNEL_ID**
     1. 在 Workspace 內建立一個專屬頻道（因已處於封閉的工作區內，直接使用公開頻道即可）。
     2. 登入網頁版 [app.slack.com](https://app.slack.com/) 並進入該目標頻道。
     3. 觀察網址列，結構通常為 `https://app.slack.com/client/T.../C...`。
