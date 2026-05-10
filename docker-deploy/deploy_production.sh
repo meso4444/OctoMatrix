@@ -3,22 +3,22 @@
 # MC Production Environment Migration & Deployment Script
 # ============================================================================
 # Purpose: Migrate from Staging (mc_dev) to Production (Port 5000)
-# Process: Production image build → Green container verification → Blue-Green switch → Monitoring confirmation
-# Time: ~2-4 hours (including 72-hour verification period)
+# Process: Build Production Image → Verify Green Container → Blue-Green Switch → Monitoring
+# Duration: Approx. 2-4 hours (including 72-hour verification period)
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-# Color definitions
+# Color Definitions
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Logging functions
+# Log Functions
 log_info() {
     echo -e "${BLUE}ℹ️  [INFO]${NC} $1"
 }
@@ -36,19 +36,19 @@ log_error() {
 }
 
 # ============================================================================
-# Phase 1: Production image preparation
+# Phase 1: Production Image Preparation
 # ============================================================================
 
 phase1_build_production_image() {
     echo ""
     echo "=========================================="
-    echo "Phase 1: Building production image"
+    echo "Phase 1: Build Production Image"
     echo "=========================================="
 
     log_info "Starting production-grade image build..."
 
     if [ ! -f "$SCRIPT_DIR/Dockerfile" ]; then
-        log_error "Dockerfile not found: $SCRIPT_DIR/Dockerfile"
+        log_error "Dockerfile does not exist: $SCRIPT_DIR/Dockerfile"
         return 1
     fi
 
@@ -60,7 +60,7 @@ phase1_build_production_image() {
         "$PROJECT_DIR" 2>&1 | tee "$SCRIPT_DIR/logs/build.log"
 
     if [ $? -eq 0 ]; then
-        log_success "Production image build completed: chat-agent-mc:production"
+        log_success "Production image build complete: chat-agent-mc:production"
         docker image ls | grep "chat-agent-mc"
         return 0
     else
@@ -70,13 +70,13 @@ phase1_build_production_image() {
 }
 
 # ============================================================================
-# Phase 2: Green container preparation and verification (Port 12210)
+# Phase 2: Green Container Setup & Verification (Port 12210)
 # ============================================================================
 
 phase2_setup_green_container() {
     echo ""
     echo "=========================================="
-    echo "Phase 2: Green container setup and verification"
+    echo "Phase 2: Green Container Setup & Verification"
     echo "=========================================="
 
     INSTANCE_NAME="production_green"
@@ -89,7 +89,7 @@ phase2_setup_green_container() {
     python3 generate_config.py "compose" "$INSTANCE_NAME" "" "$SCRIPT_DIR"
 
     if [ ! -f "$SCRIPT_DIR/config.${INSTANCE_NAME}.yaml" ]; then
-        log_error "Configuration file generation failed"
+        log_error "Failed to generate configuration files"
         return 1
     fi
 
@@ -104,7 +104,7 @@ phase2_setup_green_container() {
         up -d bot 2>&1 | tee -a "$SCRIPT_DIR/logs/green_startup.log"
 
     if [ $? -ne 0 ]; then
-        log_error "Green container startup failed"
+        log_error "Failed to start Green container"
         return 1
     fi
 
@@ -117,9 +117,9 @@ phase2_setup_green_container() {
     # 4. Verify container health status
     log_info "Verifying container health status..."
     if docker ps | grep -q "chat-agent-${INSTANCE_NAME}"; then
-        log_success "Green container running normally"
+        log_success "Green container is running normally"
     else
-        log_error "Green container not running"
+        log_error "Green container is not running"
         return 1
     fi
 
@@ -127,100 +127,100 @@ phase2_setup_green_container() {
 }
 
 # ============================================================================
-# Phase 3: Green container 72-hour verification
+# Phase 3: Green Container 72-Hour Verification
 # ============================================================================
 
 phase3_verify_green_container() {
     echo ""
     echo "=========================================="
-    echo "Phase 3: Green container verification checklist"
+    echo "Phase 3: Green Container Verification Checklist"
     echo "=========================================="
 
-    log_warn "Note: Complete verification requires 72 hours, the following is a quick checklist"
+    log_warn "Note: Full verification requires 72 hours. Below is a quick checklist."
 
     CHECKS_PASSED=0
     CHECKS_TOTAL=11
 
-    # Check 1: API endpoint verification
+    # Check 1: API Endpoint Verification
     log_info "[1/11] Verifying /health endpoint..."
     if curl -s http://localhost:12210/health | grep -q "ok"; then
-        log_success "✅ /health endpoint normal"
+        log_success "✅ /health endpoint OK"
         ((CHECKS_PASSED++))
     else
-        log_error "❌ /health endpoint failed"
+        log_error "❌ /health endpoint FAILED"
     fi
 
-    # Check 2: Container logs
+    # Check 2: Container Logs
     log_info "[2/11] Checking container logs..."
     if docker logs chat-agent-production_green_bot 2>&1 | grep -q "OctoMatrix"; then
-        log_success "✅ Container logs normal"
+        log_success "✅ Container logs OK"
         ((CHECKS_PASSED++))
     else
-        log_error "❌ Container logs abnormal"
+        log_error "❌ Container logs ABNORMAL"
     fi
 
-    # Check 3: Process check
+    # Check 3: Process Check
     log_info "[3/11] Checking core processes..."
     if docker exec chat-agent-production_green_bot ps aux | grep -E "mc_router|gateway" | grep -v grep | wc -l | grep -qE "[3-9]"; then
-        log_success "✅ Core processes normal (3+ processes)"
+        log_success "✅ Core processes OK (3+ count)"
         ((CHECKS_PASSED++))
     else
-        log_warn "⚠️  Insufficient core processes, recommend checking"
+        log_warn "⚠️  Insufficient core processes, please check"
     fi
 
-    # Check 4: Port listening
+    # Check 4: Port Listening
     log_info "[4/11] Checking port listening..."
     if docker exec chat-agent-production_green_bot netstat -tlnp 2>/dev/null | grep -q "12210"; then
-        log_success "✅ Port 12210 listening normal"
+        log_success "✅ Port 12210 listening OK"
         ((CHECKS_PASSED++))
     else
         log_warn "⚠️  Port 12210 listening status abnormal"
     fi
 
-    # Check 5-11: Other verification items
-    log_info "[5-11] Other verification items..."
-    log_warn "The following items require manual verification (complete within 72 hours):"
-    echo "  [ ] Three-platform communication verification (Telegram/Discord/Slack)"
-    echo "  [ ] Long message segmentation verification (4000+ chars)"
-    echo "  [ ] Dynamic port sensing verification (.router_port)"
-    echo "  [ ] Concurrent lock verification (threading.Lock)"
-    echo "  [ ] Visual replication verification (cross-platform UI)"
-    echo "  [ ] Load testing (high concurrency stability)"
-    echo "  [ ] Failure recovery testing (reconnection mechanism)"
+    # Check 5-11: Other Verification Items
+    log_info "[5-11] Other Verification Items..."
+    log_warn "The following items require manual verification (to be completed within 72 hours):"
+    echo "  [ ] Multi-platform communication check (Telegram/Discord/Slack)"
+    echo "  [ ] Long message fragmentation check (4000+ chars)"
+    echo "  [ ] Dynamic port sensing check (.router_port)"
+    echo "  [ ] Concurrent locking check (threading.Lock)"
+    echo "  [ ] Visual UI consistency check (Cross-platform UI)"
+    echo "  [ ] Load testing (High concurrency stability)"
+    echo "  [ ] Failover/Recovery testing (Reconnection mechanisms)"
 
-    CHECKS_PASSED=$((CHECKS_PASSED + 7))  # Assuming manual verification all passed
+    CHECKS_PASSED=$((CHECKS_PASSED + 7))  # Assuming manual checks pass
 
     echo ""
-    log_info "Quick verification completed: $CHECKS_PASSED/$CHECKS_TOTAL items passed"
+    log_info "Quick verification complete: $CHECKS_PASSED/$CHECKS_TOTAL items passed"
 
     if [ $CHECKS_PASSED -ge 10 ]; then
-        log_success "Green container verification basically passed, ready for switch preparation"
+        log_success "Green container verification essentially passed, ready for switch"
         return 0
     else
-        log_error "Verification items did not meet standard, recommend checking"
+        log_error "Verification targets not met, please check"
         return 1
     fi
 }
 
 # ============================================================================
-# Phase 4: Blue-Green switch (Port 5000)
+# Phase 4: Blue-Green Switch (Port 5000)
 # ============================================================================
 
 phase4_blue_green_switch() {
     echo ""
     echo "=========================================="
-    echo "Phase 4: Blue-Green switch (Port 5000)"
+    echo "Phase 4: Blue-Green Switch (Port 5000)"
     echo "=========================================="
 
-    read -p "Do you confirm to execute Blue-Green switch? (y/N): " -n 1 -r
+    read -p "Confirm Blue-Green switch? (y/N): " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         log_warn "User cancelled switch"
         return 1
     fi
 
-    # 1. Stop Blue container (old version)
-    log_info "Stopping Blue container (old version)..."
+    # 1. Stop Blue Container (Old Version)
+    log_info "Stopping Blue container (Old Version)..."
     if docker ps | grep -q "chat-agent-production_blue"; then
         docker stop chat-agent-production_blue_bot || true
         docker rm chat-agent-production_blue_bot || true
@@ -229,14 +229,14 @@ phase4_blue_green_switch() {
         log_warn "Blue container not found, skipping stop step"
     fi
 
-    # 2. Backup old version (optional keep-alive 24+ hours)
-    log_info "Backing up Blue container (for rollback)..."
+    # 2. Backup Old Version (Optional persistence for 24+ hours)
+    log_info "Backing up Blue container (for rollback purposes)..."
     docker rename chat-agent-production_green_bot chat-agent-production_blue_backup || true
 
-    # 3. Start new Green container to Port 5000
-    log_info "Starting new Green container to Port 5000..."
+    # 3. Start New Green Container on Port 5000
+    log_info "Starting new Green container on Port 5000..."
 
-    # Modify docker-compose configuration to use Port 5000
+    # Modify docker-compose config to use Port 5000
     sed 's/12210/5000/g' "$SCRIPT_DIR/config.production_green.yaml" \
         > "$SCRIPT_DIR/config.production_new.yaml"
 
@@ -250,51 +250,51 @@ phase4_blue_green_switch() {
     if docker ps | grep -q "chat-agent-production"; then
         log_success "New Green container started on Port 5000"
     else
-        log_error "New container startup failed, executing rollback"
+        log_error "New container failed to start, performing rollback"
         docker rename chat-agent-production_blue_backup chat-agent-production_green_bot || true
         return 1
     fi
 
-    # 4. Verify new container
+    # 4. Verify New Container
     log_info "Verifying Port 5000 availability..."
     if curl -s http://localhost:5000/health | grep -q "ok"; then
-        log_success "✅ Port 5000 Health Check passed"
+        log_success "✅ Port 5000 Health Check PASSED"
         log_success "Blue-Green switch successful!"
         return 0
     else
-        log_error "Port 5000 Health Check failed, executing rollback"
+        log_error "Port 5000 Health Check FAILED, performing rollback"
         docker stop chat-agent-production || true
         return 1
     fi
 }
 
 # ============================================================================
-# Phase 5: Monitoring and confirmation
+# Phase 5: Monitoring & Confirmation
 # ============================================================================
 
 phase5_monitoring() {
     echo ""
     echo "=========================================="
-    echo "Phase 5: Production environment monitoring"
+    echo "Phase 5: Production Environment Monitoring"
     echo "=========================================="
 
-    log_info "Production environment monitoring started, estimated 72-hour verification required"
+    log_info "Production monitoring started, expected 72-hour verification period"
 
     # Create monitoring log
     MONITOR_LOG="$SCRIPT_DIR/logs/production_monitor.log"
 
-    echo "Monitoring time: $(date)" > "$MONITOR_LOG"
-    echo "Container status monitoring:" >> "$MONITOR_LOG"
+    echo "Monitoring Time: $(date)" > "$MONITOR_LOG"
+    echo "Container Status Monitoring:" >> "$MONITOR_LOG"
 
-    # Check every minute (demo: check 5 times)
+    # Check once per minute (demo: check 5 times)
     for i in {1..5}; do
         echo "" | tee -a "$MONITOR_LOG"
-        echo "=== Check cycle $i ===" | tee -a "$MONITOR_LOG"
+        echo "=== Check Cycle $i ===" | tee -a "$MONITOR_LOG"
 
         if curl -s http://localhost:5000/health >> "$MONITOR_LOG" 2>&1; then
-            echo "✅ $(date): Port 5000 Health Check passed" | tee -a "$MONITOR_LOG"
+            echo "✅ $(date): Port 5000 Health Check PASSED" | tee -a "$MONITOR_LOG"
         else
-            echo "❌ $(date): Port 5000 Health Check failed" | tee -a "$MONITOR_LOG"
+            echo "❌ $(date): Port 5000 Health Check FAILED" | tee -a "$MONITOR_LOG"
         fi
 
         docker stats --no-stream chat-agent-production >> "$MONITOR_LOG" 2>&1
@@ -308,35 +308,35 @@ phase5_monitoring() {
 }
 
 # ============================================================================
-# Main process
+# Main Workflow
 # ============================================================================
 
 main() {
     echo ""
     echo "============================================================"
-    echo "MC Production environment deployment script"
+    echo "MC Production Environment Deployment Script"
     echo "============================================================"
-    echo "Start time: $(date)"
+    echo "Start Time: $(date)"
     echo ""
 
     # Create logs directory
     mkdir -p "$SCRIPT_DIR/logs"
 
-    # Phase 1: Build production image
+    # Phase 1: Build Production Image
     if ! phase1_build_production_image; then
-        log_error "Phase 1 failed"
+        log_error "Phase 1 FAILED"
         exit 1
     fi
 
-    # Phase 2: Setup Green container
+    # Phase 2: Setup Green Container
     if ! phase2_setup_green_container; then
-        log_error "Phase 2 failed"
+        log_error "Phase 2 FAILED"
         exit 1
     fi
 
-    # Phase 3: Verify Green container
+    # Phase 3: Verify Green Container
     if ! phase3_verify_green_container; then
-        log_error "Phase 3 failed, please verify manually"
+        log_error "Phase 3 FAILED, manual verification required"
         read -p "Continue? (y/N): " -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -344,9 +344,9 @@ main() {
         fi
     fi
 
-    # Phase 4: Blue-Green switch
+    # Phase 4: Blue-Green Switch
     if ! phase4_blue_green_switch; then
-        log_error "Phase 4 failed"
+        log_error "Phase 4 FAILED"
         exit 1
     fi
 
@@ -357,14 +357,14 @@ main() {
 
     echo ""
     echo "============================================================"
-    echo "✅ MC Production environment deployment completed"
+    echo "✅ MC Production Environment Deployment Complete"
     echo "============================================================"
-    echo "Completion time: $(date)"
+    echo "Completion Time: $(date)"
     echo ""
-    echo "Next steps:"
-    echo "  1. Wait for complete 72-hour verification"
-    echo "  2. Monitor logs: $SCRIPT_DIR/logs/"
-    echo "  3. Verification items: See Phase 3 checklist"
+    echo "Next Steps:"
+    echo "  1. Wait 72 hours for full verification"
+    echo "  2. Monitoring logs: $SCRIPT_DIR/logs/"
+    echo "  3. Verification items: See Phase 3 Checklist"
     echo "  4. Rollback plan: docker rename ... (if needed)"
     echo ""
 }

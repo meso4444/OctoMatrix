@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Configuration Generator for OctoMatrix
-Generate instance-specific configuration files (docker-compose, config.yaml, etc.)
+Generates instance-specific configuration files (docker-compose, config.yaml, etc.)
 """
 
 import sys
@@ -9,7 +9,7 @@ import yaml
 import os
 
 def generate_docker_compose(instance, user, script_dir, router_port=12210):
-    """Generate complete docker-compose file based on template"""
+    """Generates a complete docker-compose file based on the template"""
     return {
         "services": {
             "bot": {
@@ -49,7 +49,7 @@ def generate_docker_compose(instance, user, script_dir, router_port=12210):
     }
 
 def generate_config(instance, data, telegram_gateway_port=11440, ngrok_api_port=4040, router_port=12210):
-    """Generate instance configuration yaml (complete structure)"""
+    """Generates the instance configuration yaml (full structure)"""
     agents = []
     if data:
         for entry in data.split('|||'):
@@ -65,7 +65,7 @@ def generate_config(instance, data, telegram_gateway_port=11440, ngrok_api_port=
                     agent_dict["model"] = p[4]
                 agents.append(agent_dict)
 
-    # Get default Agent name (first Agent)
+    # Get default agent name (first agent)
     default_agent = agents[0]["name"] if agents else ""
 
     return {
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     user = os.environ.get('USER', 'appuser')
     router_port = 12210
 
-    # Parse optional parameters
+    # Parse optional arguments
     if len(sys.argv) >= 6:
         try:
             telegram_gateway_port = int(sys.argv[5])
@@ -129,7 +129,7 @@ if __name__ == "__main__":
 
     if len(sys.argv) >= 8:
         user = sys.argv[7]
-
+        
     if len(sys.argv) >= 9:
         try:
             router_port = int(sys.argv[8])
@@ -156,7 +156,7 @@ if __name__ == "__main__":
 # OctoMatrix Configuration File
 # ==========================================
 
-# 🌐 Server and Network Settings
+# 🌐 Server & Network Settings
 server:
   host: {config['server']['host']}
   telegram_gateway_port: {config['server']['telegram_gateway_port']}
@@ -165,13 +165,13 @@ router:
   host: {config['router']['host']}
   port: {config['router']['port']}
 
-# [1] 🤖 AI Agent Squad Configuration
+# [1] 🤖 AI Agent Army Configuration
 {agents_yaml}
-# Default active Agent name at startup
+# Default active agent name on startup
 default_active_agent: "{config['default_active_agent']}"
 
 # [3] 🤝 Collaboration Groups
-# Group members automatically establish bidirectional interconnection (Full Mesh) symlinks
+# Members within a group will automatically establish bi-directional soft-links (Full Mesh)
 collaboration_groups: []
 
 # [5] 🎮 Custom Menu
