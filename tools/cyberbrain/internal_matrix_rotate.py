@@ -132,8 +132,8 @@ def main():
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
     time.sleep(2.0)
 
-    # 🚀 Strengthening Method 2: Send clean /clear command
-    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear"]) 
+    # 🚀 Strengthening Method 2: Anti-autocomplete mechanism. Add trailing space to prevent CLI from treating it as incomplete
+    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear "]) 
     time.sleep(1.5) # Wait for string to be fully input
 
     # 🚀 Strengthening Method 3: Slow and certain Enter execution (2s delay)
