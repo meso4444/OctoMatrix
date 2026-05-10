@@ -293,7 +293,7 @@ tmux send-keys -t target 您的訊息內容 && sleep 1 && tmux send-keys -t targ
             except Exception as e:
                 logger.error(f"❌ [Router] 寫入暫存檔失敗: {e}")
 
-        success = self.injector.inject(final_message, target_agent, interrupt_first=(msg.source not in ['awake', 'reaper', 'system_flush']))
+        success = self.injector.inject(final_message, target_agent, interrupt_first=(msg.source not in ['awake', 'system_flush']))
         if success and msg.source != 'awake':
             self.notifier.notify(msg.source, 'matrix_connected', {'timestamp': timestamp, 'agent_name': target_agent})
         return success

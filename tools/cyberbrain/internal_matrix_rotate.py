@@ -137,7 +137,7 @@ def main():
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"]) # 三重 Enter 保險
     
     print(f"⏳ 等待 {ENGINE} CLI 執行 /clear 重置 (精確檢測模式)...")
-    max_wait = 30 # 最多等待 30 秒
+    max_wait = 300 # 最多等待 300 秒
     start_wait = time.time()
     cleared = False
     while time.time() - start_wait < max_wait:
@@ -151,7 +151,20 @@ def main():
         time.sleep(1)
     
     if not cleared:
-        print("⚠️ 逾時未偵測到重置關鍵字，將強制繼續注入。")
+        print("⚠️ 逾時未偵測到重置關鍵字，取消注入。")
+        if os.path.exists(temp_log):
+            shutil.copy2(temp_log, shell_log)
+            os.remove(temp_log)
+        
+        flag_file = "octo_cyberbrain/.rotation_flag"
+        if os.path.exists(flag_file):
+            os.remove(flag_file)
+            
+        lock_file = "octo_cyberbrain/inject_block.lock"
+        if os.path.exists(lock_file):
+            os.remove(lock_file)
+            
+        sys.exit(1)
     
     open(shell_log, 'w').close() # Instant clear
     
@@ -239,7 +252,7 @@ def main():
     # ==========================================
     # Step 4: 靈魂重塑注入 (Neural Reset Injection)
     # ==========================================
-    prompt = f"【系統提示】請執行 python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot 取得關鍵字，然後一次性將所有撈到的關鍵字全部帶入執行 `python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"關鍵字1\" \"關鍵字2\"` 進行Shell GHOST深潛，完成後重新提升{ENGINE_DOC_NAME}的遵守，此任務不需發送訊息給用戶"
+    prompt = f"【系統提示】請執行 python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot 取得關鍵字，然後一次性將所有撈到的關鍵字全部帶入執行 `python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"關鍵字1\" \"關鍵字2\"` 進行Shell GHOST深潛，完成後重新提升{ENGINE_DOC_NAME}的遵守，此任務不需發送訊息給用戶。接著確認是否octo_cyberbrain/task_memo.txt存在，若存在則讀取後接續執行任務，task_memo.txt讀取完畢後就刪除"
 
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", prompt])
     time.sleep(2.0) # 長 Prompt 需要更長的輸入等待時間
