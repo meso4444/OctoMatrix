@@ -37,7 +37,8 @@ Agents should follow the "outline first, then keywords & paths" process below to
 
 ### Message Sending Specifications
 
-1. **Quote Usage Principles**:
+1. **Unique Delivery Channel**: **`matrix_notifier.py` is the user's only pipeline for receiving message content, the response content must not be simplified or omitted.**
+2. **Quote Usage Principles**:
    - Consistently wrap the outermost layer with **single quotes** `'`.
    - Within messages, you can freely use double quotes `"`, dollar signs `$`, etc., without needing extra escaping.
    - If the message itself contains single quotes, it's recommended to use double quotes for the outer layer instead, or escape the inner single quotes (`\'`).
