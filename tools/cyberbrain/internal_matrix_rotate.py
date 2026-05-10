@@ -126,8 +126,22 @@ def main():
     time.sleep(0.5)
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"]) # Triple Enter insurance
 
-    print("⏳ Waiting for CLI to execute /clear reset (5s)...")
-    time.sleep(5.0) # Reserve sufficient time for CLI to clean context and screen
+    print("⏳ Waiting for CLI to execute /clear reset (Precise detection mode)...")
+    max_wait = 30 # Max wait 30 seconds
+    start_wait = time.time()
+    cleared = False
+    while time.time() - start_wait < max_wait:
+        res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
+        screen = res.stdout.lower()
+        # Look for startup keywords after reset
+        if "gemini" in screen or "claude" in screen:
+            cleared = True
+            print("✅ Detected model startup keywords, reset complete.")
+            break
+        time.sleep(1)
+    
+    if not cleared:
+        print("⚠️ Timeout waiting for reset keywords, forcing injection.")
 
     open(shell_log, 'w').close() # Instant clear
     
