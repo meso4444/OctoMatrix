@@ -20,6 +20,12 @@ def notify_agent(agent_name):
     router_host = getattr(config, 'ROUTER_HOST', '127.0.0.1')
     router_port = getattr(config, 'ROUTER_PORT', 12210)
 
+    # Create inject_block.lock for blocking
+    agent_dir = os.path.join(base_dir, 'agent_home', agent_name)
+    lock_file = os.path.join(agent_dir, 'octo_cyberbrain', 'inject_block.lock')
+    os.makedirs(os.path.dirname(lock_file), exist_ok=True)
+    open(lock_file, 'w').close()
+
     # Inject command to Agent (implicit maintenance mode)
     inject_url = f"http://{router_host}:{router_port}/inject"
     payload = {
