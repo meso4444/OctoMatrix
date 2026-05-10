@@ -161,13 +161,13 @@ class CommandHandler:
                     CURRENT_AGENT = found['name']
                     self.notifier.notify(msg.source, 'custom', {'content': f'⚡ <b>對話切換成功</b>\n當前活躍 Agent: <code>{CURRENT_AGENT}</code>'})
             return True
-        elif cmd_content in ['/status', '/health']:
+        elif cmd_content == '/status':
             self._send_status(msg); return True
         elif cmd_content == '/help':
             self._send_help(msg); return True
-        elif cmd_content in ['/menu', '/start']:
+        elif cmd_content == '/menu':
             self._send_menu(msg); return True
-        elif cmd_content in ['/interrupt', '/stop']:
+        elif cmd_content == '/interrupt':
             if not check_cooldown(target_agent, 'interrupt'):
                 self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> 操作冷卻中，請稍後再試。'})
                 return True
