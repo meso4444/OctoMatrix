@@ -71,7 +71,7 @@ COPY tools/ /app/octomatrix/tools/
 COPY skills/ /app/octomatrix/skills/
 
 # 8. Pre-build Skills (Install OS packages and dependencies during build and repackage)
-# This extracts all skill archives, finds and executes setup.sh, and repacks the archive including node_modules
+# This extracts all skill archives, finds and executes setup.sh and requirements.txt, and repacks the archive including node_modules
 RUN echo "⚙️ Pre-executing Skill setup scripts and repackaging..." && \
     for archive in /app/octomatrix/skills/*.tar.gz; do \
         if [ -f "$archive" ]; then \
@@ -79,6 +79,12 @@ RUN echo "⚙️ Pre-executing Skill setup scripts and repackaging..." && \
             tmp_dir="/tmp/skill_build_tmp"; \
             rm -rf "$tmp_dir" && mkdir -p "$tmp_dir"; \
             tar -xzf "$archive" -C "$tmp_dir"; \
+            for req_file in "$tmp_dir"/*/requirements.txt "$tmp_dir"/requirements.txt; do \
+                if [ -f "$req_file" ]; then \
+                    echo "🐍 Found Python dependencies, installing: $req_file"; \
+                    pip install --no-cache-dir -r "$req_file"; \
+                fi; \
+            done; \
             for setup_script in "$tmp_dir"/*/setup.sh "$tmp_dir"/setup.sh; do \
                 if [ -f "$setup_script" ]; then \
                     echo "🚀 Executing setup script: $setup_script"; \
