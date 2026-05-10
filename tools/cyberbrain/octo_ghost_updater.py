@@ -110,6 +110,8 @@ def main():
 
     if os.path.exists(FLAG_FILE):
         print("⚡ Rotation flag detected, launching background neural reset and hierarchy consolidation program...")
+        # 🚀 Immediately remove the flag to prevent spawning multiple rotate ghost processes upon consecutive updater calls
+        os.remove(FLAG_FILE)
         subprocess.Popen(["python3", ROTATE_SCRIPT], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
 
 if __name__ == "__main__":
