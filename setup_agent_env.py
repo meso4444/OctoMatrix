@@ -6,6 +6,7 @@ import os
 import sys
 import yaml
 import shutil
+import subprocess
 
 # 定義路徑
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
