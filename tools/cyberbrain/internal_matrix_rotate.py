@@ -29,6 +29,7 @@ def get_config(agent_name=None):
         base_dir = os.path.dirname(base_dir)
     sys.path.append(base_dir)
     engine_doc_name = "GEMINI.md"
+    engine = "gemini"
     try:
         import config
         limit = int(getattr(config, 'CYBERBRAIN_ROLLING_MERGE_LIMIT', 12))
@@ -36,14 +37,15 @@ def get_config(agent_name=None):
         if agent_name:
             for a in getattr(config, 'AGENTS', []):
                 if a['name'] == agent_name:
-                    if a.get('engine', '').lower() == 'claude':
+                    engine = a.get('engine', 'gemini').lower()
+                    if engine == 'claude':
                         engine_doc_name = "CLAUDE.md"
-                    elif a.get('engine', '').lower() == 'codex':
+                    elif engine == 'codex':
                         engine_doc_name = "AGENTS.md"
                     break
-        return limit, context_size, engine_doc_name
+        return limit, context_size, engine_doc_name, engine
     except Exception:
-        return 12, 50, "GEMINI.md"
+        return 12, 50, "GEMINI.md", "gemini"
 
 # 🔍 環境自適應：自動定位 Tmux Socket
 def get_tmux_cmd():
@@ -100,11 +102,19 @@ def main():
         sys.exit(1)
 
     TMUX_TARGET = f"{TMUX_SESSION_NAME}:{AGENT_NAME}"
-    LIMIT, CONTEXT_SIZE, ENGINE_DOC_NAME = get_config(AGENT_NAME)
+    LIMIT, CONTEXT_SIZE, ENGINE_DOC_NAME, ENGINE = get_config(AGENT_NAME)
     TS = datetime.now().strftime("%Y-%m-%d_%H%M")
     MONTH_TS = datetime.now().strftime("%Y-%m")
     YEAR_TS = datetime.now().strftime("%Y")
     
+    # 根據引擎選擇對應的提示符 (參考服務啟動邏輯)
+    if ENGINE == 'claude':
+        prompt_markers = ['Claude', 'bypass permissions on']
+    elif ENGINE == 'codex':
+        prompt_markers = ['OpenAI', '› ']
+    else:  # gemini
+        prompt_markers = ['Gemini', 'YOLO']
+
     # ==========================================
     # Step 1: 物理中斷與零幹擾轉儲
     # ==========================================
@@ -126,17 +136,17 @@ def main():
     time.sleep(0.5)
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"]) # 三重 Enter 保險
     
-    print("⏳ 等待 CLI 執行 /clear 重置 (精確檢測模式)...")
+    print(f"⏳ 等待 {ENGINE} CLI 執行 /clear 重置 (精確檢測模式)...")
     max_wait = 30 # 最多等待 30 秒
     start_wait = time.time()
     cleared = False
     while time.time() - start_wait < max_wait:
         res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
-        screen = res.stdout.lower()
+        screen = res.stdout
         # 尋找重置後的啟動關鍵字
-        if "gemini" in screen or "claude" in screen:
+        if any(marker in screen for marker in prompt_markers):
             cleared = True
-            print("✅ 偵測到模型啟動關鍵字，重置完成。")
+            print(f"✅ 偵測到 {ENGINE} 啟動關鍵字，重置完成。")
             break
         time.sleep(1)
     
