@@ -73,7 +73,7 @@ COPY skills/ /app/octomatrix/skills/
 # 8. Pre-build Skills dynamically during image build
 ARG INSTANCE_NAME
 # Copy config and extraction script to temp directory (using wildcard to avoid errors if missing)
-COPY config.${INSTANCE_NAME}.yam[l] /tmp/config.yaml
+COPY docker-deploy/config.${INSTANCE_NAME}.yam[l] /tmp/config.yaml
 COPY docker-deploy/extract_skill_deps.py /tmp/extract_skill_deps.py
 
 RUN echo "⚙️ Dynamically resolving and executing registered Skill dependencies..." && \
