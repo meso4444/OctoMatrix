@@ -126,18 +126,16 @@ def main():
     else:
         open(temp_log, 'w').close()
         
-    print(f"⏳ 開始週期性嘗試 /clear 重置 (每 3 秒一次，共 100 次)...")
+    print(f"⏳ 注入 /clear 並開始週期性嘗試 Enter (每 3 秒一次，共 100 次)...")
+    # 🚀 強化手段 1: 前置喚醒。先發送 Enter 確保 CLI 處於活動狀態
+    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+    
+    # 🚀 強化手段 2: 注入 /clear 指令 (僅一次)
+    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear "]) 
+    
     cleared = False
     for i in range(100):
-        # 🚀 強化手段 1: 前置喚醒。先發送 Enter 確保 CLI 處於活動狀態
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-        
-        # 🚀 強化手段 2: 防補全機制。加上空白後綴，防止 CLI 將其視為未完成指令
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear "]) 
-        
-        # 🚀 強化手段 3: 雙重 Enter 擊發 (確保指令送出)
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-        time.sleep(0.5)
+        # 🚀 強化手段 3: 持續擊發 Enter 試圖觸發執行
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
 
         time.sleep(3.0) # 等待 3 秒觀察結果
@@ -149,7 +147,7 @@ def main():
             cleared = True
             print(f"✅ 第 {i+1} 次嘗試成功！偵測到 {ENGINE} 啟動關鍵字。")
             break
-        print(f"⚠️ 第 {i+1} 次嘗試失敗 (CLI 忙碌中)，3 秒後重試...")
+        print(f"⚠️ 第 {i+1} 次嘗試失敗 (CLI 忙碌中)，3 秒後續發 Enter...")
     
     if not cleared:
         print("⚠️ 逾時 100 次嘗試仍未偵測到重置關鍵字，取消注入。")
