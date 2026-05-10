@@ -131,7 +131,7 @@ def main():
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
     
     # 🚀 強化手段 2: 注入 /clear 指令 (僅一次)
-    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear "]) 
+    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear"]) 
     
     cleared = False
     for i in range(100):
