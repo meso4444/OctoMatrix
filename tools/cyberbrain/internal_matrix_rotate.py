@@ -129,17 +129,17 @@ def main():
     
     # 🚀 強化手段 1: 前置喚醒與清理。先發送 Enter 確保取得乾淨的 Prompt
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-    time.sleep(1.0)
+    time.sleep(2.0)
     
-    # 🚀 強化手段 2: 防補全機制。尾部加入空白，避免 CLI 將指令視為未完成的自動補全
-    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear "]) 
+    # 🚀 強化手段 2: 傳送乾淨的 /clear 指令
+    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear"]) 
     time.sleep(1.5) # 等待字串完全輸入
     
-    # 🚀 強化手段 3: 緩慢而確實的 Enter 擊發
+    # 🚀 強化手段 3: 緩慢而確實的 Enter 擊發 (2秒間隔)
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-    time.sleep(1.0)
+    time.sleep(2.0)
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-    time.sleep(1.0)
+    time.sleep(2.0)
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"]) # 三重 Enter 保險
     
     print(f"⏳ 等待 {ENGINE} CLI 執行 /clear 重置 (精確檢測模式)...")
