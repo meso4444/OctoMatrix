@@ -127,8 +127,20 @@ def main():
     else:
         open(temp_log, 'w').close()
 
+    # 🚀 Strengthening Method 0: Wait for CLI idle. Avoid collision with ongoing LLM output
+    print("⏳ Waiting for CLI to enter idle state (> prompt)...")
+    idle_wait = 30 # Wait up to 30 seconds
+    start_idle = time.time()
+    while time.time() - start_idle < idle_wait:
+        res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
+        lines = res.stdout.strip().split('\n')
+        if lines and lines[-1].strip() == ">":
+            break
+        time.sleep(2)
 
-    # 🚀 Strengthening Method 1: Pre-wakeup. Send Enter first to ensure CLI is active
+    # 🚀 Strengthening Method 1: Pre-wakeup and screen clear
+    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-l"])
+    time.sleep(1.5)
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
     time.sleep(1.0)
 
