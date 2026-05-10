@@ -128,29 +128,19 @@ def main():
         open(temp_log, 'w').close()
 
 
-    # 🚀 Strengthening Method 1: Wait for Agent to finish current task output until > prompt appears
-    print(f"⏳ Waiting for {ENGINE} CLI to become idle (> prompt)...")
-    wait_idle_start = time.time()
-    while time.time() - wait_idle_start < 120:
-        res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
-        lines = res.stdout.strip().split('\n')
-        if lines and lines[-1].strip() == ">":
-            break
-        time.sleep(1)
+    # 🚀 Strengthening Method 1: Pre-wakeup. Send Enter first to ensure CLI is active
+    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+    time.sleep(1.0)
 
-    # 🚀 Strengthening Method 2: Clear terminal screen first to avoid interference from old history
-    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-l"])
-    time.sleep(1.5)
-
-    # 🚀 Strengthening Method 3: Anti-autocomplete mechanism. Add trailing space to prevent CLI from treating it as incomplete
+    # 🚀 Strengthening Method 2: Anti-autocomplete mechanism. Add trailing space to prevent CLI from treating it as incomplete
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear "]) 
-    time.sleep(1.5) # Wait for string to be fully input
+    time.sleep(1.0) # Wait for string to be fully input
 
-    # 🚀 Strengthening Method 4: Slow and certain Enter execution (2s delay)
+    # 🚀 Strengthening Method 3: Slow and certain Enter execution (1s delay)
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-    time.sleep(2.0)
+    time.sleep(1.0)
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-    time.sleep(2.0)
+    time.sleep(1.0)
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"]) # Triple Enter insurance
     print(f"⏳ Waiting for {ENGINE} CLI to execute /clear reset (Precise detection mode)...")
     max_wait = 300 # Max wait 300 seconds
@@ -313,16 +303,6 @@ def main():
     pending_file = "octo_cyberbrain/pending_inject.txt"        
     if os.path.exists(pending_file):
         try:
-            # 🚀 Strengthening Method 5: Wait for Agent to complete Ghost recovery
-            print(f"⏳ Waiting for {ENGINE} CLI to finish Ghost recovery and become idle (> prompt)...")
-            wait_idle_start = time.time()
-            while time.time() - wait_idle_start < 600: # Max wait 10 mins
-                res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
-                lines = res.stdout.strip().split('\n')
-                if lines and lines[-1].strip() == ">":
-                    break
-                time.sleep(2)
-
             with open(pending_file, 'r', encoding='utf-8') as f:
                 pending_content = f.read().strip()
                 
