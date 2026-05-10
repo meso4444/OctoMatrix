@@ -61,23 +61,6 @@ sudo apt install git -y
 
 The system will prompt for the password you just created. Enter it and press Enter (it won't show as you type).
 
-#### Step 6: Clone and Install OctoMatrix
-
-After Git is installed, run the following command to clone the repository:
-
-```bash
-git clone https://github.com/meso4444/OctoMatrix.git
-```
-
-Then enter the desired environment and run setup:
-
-```bash
-cd OctoMatrix/public-en
-./setup_agent_env.py
-```
-
-7. Follow the setup wizard instructions to complete the configuration.
-
 ## Troubleshooting
 
 ### Issue 1: Nothing happens when double-clicked
