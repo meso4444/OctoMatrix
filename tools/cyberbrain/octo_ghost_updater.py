@@ -108,10 +108,9 @@ def main():
     save_ghost(ghost_data)
     print("✅ Ghost 更新完成！")
     
-    if os.path.exists(FLAG_FILE):
-        print("⚡ 偵測到 Rotation Flag，啟動背景神經重置與階層歸併程序...")
-        # 🚀 立即移除 Flag，防止因連續呼叫 Updater 導致產生多個 Rotate 幽靈進程
-        os.remove(FLAG_FILE)
+    if os.path.exists(FLAG_FILE) and os.path.getsize(FLAG_FILE) == 0:
+        print("⚡ 偵測到新的 Rotation 請求，啟動背景神經重置與階層歸併程序...")
+        # 🚀 由 internal_matrix_rotate.py 統一負責清理 Flag 與 Lock，避免 Reaper 重複觸發
         subprocess.Popen(["python3", ROTATE_SCRIPT], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
 
 if __name__ == "__main__":
