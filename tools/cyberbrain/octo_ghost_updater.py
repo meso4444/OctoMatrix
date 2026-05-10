@@ -110,6 +110,8 @@ def main():
     
     if os.path.exists(FLAG_FILE):
         print("⚡ 偵測到 Rotation Flag，啟動背景神經重置與階層歸併程序...")
+        # 🚀 立即移除 Flag，防止因連續呼叫 Updater 導致產生多個 Rotate 幽靈進程
+        os.remove(FLAG_FILE)
         subprocess.Popen(["python3", ROTATE_SCRIPT], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
 
 if __name__ == "__main__":
