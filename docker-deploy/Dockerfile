@@ -70,33 +70,22 @@ COPY agent_rule_gen_template.txt /app/octomatrix/
 COPY tools/ /app/octomatrix/tools/
 COPY skills/ /app/octomatrix/skills/
 
-# 8. Pre-build Skills (Install OS packages and dependencies during build and repackage)
-# This extracts all skill archives, finds and executes setup.sh and requirements.txt, and repacks the archive including node_modules
-RUN echo "⚙️ Pre-executing Skill setup scripts and repackaging..." && \
-    for archive in /app/octomatrix/skills/*.tar.gz; do \
-        if [ -f "$archive" ]; then \
-            echo "📦 Processing skill archive: $archive"; \
-            tmp_dir="/tmp/skill_build_tmp"; \
-            rm -rf "$tmp_dir" && mkdir -p "$tmp_dir"; \
-            tar -xzf "$archive" -C "$tmp_dir"; \
-            for req_file in "$tmp_dir"/*/requirements.txt "$tmp_dir"/requirements.txt; do \
-                if [ -f "$req_file" ]; then \
-                    echo "🐍 Found Python dependencies, installing: $req_file"; \
-                    pip install --no-cache-dir -r "$req_file"; \
-                fi; \
-            done; \
-            for setup_script in "$tmp_dir"/*/setup.sh "$tmp_dir"/setup.sh; do \
-                if [ -f "$setup_script" ]; then \
-                    echo "🚀 Executing setup script: $setup_script"; \
-                    chmod +x "$setup_script"; \
-                    (cd "$(dirname "$setup_script")" && bash setup.sh); \
-                fi; \
-            done; \
-            echo "📦 Repackaging skill archive (with dependencies)..."; \
-            (cd "$tmp_dir" && tar -czf "$archive" *); \
-            rm -rf "$tmp_dir"; \
-        fi; \
-    done
+# 8. Pre-build Skills (Install OS packages and dependencies dynamically based on setup_docker.sh)
+ARG INSTANCE_NAME
+# Use wildcard trick to safely copy dynamically generated dependency files (will not fail if missing, as long as extract_skill_deps.py exists)
+COPY docker-deploy/extract_skill_deps.py docker-deploy/dynamic_requirements.${INSTANCE_NAME}.tx[t] docker-deploy/dynamic_prebuild.${INSTANCE_NAME}.s[h] /tmp/dynamic_deps/
+
+RUN echo "⚙️ Pre-executing registered Skill dependencies and setup scripts..." && \
+    if [ -f "/tmp/dynamic_deps/dynamic_requirements.${INSTANCE_NAME}.txt" ] && [ -s "/tmp/dynamic_deps/dynamic_requirements.${INSTANCE_NAME}.txt" ]; then \
+        echo "🐍 Found Python dependencies list, installing..."; \
+        pip install --no-cache-dir -r "/tmp/dynamic_deps/dynamic_requirements.${INSTANCE_NAME}.txt"; \
+    fi && \
+    if [ -f "/tmp/dynamic_deps/dynamic_prebuild.${INSTANCE_NAME}.sh" ]; then \
+        echo "🚀 Executing dynamic skill repackaging and OS package installation script..."; \
+        chmod +x "/tmp/dynamic_deps/dynamic_prebuild.${INSTANCE_NAME}.sh"; \
+        bash "/tmp/dynamic_deps/dynamic_prebuild.${INSTANCE_NAME}.sh"; \
+    fi && \
+    rm -rf /tmp/dynamic_deps
 
 # Copy container entrypoint script
 COPY docker-deploy/scripts/entrypoint.sh /app/octomatrix/docker-deploy/scripts/
