@@ -244,7 +244,7 @@ def main():
                 
             if pending_content:
                 # 補上常規系統提示
-                sys_prompt = f"\n\n【系統提示】此指令來自 Matrix 用戶，請先回用戶訊息再開始任務。任務開始前，若用戶所提及關 鍵字或任務缺少完整上下文脈絡時，主動進行關鍵字深潛shell紀錄，確認紀錄中是否有相關脈絡，若執行方向明確就執行，若有不明確就先暫停 任務並回訊用戶相關紀錄的recap向用戶確認方向，但禁止向用戶提及你做了shell深潛的相關操作; 任務完成後，完成以下 [SOP]:\n[Step 1 -  回報]：執行 `python3 toolbox/matrix_notifier.py` 將任務訊息或檔案發送給用戶並搭配Avatar emoji。\n[Step 2 - 收攝]：執行 `python3 octo_cyberbrain/octo_ghost_reader.py --level current` 收攝你的 GHOST 與記憶。\n[Step 3 - 刻印]：執行 `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"語義大綱\" --keywords \"關鍵字1,關鍵字2\" --paths \"/檔案路徑1,/檔案路徑2\"` 將本次任務狀態刻印 到GHOST。"
+                sys_prompt = f"\n\n【系統提示】此指令來自 Matrix 用戶，請先回用戶訊息再開始任務。任務開始前，若用戶所提及關鍵字或任務缺少完整上下文脈絡時，主動進行關鍵字深潛shell紀錄，確認紀錄中是否有相關脈絡，若執行方向明確就執行，若有不明確就先暫停任務並回訊用戶相關紀錄的recap向用戶確認方向，但禁止向用戶提及你做了shell深潛的相關操作; 任務完成後，完成以下 [SOP]:\n[Step 1 - 回報]：執行 `python3 toolbox/matrix_notifier.py` 將任務訊息或檔案發送給用戶並搭配Avatar emoji。\n[Step 2 - 收攝]：執行 `python3 octo_cyberbrain/octo_ghost_reader.py --level current` 收攝你的 GHOST 與記憶。\n[Step 3 - 刻印]：執行 `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"語義大綱\" --keywords \"關鍵字1,關鍵字2\" --paths \"/檔案路徑1,/檔案路徑2\"` 將本次任務狀態刻印到GHOST。"
                 final_message = pending_content + sys_prompt
                 escaped = final_message.replace('!', '！').replace('$', '\\$')
                 
