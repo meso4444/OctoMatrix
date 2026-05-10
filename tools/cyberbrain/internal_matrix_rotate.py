@@ -127,18 +127,16 @@ def main():
     else:
         open(temp_log, 'w').close()
 
-    print(f"⏳ Starting periodic /clear reset attempts (every 3s, up to 100 times)...")
+    print(f"⏳ Injecting /clear and starting periodic Enter attempts (every 3s, up to 100 times)...")
+    # 🚀 Strengthening Method 1: Pre-wakeup. Send Enter first to ensure CLI is active
+    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+
+    # 🚀 Strengthening Method 2: Inject /clear command (only once)
+    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear "]) 
+
     cleared = False
     for i in range(100):
-        # 🚀 Strengthening Method 1: Pre-wakeup. Send Enter first to ensure CLI is active
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-
-        # 🚀 Strengthening Method 2: Anti-autocomplete mechanism. Add trailing space to prevent CLI from treating it as incomplete
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear "]) 
-
-        # 🚀 Strengthening Method 3: Double Enter firing (ensure command delivery)
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-        time.sleep(0.5)
+        # 🚀 Strengthening Method 3: Continuously fire Enter to trigger execution
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
 
         time.sleep(3.0) # Wait 3s to observe results
@@ -150,7 +148,7 @@ def main():
             cleared = True
             print(f"✅ Attempt {i+1} successful! Detected {ENGINE} startup markers.")
             break
-        print(f"⚠️ Attempt {i+1} failed (CLI busy), retrying in 3 seconds...")
+        print(f"⚠️ Attempt {i+1} failed (CLI busy), firing Enter again in 3 seconds...")
 
     if not cleared:
         print("⚠️ Timeout: Failed to detect reset markers after 100 attempts, canceling injection.")
