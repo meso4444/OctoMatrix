@@ -8,7 +8,7 @@
 
 ---
 
-## 2. Notification System Operation Guidelines
+## 2. Core System Operational Protocols
 - Inherited from AGENT_PROTOCOL.md; copy the entire content directly here except for the file title section
 
 ---
