@@ -132,7 +132,7 @@ def main():
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
 
     # 🚀 Strengthening Method 2: Inject /clear command (only once)
-    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear "]) 
+    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear"]) 
 
     cleared = False
     for i in range(100):
