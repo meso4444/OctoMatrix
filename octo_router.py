@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 ROUTER_PORT = int(os.getenv('ROUTER_PORT', 12210))
 ROUTER_HOST = '0.0.0.0'
 script_dir = os.path.dirname(os.path.abspath(__file__))
+AGENT_HOME_BASE = os.path.join(script_dir, 'agent_home')
 
 # Solidify port information
 try:
