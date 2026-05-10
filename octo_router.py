@@ -104,19 +104,13 @@ class AtomicInjector:
 
                 escaped = content.replace('!', '！').replace('$', '\\$')
                 
-                # 🚀 針對 /clear 的特殊強化：增加空白後綴以打斷補全
-                if escaped == '/clear':
-                    escaped = '/clear '
-
-                # 🚀 物理注入硬化：文字與 Enter 物理分離，間隔拉長至 1s
+                # 🚀 物理注入硬化：文字與 Enter 物理分離
                 subprocess.run(['tmux', 'send-keys', '-t', target, '-l', escaped], check=True)
-                time.sleep(1.0)
+                time.sleep(0.8)
                 subprocess.run(['tmux', 'send-keys', '-t', target, 'Enter'], check=True)
                 
-                # 🚀 強制執行三重 Enter 協議 (比照 internal_matrix_rotate)
-                time.sleep(1.0)
-                subprocess.run(['tmux', 'send-keys', '-t', target, 'Enter'], check=True)
-                time.sleep(1.0)
+                # 🚀 強制執行雙重 Enter 協議
+                time.sleep(0.3)
                 subprocess.run(['tmux', 'send-keys', '-t', target, 'Enter'], check=True)
                 self.last_inject_time = time.time()
                 return True

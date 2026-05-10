@@ -126,50 +126,33 @@ def main():
     else:
         open(temp_log, 'w').close()
         
-    # 🚀 強化手段 0: 等待 CLI 閒置。避免與正在輸出的 LLM 撞車
-    print("⏳ 等待 CLI 進入閒置狀態 (> 提示符)...")
-    idle_wait = 30 # 最多等待 30 秒
-    start_idle = time.time()
-    while time.time() - start_idle < idle_wait:
-        res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
-        lines = res.stdout.strip().split('\n')
-        if lines and lines[-1].strip() == ">":
-            break
-        time.sleep(2)
-    
-    # 🚀 強化手段 1: 前置喚醒與畫面淨空
-    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-l"])
-    time.sleep(1.5)
-    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-    time.sleep(1.0)
-
-    # 🚀 強化手段 2: 防補全機制。加上空白後綴，防止 CLI 將其視為未完成指令
-    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear "]) 
-    time.sleep(1.0) # 等待字串完全輸入
-    
-    # 🚀 強化手段 3: 緩慢而確實的 Enter 擊發 (1秒間隔)
-    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-    time.sleep(1.0)
-    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-    time.sleep(1.0)
-    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"]) # 三重 Enter 保險
-    
-    print(f"⏳ 等待 {ENGINE} CLI 執行 /clear 重置 (精確檢測模式)...")
-    max_wait = 300 # 最多等待 300 秒
-    start_wait = time.time()
+    print(f"⏳ 開始週期性嘗試 /clear 重置 (每 3 秒一次，共 100 次)...")
     cleared = False
-    while time.time() - start_wait < max_wait:
+    for i in range(100):
+        # 🚀 強化手段 1: 前置喚醒。先發送 Enter 確保 CLI 處於活動狀態
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+        
+        # 🚀 強化手段 2: 防補全機制。加上空白後綴，防止 CLI 將其視為未完成指令
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear "]) 
+        
+        # 🚀 強化手段 3: 雙重 Enter 擊發 (確保指令送出)
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+        time.sleep(0.5)
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+
+        time.sleep(3.0) # 等待 3 秒觀察結果
+
+        # 檢測是否重置成功
         res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
         screen = res.stdout
-        # 尋找重置後的啟動關鍵字
         if any(marker in screen for marker in prompt_markers):
             cleared = True
-            print(f"✅ 偵測到 {ENGINE} 啟動關鍵字，重置完成。")
+            print(f"✅ 第 {i+1} 次嘗試成功！偵測到 {ENGINE} 啟動關鍵字。")
             break
-        time.sleep(1)
+        print(f"⚠️ 第 {i+1} 次嘗試失敗 (CLI 忙碌中)，3 秒後重試...")
     
     if not cleared:
-        print("⚠️ 逾時未偵測到重置關鍵字，取消注入。")
+        print("⚠️ 逾時 100 次嘗試仍未偵測到重置關鍵字，取消注入。")
         if os.path.exists(temp_log):
             shutil.copy2(temp_log, shell_log)
             os.remove(temp_log)
