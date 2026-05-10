@@ -127,48 +127,33 @@ def main():
     else:
         open(temp_log, 'w').close()
 
-    # 🚀 Strengthening Method 0: Wait for CLI idle. Avoid collision with ongoing LLM output
-    print("⏳ Waiting for CLI to enter idle state (> prompt)...")
-    idle_wait = 30 # Wait up to 30 seconds
-    start_idle = time.time()
-    while time.time() - start_idle < idle_wait:
-        res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
-        lines = res.stdout.strip().split('\n')
-        if lines and lines[-1].strip() == ">":
-            break
-        time.sleep(2)
-
-    # 🚀 Strengthening Method 1: Pre-wakeup and screen clear
-    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-l"])
-    time.sleep(1.5)
-    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-    time.sleep(1.0)
-
-    # 🚀 Strengthening Method 2: Anti-autocomplete mechanism. Add trailing space to prevent CLI from treating it as incomplete
-    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear "]) 
-    time.sleep(1.0) # Wait for string to be fully input
-
-    # 🚀 Strengthening Method 3: Slow and certain Enter execution (1s delay)
-    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-    time.sleep(1.0)
-    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-    time.sleep(1.0)
-    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"]) # Triple Enter insurance
-    print(f"⏳ Waiting for {ENGINE} CLI to execute /clear reset (Precise detection mode)...")
-    max_wait = 300 # Max wait 300 seconds
-    start_wait = time.time()
+    print(f"⏳ Starting periodic /clear reset attempts (every 3s, up to 100 times)...")
     cleared = False
-    while time.time() - start_wait < max_wait:
+    for i in range(100):
+        # 🚀 Strengthening Method 1: Pre-wakeup. Send Enter first to ensure CLI is active
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+
+        # 🚀 Strengthening Method 2: Anti-autocomplete mechanism. Add trailing space to prevent CLI from treating it as incomplete
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear "]) 
+
+        # 🚀 Strengthening Method 3: Double Enter firing (ensure command delivery)
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+        time.sleep(0.5)
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+
+        time.sleep(3.0) # Wait 3s to observe results
+
+        # Check for reset success
         res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
         screen = res.stdout
-        # Search for startup markers after reset
         if any(marker in screen for marker in prompt_markers):
             cleared = True
-            print(f"✅ Detected {ENGINE} startup markers, reset complete.")
+            print(f"✅ Attempt {i+1} successful! Detected {ENGINE} startup markers.")
             break
-        time.sleep(1)
+        print(f"⚠️ Attempt {i+1} failed (CLI busy), retrying in 3 seconds...")
+
     if not cleared:
-        print("⚠️ Timeout waiting for reset keywords, canceling injection.")
+        print("⚠️ Timeout: Failed to detect reset markers after 100 attempts, canceling injection.")
         if os.path.exists(temp_log):
             shutil.copy2(temp_log, shell_log)
             os.remove(temp_log)
