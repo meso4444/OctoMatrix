@@ -131,8 +131,8 @@ def main():
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
     time.sleep(2.0)
     
-    # 🚀 強化手段 2: 傳送乾淨的 /clear 指令
-    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear"]) 
+    # 🚀 強化手段 2: 防補全機制。加上空白後綴，防止 CLI 將其視為未完成指令
+    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear "]) 
     time.sleep(1.5) # 等待字串完全輸入
     
     # 🚀 強化手段 3: 緩慢而確實的 Enter 擊發 (2秒間隔)
