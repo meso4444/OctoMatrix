@@ -138,7 +138,7 @@ def main():
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"]) # Triple Enter insurance
 
     print(f"⏳ Waiting for {ENGINE} CLI to execute /clear reset (Precise detection mode)...")
-    max_wait = 30 # Max wait 30 seconds
+    max_wait = 300 # Max wait 300 seconds
     start_wait = time.time()
     cleared = False
     while time.time() - start_wait < max_wait:
@@ -151,7 +151,20 @@ def main():
             break
         time.sleep(1)
     if not cleared:
-        print("⚠️ Timeout waiting for reset keywords, forcing injection.")
+        print("⚠️ Timeout waiting for reset keywords, canceling injection.")
+        if os.path.exists(temp_log):
+            shutil.copy2(temp_log, shell_log)
+            os.remove(temp_log)
+        
+        flag_file = "octo_cyberbrain/.rotation_flag"
+        if os.path.exists(flag_file):
+            os.remove(flag_file)
+            
+        lock_file = "octo_cyberbrain/inject_block.lock"
+        if os.path.exists(lock_file):
+            os.remove(lock_file)
+            
+        sys.exit(1)
 
     open(shell_log, 'w').close() # Instant clear
     
