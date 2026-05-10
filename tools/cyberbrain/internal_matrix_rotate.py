@@ -126,8 +126,22 @@ def main():
     time.sleep(0.5)
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"]) # 三重 Enter 保險
     
-    print("⏳ 等待 CLI 執行 /clear 重置 (5s)...")
-    time.sleep(5.0) # 預留充足時間讓 CLI 清理 Context 與畫面
+    print("⏳ 等待 CLI 執行 /clear 重置 (精確檢測模式)...")
+    max_wait = 30 # 最多等待 30 秒
+    start_wait = time.time()
+    cleared = False
+    while time.time() - start_wait < max_wait:
+        res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
+        screen = res.stdout.lower()
+        # 尋找重置後的啟動關鍵字
+        if "gemini" in screen or "claude" in screen:
+            cleared = True
+            print("✅ 偵測到模型啟動關鍵字，重置完成。")
+            break
+        time.sleep(1)
+    
+    if not cleared:
+        print("⚠️ 逾時未偵測到重置關鍵字，將強制繼續注入。")
     
     open(shell_log, 'w').close() # Instant clear
     
