@@ -107,13 +107,13 @@ def main():
     MONTH_TS = datetime.now().strftime("%Y-%m")
     YEAR_TS = datetime.now().strftime("%Y")
     
-    # 根據引擎選擇對應的提示符 (參考服務啟動邏輯)
+    # 根據引擎選擇對應的提示符 (嚴格大小寫)
     if ENGINE == 'claude':
-        prompt_markers = ['Claude', 'bypass permissions on']
+        prompt_markers = ['Claude']
     elif ENGINE == 'codex':
-        prompt_markers = ['OpenAI', '› ']
+        prompt_markers = ['OpenAI']
     else:  # gemini
-        prompt_markers = ['Gemini', 'YOLO']
+        prompt_markers = ['Gemini']
 
     # ==========================================
     # Step 1: 物理中斷與零幹擾轉儲
