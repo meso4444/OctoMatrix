@@ -23,12 +23,13 @@ def load_env():
     return env
 
 def get_config(agent_name=None):
-    # Search upward for config.py
+    # Search up for config.py
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     if os.path.basename(base_dir) == 'agent_home':
         base_dir = os.path.dirname(base_dir)
     sys.path.append(base_dir)
     engine_doc_name = "GEMINI.md"
+    engine = "gemini"
     try:
         import config
         limit = int(getattr(config, 'CYBERBRAIN_ROLLING_MERGE_LIMIT', 12))
@@ -36,14 +37,16 @@ def get_config(agent_name=None):
         if agent_name:
             for a in getattr(config, 'AGENTS', []):
                 if a['name'] == agent_name:
-                    if a.get('engine', '').lower() == 'claude':
+                    engine = a.get('engine', 'gemini').lower()
+                    if engine == 'claude':
                         engine_doc_name = "CLAUDE.md"
-                    elif a.get('engine', '').lower() == 'codex':
+                    elif engine == 'codex':
                         engine_doc_name = "AGENTS.md"
                     break
-        return limit, context_size, engine_doc_name
+        return limit, context_size, engine_doc_name, engine
     except Exception:
-        return 12, 50, "GEMINI.md"
+        return 12, 50, "GEMINI.md", "gemini"
+
 
 # 🔍 Environment adaptation: auto-locate Tmux Socket
 def get_tmux_cmd():
@@ -100,24 +103,32 @@ def main():
         sys.exit(1)
 
     TMUX_TARGET = f"{TMUX_SESSION_NAME}:{AGENT_NAME}"
-    LIMIT, CONTEXT_SIZE, ENGINE_DOC_NAME = get_config(AGENT_NAME)
+    LIMIT, CONTEXT_SIZE, ENGINE_DOC_NAME, ENGINE = get_config(AGENT_NAME)
     TS = datetime.now().strftime("%Y-%m-%d_%H%M")
     MONTH_TS = datetime.now().strftime("%Y-%m")
     YEAR_TS = datetime.now().strftime("%Y")
+
+    # Choose markers based on engine (strict case-sensitive)
+    if ENGINE == 'claude':
+        prompt_markers = ['Claude']
+    elif ENGINE == 'codex':
+        prompt_markers = ['OpenAI']
+    else:  # gemini
+        prompt_markers = ['Gemini']
 
     # ==========================================
     # Step 1: Physical interruption and zero-disturbance dump
     # ==========================================
     shell_log = "octo_cyberbrain/shell/octo_shell.log"
     temp_log = "octo_cyberbrain/shell/temp.log"
-    
+
     if os.path.exists(shell_log):
         shutil.copy2(shell_log, temp_log)
     else:
         open(temp_log, 'w').close()
-        
 
-    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear"])
+
+    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear"]) 
     time.sleep(1.5) # Wait for string to be fully input
 
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
@@ -126,20 +137,19 @@ def main():
     time.sleep(0.5)
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"]) # Triple Enter insurance
 
-    print("⏳ Waiting for CLI to execute /clear reset (Precise detection mode)...")
+    print(f"⏳ Waiting for {ENGINE} CLI to execute /clear reset (Precise detection mode)...")
     max_wait = 30 # Max wait 30 seconds
     start_wait = time.time()
     cleared = False
     while time.time() - start_wait < max_wait:
         res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
-        screen = res.stdout.lower()
-        # Look for startup keywords after reset
-        if "gemini" in screen or "claude" in screen:
+        screen = res.stdout
+        # Search for startup markers after reset
+        if any(marker in screen for marker in prompt_markers):
             cleared = True
-            print("✅ Detected model startup keywords, reset complete.")
+            print(f"✅ Detected {ENGINE} startup markers, reset complete.")
             break
         time.sleep(1)
-    
     if not cleared:
         print("⚠️ Timeout waiting for reset keywords, forcing injection.")
 
