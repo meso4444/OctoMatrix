@@ -161,27 +161,27 @@ class CommandHandler:
                     CURRENT_AGENT = found['name']
                     self.notifier.notify(msg.source, 'custom', {'content': f'⚡ <b>對話切換成功</b>\n當前活躍 Agent: <code>{CURRENT_AGENT}</code>'})
             return True
-        elif cmd_content in ['/status', 'status', '狀態', '/health', 'health']:
+        elif cmd_content in ['/status', '/health']:
             self._send_status(msg); return True
-        elif cmd_content in ['/help', 'help', '說明書', '幫助']:
+        elif cmd_content == '/help':
             self._send_help(msg); return True
-        elif cmd_content in ['/menu', '/start', 'menu', 'start', '菜單']:
+        elif cmd_content in ['/menu', '/start']:
             self._send_menu(msg); return True
-        elif cmd_content in ['/interrupt', '/stop', 'interrupt', 'stop', '中斷']:
+        elif cmd_content in ['/interrupt', '/stop']:
             if not check_cooldown(target_agent, 'interrupt'):
                 self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> 操作冷卻中，請稍後再試。'})
                 return True
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'C-c'], check=False)
             self.notifier.notify(msg.source, 'custom', {'content': f'🛑 已發送中斷訊號至 <b>[{target_agent}]</b>'})
             return True
-        elif cmd_content in ['/clear', 'clear', '清除', '清除上下文', '重置']:
+        elif cmd_content == '/clear':
             if not check_cooldown(target_agent, 'clear'):
                 self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> 操作冷卻中，請稍後再試。'})
                 return True
             self.injector.inject('/clear', target_agent)
             self.notifier.notify(msg.source, 'custom', {'content': f'🧹 已清除 <b>[{target_agent}]</b> 的畫面與上下文'})
             return True
-        elif cmd_content in ['/resume_latest', '恢復上下文', '恢復最新狀態']:
+        elif cmd_content == '/resume_latest':
             if not check_cooldown(target_agent, 'resume_latest'):
                 self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> 操作冷卻中，請稍後再試。'})
                 return True
