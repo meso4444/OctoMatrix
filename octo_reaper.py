@@ -20,9 +20,9 @@ def notify_agent(agent_name):
     router_host = getattr(config, 'ROUTER_HOST', '127.0.0.1')
     router_port = getattr(config, 'ROUTER_PORT', 12210)
     
-    # 建立 reset.lock 進行阻塞
+    # 建立 inject_block.lock 進行阻塞
     agent_dir = os.path.join(base_dir, 'agent_home', agent_name)
-    lock_file = os.path.join(agent_dir, 'octo_cyberbrain', 'reset.lock')
+    lock_file = os.path.join(agent_dir, 'octo_cyberbrain', 'inject_block.lock')
     os.makedirs(os.path.dirname(lock_file), exist_ok=True)
     open(lock_file, 'w').close()
 
