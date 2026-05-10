@@ -40,8 +40,14 @@ def notify_agent(agent_name):
     try:
         requests.post(inject_url, json=payload, timeout=5)
         print(f"[Reaper] Notified Agent: {agent_name} for implicit GHOST status update")
+        return True
     except Exception as e:
         print(f"[Reaper] Failed to notify Agent {agent_name}: {e}")
+        if os.path.exists(lock_file):
+            try: os.remove(lock_file)
+            except: pass
+        return False
+
 def main():
     print("🐙 Global Reaper Daemon Started")
     while True:
@@ -64,7 +70,11 @@ def main():
                             # Touch flag
                             os.makedirs(os.path.dirname(flag_file), exist_ok=True)
                             open(flag_file, 'w').close()
-                            notify_agent(agent_name)
+                            success = notify_agent(agent_name)
+                            if not success:
+                                if os.path.exists(flag_file):
+                                    try: os.remove(flag_file)
+                                    except: pass
                         except Exception as e:
                             print(f"[Reaper] Failed to create Flag ({agent_name}): {e}")
                 else:
