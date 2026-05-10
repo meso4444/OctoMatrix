@@ -274,9 +274,6 @@ while true; do
                 echo "📄 已產生全新喚醒配置檔: awake.${INSTANCE_NAME}.yaml"
             fi
 
-            echo "📦 正在動態解析註冊技能之相依性..."
-            python3 "$SCRIPT_DIR/extract_skill_deps.py" "$INSTANCE_NAME"
-
             # 建立容器憑證持久化目錄            mkdir -p "$SCRIPT_DIR/container_home/$INSTANCE_NAME"
             chmod 750 "$SCRIPT_DIR/container_home/$INSTANCE_NAME"
             chown $(whoami):$(whoami) "$SCRIPT_DIR/container_home/$INSTANCE_NAME"

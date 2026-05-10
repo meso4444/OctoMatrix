@@ -10,16 +10,22 @@ import tarfile
 import zipfile
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: extract_skill_deps.py <instance_name>")
+    if len(sys.argv) == 2:
+        instance = sys.argv[1]
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        config_file = os.path.join(script_dir, f"config.{instance}.yaml")
+        skills_dir = os.path.abspath(os.path.join(script_dir, "../skills"))
+        req_out = os.path.join(script_dir, f"dynamic_requirements.{instance}.txt")
+        script_out = os.path.join(script_dir, f"dynamic_prebuild.{instance}.sh")
+    elif len(sys.argv) == 5:
+        config_file = sys.argv[1]
+        skills_dir = sys.argv[2]
+        req_out = sys.argv[3]
+        script_out = sys.argv[4]
+    else:
+        print("Usage: extract_skill_deps.py <instance_name> OR extract_skill_deps.py <config_file> <skills_dir> <req_out> <script_out>")
         sys.exit(1)
         
-    instance = sys.argv[1]
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    config_file = os.path.join(script_dir, f"config.{instance}.yaml")
-    req_out = os.path.join(script_dir, f"dynamic_requirements.{instance}.txt")
-    script_out = os.path.join(script_dir, f"dynamic_prebuild.{instance}.sh")
-    
     if not os.path.exists(config_file):
         print(f"⚠️ Config not found: {config_file}")
         return
@@ -35,8 +41,6 @@ def main():
             
     requirements = set()
     prebuild_steps = []
-    
-    skills_dir = os.path.abspath(os.path.join(script_dir, "../skills"))
     
     for skill in used_skills:
         archive_path = None

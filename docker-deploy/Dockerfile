@@ -70,22 +70,29 @@ COPY agent_rule_gen_template.txt /app/octomatrix/
 COPY tools/ /app/octomatrix/tools/
 COPY skills/ /app/octomatrix/skills/
 
-# 8. 預先編譯 Skills (在建置階段根據 setup_docker.sh 產生的動態腳本安裝套件與依賴)
+# 8. 預先編譯 Skills
 ARG INSTANCE_NAME
-# 使用萬用字元技巧安全地複製動態生成的依賴檔案 (即使不存在也不會報錯，只要確保 extract_skill_deps.py 存在即可)
-COPY docker-deploy/extract_skill_deps.py docker-deploy/dynamic_requirements.${INSTANCE_NAME}.tx[t] docker-deploy/dynamic_prebuild.${INSTANCE_NAME}.s[h] /tmp/dynamic_deps/
+# 將設定檔與萃取腳本複製到暫存區 (使用萬用字元避免不存在時報錯)
+COPY config.${INSTANCE_NAME}.yam[l] /tmp/config.yaml
+COPY docker-deploy/extract_skill_deps.py /tmp/extract_skill_deps.py
 
-RUN echo "⚙️ 預先執行註冊 Skills 的依賴與安裝腳本..." && \
-    if [ -f "/tmp/dynamic_deps/dynamic_requirements.${INSTANCE_NAME}.txt" ] && [ -s "/tmp/dynamic_deps/dynamic_requirements.${INSTANCE_NAME}.txt" ]; then \
-        echo "🐍 發現 Python 依賴清單，正在安裝..."; \
-        pip install --no-cache-dir -r "/tmp/dynamic_deps/dynamic_requirements.${INSTANCE_NAME}.txt"; \
+RUN echo "⚙️ 動態解析與預先執行註冊 Skills 的依賴安裝腳本..." && \
+    if [ -f "/tmp/config.yaml" ]; then \
+        echo "📄 找到配置檔，開始解析..."; \
+        python3 /tmp/extract_skill_deps.py /tmp/config.yaml /app/octomatrix/skills /tmp/dynamic_requirements.txt /tmp/dynamic_prebuild.sh; \
+        if [ -f "/tmp/dynamic_requirements.txt" ] && [ -s "/tmp/dynamic_requirements.txt" ]; then \
+            echo "🐍 發現 Python 依賴清單，正在安裝..."; \
+            pip install --no-cache-dir -r "/tmp/dynamic_requirements.txt"; \
+        fi; \
+        if [ -f "/tmp/dynamic_prebuild.sh" ]; then \
+            echo "🚀 執行技能的動態封裝與 OS 套件安裝腳本..."; \
+            chmod +x "/tmp/dynamic_prebuild.sh"; \
+            bash "/tmp/dynamic_prebuild.sh"; \
+        fi; \
+    else \
+        echo "⚠️ 未找到 config.yaml，跳過特定技能依賴解析。"; \
     fi && \
-    if [ -f "/tmp/dynamic_deps/dynamic_prebuild.${INSTANCE_NAME}.sh" ]; then \
-        echo "🚀 執行技能的動態封裝與 OS 套件安裝腳本..."; \
-        chmod +x "/tmp/dynamic_deps/dynamic_prebuild.${INSTANCE_NAME}.sh"; \
-        bash "/tmp/dynamic_deps/dynamic_prebuild.${INSTANCE_NAME}.sh"; \
-    fi && \
-    rm -rf /tmp/dynamic_deps
+    rm -f /tmp/config.yaml /tmp/extract_skill_deps.py /tmp/dynamic_requirements.txt /tmp/dynamic_prebuild.sh
 
 # 複製容器入口腳本
 COPY docker-deploy/scripts/entrypoint.sh /app/octomatrix/docker-deploy/scripts/
