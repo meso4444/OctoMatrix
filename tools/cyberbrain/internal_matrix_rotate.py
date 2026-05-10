@@ -116,9 +116,6 @@ def main():
     else:
         open(temp_log, 'w').close()
         
-    # 移除強力中斷程序 (依據用戶需求：不要對前面的指令ctrl+c)
-    # subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
-    # time.sleep(2.0) # 給予足夠時間中斷當前任務
     
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear"]) 
     time.sleep(1.5) # 等待字串完全輸入
