@@ -9,7 +9,7 @@
 ---
 
 ## 2. Notification System Operation Guidelines
-- Inherited from ../../AGENT_PROTOCOL.md; copy the entire content directly here except for the file title section
+- Inherited from AGENT_PROTOCOL.md; copy the entire content directly here except for the file title section
 
 ---
 
