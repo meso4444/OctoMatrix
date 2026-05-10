@@ -274,8 +274,25 @@ tmux send-keys -t target Your message content && sleep 1 && tmux send-keys -t ta
         final_message = content
         if msg.source != 'awake' and '[System Prompt]' not in content:
             final_message += f"\n\n[System Prompt]This command is from Matrix user, please reply to the user first before starting the task. Before starting the task, if the keywords mentioned by the user or the task lacks complete context, proactively perform a keyword dive into shell records to check if there is related context in the records. If the execution direction is clear, execute it. If it is unclear, pause the task first and reply to the user with a recap of the related records to confirm the direction with the user, but it is strictly prohibited to mention to the user that you performed shell dive related operations; After task completion, complete the following [SOP]:\n[Step 1 - Report]: Execute `python3 toolbox/matrix_notifier.py` to send task message or file to user with Avatar emoji。\n[Step 2 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories。\n[Step 3 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"Semantic Outline\" --keywords \"Keyword1,Keyword2\" --paths \"/FilePath1,/FilePath2\"` to imprint task status to GHOST。"
-        
-        success = self.injector.inject(final_message, target_agent, interrupt_first=(msg.source != 'awake'))
+
+        # 👻 GHOST 實體檔案阻塞與積累機制
+        agent_dir = os.path.join(AGENT_HOME_BASE, target_agent)
+        lock_file = os.path.join(agent_dir, 'octo_cyberbrain', 'inject_block.lock')
+        pending_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_inject.txt')
+
+        if msg.source not in ['reaper', 'system_flush'] and os.path.exists(lock_file):
+            try:
+                with open(pending_file, 'a', encoding='utf-8') as f:
+                    if os.path.exists(pending_file) and os.path.getsize(pending_file) > 0:
+                        f.write("\n\n")
+                    f.write(content) # 只存純淨的用戶訊息
+                if msg.source != 'awake':
+                    self.notifier.notify(msg.source, 'custom', {'content': f'👻 <b>[{target_agent}]</b> is reorganizing thoughts, please wait...'})
+                return True
+            except Exception as e:
+                logger.error(f"❌ [Router] 寫入暫存檔失敗: {e}")
+
+        success = self.injector.inject(final_message, target_agent, interrupt_first=(msg.source not in ['awake', 'reaper', 'system_flush']))
         if success and msg.source != 'awake':
             self.notifier.notify(msg.source, 'matrix_connected', {'timestamp': timestamp, 'agent_name': target_agent})
         return success

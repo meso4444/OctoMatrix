@@ -68,6 +68,15 @@ def main():
                             print(f"[Reaper] Removed expired residual Flag ({agent_name})")
                         except FileNotFoundError:
                             pass
+
+                    # 🚀 Fail-safe cleanup: If threshold not met, clear any residual inject_block.lock
+                    lock_file = os.path.join(agent_dir, 'octo_cyberbrain', 'inject_block.lock')
+                    if os.path.exists(lock_file):
+                        try:
+                            os.remove(lock_file)
+                            print(f"[Reaper] Removed residual inject_block.lock ({agent_name})")
+                        except FileNotFoundError:
+                            pass
         
         time.sleep(polling_interval)
 

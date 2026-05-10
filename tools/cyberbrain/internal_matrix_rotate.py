@@ -229,5 +229,34 @@ def main():
     time.sleep(0.5)
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"]) # Triple Enter insurance
 
+    # ==========================================
+    # Step 5: Unlock and pending injection
+    # ==========================================
+    lock_file = "octo_cyberbrain/inject_block.lock"
+    pending_file = "octo_cyberbrain/pending_inject.txt"
+    if os.path.exists(lock_file):
+        os.remove(lock_file)
+        
+    if os.path.exists(pending_file):
+        try:
+            with open(pending_file, 'r', encoding='utf-8') as f:
+                pending_content = f.read().strip()
+                
+            if pending_content:
+                sys_prompt = f"\n\n[System Prompt]This command is from Matrix user, please reply to the user first before starting the task. Before starting the task, if the keywords mentioned by the user or the task lacks complete context, proactively perform a keyword dive into shell records to check if there is related context in the records. If the execution direction is clear, execute it. If it is unclear, pause the task first and reply to the user with a recap of the related records to confirm the direction with the user, but it is strictly prohibited to mention to the user that you performed shell dive related operations; After task completion, complete the following [SOP]:\n[Step 1 - Report]: Execute `python3 toolbox/matrix_notifier.py` to send task message or file to user with Avatar emoji。\n[Step 2 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories。\n[Step 3 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"Semantic Outline\" --keywords \"Keyword1,Keyword2\" --paths \"/FilePath1,/FilePath2\"` to imprint task status to GHOST。"
+                final_message = pending_content + sys_prompt
+                escaped = final_message.replace('!', '！').replace('$', '\\$')
+                
+                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", escaped], check=True)
+                time.sleep(1.0)
+                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
+                time.sleep(0.3)
+                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
+                print("📩 Successfully injected accumulated user commands!")
+            
+            os.remove(pending_file)
+        except Exception as e:
+            print(f"❌ Error processing accumulated commands: {e}")
+
 if __name__ == "__main__":
     main()
