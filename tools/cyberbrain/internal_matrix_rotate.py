@@ -127,15 +127,25 @@ def main():
         open(temp_log, 'w').close()
         
     
-    # 🚀 強化手段 1: 前置喚醒與清理。先發送 Enter 確保取得乾淨的 Prompt
-    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-    time.sleep(2.0)
+    # 🚀 強化手段 1: 等待 Agent 完成當前任務輸出，直到提示符 > 出現 (避免指令吞沒)
+    print(f"⏳ 等待 {ENGINE} CLI 進入空閒狀態 (> 提示符)...")
+    wait_idle_start = time.time()
+    while time.time() - wait_idle_start < 120:
+        res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
+        lines = res.stdout.strip().split('\n')
+        if lines and lines[-1].strip() == ">":
+            break
+        time.sleep(1)
+
+    # 🚀 強化手段 2: 先清理終端機畫面，確保後續擷取關鍵字不被舊歷史干擾
+    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-l"])
+    time.sleep(1.5)
     
-    # 🚀 強化手段 2: 防補全機制。加上空白後綴，防止 CLI 將其視為未完成指令
+    # 🚀 強化手段 3: 防補全機制。加上空白後綴，防止 CLI 將其視為未完成指令
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear "]) 
     time.sleep(1.5) # 等待字串完全輸入
     
-    # 🚀 強化手段 3: 緩慢而確實的 Enter 擊發 (2秒間隔)
+    # 🚀 強化手段 4: 緩慢而確實的 Enter 擊發 (2秒間隔)
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
     time.sleep(2.0)
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
@@ -302,11 +312,20 @@ def main():
     # ==========================================
     lock_file = "octo_cyberbrain/inject_block.lock"
     pending_file = "octo_cyberbrain/pending_inject.txt"
-    if os.path.exists(lock_file):
-        os.remove(lock_file)
-        
+    
     if os.path.exists(pending_file):
         try:
+            # 🚀 強化手段 5: 等待 Agent 完成 Step 4 的靈魂恢復，避免指令與輸出文字在畫面上混雜
+            print(f"⏳ 等待 {ENGINE} CLI 完成靈魂恢復並進入空閒狀態 (> 提示符)...")
+            wait_idle_start = time.time()
+            while time.time() - wait_idle_start < 600: # 最多等待 10 分鐘
+                res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
+                lines = res.stdout.strip().split('\n')
+                if lines and lines[-1].strip() == ">":
+                    break
+                time.sleep(2)
+                
+            # 等待完成後，再一次性讀取 pending_file (包含等待期間用戶可能又輸入的新訊息)
             with open(pending_file, 'r', encoding='utf-8') as f:
                 pending_content = f.read().strip()
                 
@@ -327,6 +346,9 @@ def main():
             os.remove(pending_file)
         except Exception as e:
             print(f"❌ 處理積累指令時發生錯誤: {e}")
+
+    if os.path.exists(lock_file):
+        os.remove(lock_file)
 
 if __name__ == "__main__":
     main()
