@@ -17,7 +17,8 @@ def generate_docker_compose(instance, user, script_dir, router_port=12210):
                     "context": "../",
                     "dockerfile": "docker-deploy/Dockerfile",
                     "args": {
-                        "BUILD_USER": user
+                        "BUILD_USER": user,
+                        "INSTANCE_NAME": instance
                     }
                 },
                 "container_name": f"chat-agent-{instance}",
