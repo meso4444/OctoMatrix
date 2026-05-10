@@ -61,23 +61,6 @@ sudo apt install git -y
 
 系統會提示輸入您剛才設定的密碼，請輸入密碼並按 Enter（輸入時不會顯示密碼）。
 
-#### 第六步：克隆並安裝 OctoMatrix
-
-Git 安裝完成後，執行以下命令克隆倉庫：
-
-```bash
-git clone https://github.com/meso4444/OctoMatrix.git
-```
-
-然後進入所需環境並安裝環境：
-
-```bash
-cd OctoMatrix/public-zh
-./setup_agent_env.py
-```
-
-7. 按照環境建置的指示完成設定
-
 ## 故障排除
 
 ### 問題 1：雙擊後沒有反應
