@@ -73,7 +73,7 @@ COPY skills/ /app/octomatrix/skills/
 # 8. 預先編譯 Skills
 ARG INSTANCE_NAME
 # 將設定檔與萃取腳本複製到暫存區 (使用萬用字元避免不存在時報錯)
-COPY config.${INSTANCE_NAME}.yam[l] /tmp/config.yaml
+COPY docker-deploy/config.${INSTANCE_NAME}.yam[l] /tmp/config.yaml
 COPY docker-deploy/extract_skill_deps.py /tmp/extract_skill_deps.py
 
 RUN echo "⚙️ 動態解析與預先執行註冊 Skills 的依賴安裝腳本..." && \
