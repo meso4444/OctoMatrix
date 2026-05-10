@@ -70,6 +70,28 @@ COPY agent_rule_gen_template.txt /app/octomatrix/
 COPY tools/ /app/octomatrix/tools/
 COPY skills/ /app/octomatrix/skills/
 
+# 8. Pre-build Skills (Install OS packages and dependencies during build and repackage)
+# This extracts all skill archives, finds and executes setup.sh, and repacks the archive including node_modules
+RUN echo "⚙️ Pre-executing Skill setup scripts and repackaging..." && \
+    for archive in /app/octomatrix/skills/*.tar.gz; do \
+        if [ -f "$archive" ]; then \
+            echo "📦 Processing skill archive: $archive"; \
+            tmp_dir="/tmp/skill_build_tmp"; \
+            rm -rf "$tmp_dir" && mkdir -p "$tmp_dir"; \
+            tar -xzf "$archive" -C "$tmp_dir"; \
+            for setup_script in "$tmp_dir"/*/setup.sh "$tmp_dir"/setup.sh; do \
+                if [ -f "$setup_script" ]; then \
+                    echo "🚀 Executing setup script: $setup_script"; \
+                    chmod +x "$setup_script"; \
+                    (cd "$(dirname "$setup_script")" && bash setup.sh); \
+                fi; \
+            done; \
+            echo "📦 Repackaging skill archive (with dependencies)..."; \
+            (cd "$tmp_dir" && tar -czf "$archive" *); \
+            rm -rf "$tmp_dir"; \
+        fi; \
+    done
+
 # Copy container entrypoint script
 COPY docker-deploy/scripts/entrypoint.sh /app/octomatrix/docker-deploy/scripts/
 
