@@ -50,7 +50,7 @@ After restarting:
 2. Search for and open the **Ubuntu** application
 3. On first run, it will ask you to create a username and password. Follow the instructions.
 
-#### Step 5: Install Git Tool
+### Step 5: Install Git Tool
 
 Once set up, install Git in the Ubuntu window:
 
