@@ -192,6 +192,19 @@ def main():
     # 4. 部署 Skills
     deploy_skills(agents)
     
+    # 5. 清理注入殘留鎖
+    print("🧹 清理可能殘留的 inject_block.lock 與暫存檔...")
+    for agent in agents:
+        agent_dir = os.path.join(AGENT_HOME_BASE, agent['name'])
+        lock_file = os.path.join(agent_dir, 'octo_cyberbrain', 'inject_block.lock')
+        pending_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_inject.txt')
+        if os.path.exists(lock_file):
+            try: os.remove(lock_file)
+            except: pass
+        if os.path.exists(pending_file):
+            try: os.remove(pending_file)
+            except: pass
+
     print("✅ 環境初始化完成")
 
 if __name__ == '__main__':

@@ -20,6 +20,12 @@ def notify_agent(agent_name):
     router_host = getattr(config, 'ROUTER_HOST', '127.0.0.1')
     router_port = getattr(config, 'ROUTER_PORT', 12210)
     
+    # 建立 reset.lock 進行阻塞
+    agent_dir = os.path.join(base_dir, 'agent_home', agent_name)
+    lock_file = os.path.join(agent_dir, 'octo_cyberbrain', 'reset.lock')
+    os.makedirs(os.path.dirname(lock_file), exist_ok=True)
+    open(lock_file, 'w').close()
+
     # 注入指令給 Agent (隱性維護模式)
     inject_url = f"http://{router_host}:{router_port}/inject"
     payload = {
@@ -66,6 +72,15 @@ def main():
                         try:
                             os.remove(flag_file)
                             print(f"[Reaper] 移除過期殘留 Flag ({agent_name})")
+                        except FileNotFoundError:
+                            pass
+                    
+                    # 🚀 防呆清除機制：如果未達門檻，清除可能殘留的 inject_block.lock
+                    lock_file = os.path.join(agent_dir, 'octo_cyberbrain', 'inject_block.lock')
+                    if os.path.exists(lock_file):
+                        try:
+                            os.remove(lock_file)
+                            print(f"[Reaper] 移除殘留的 inject_block.lock ({agent_name})")
                         except FileNotFoundError:
                             pass
         
