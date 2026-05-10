@@ -104,13 +104,19 @@ class AtomicInjector:
 
                 escaped = content.replace('!', '！').replace('$', '\\$')
 
-                # 🚀 Physical injection hardening: text and Enter physically separated
+                # 🚀 Special hardening for /clear: add a space suffix to break command completion
+                if escaped == '/clear':
+                    escaped = '/clear '
+
+                # 🚀 Physical injection hardening: text and Enter physically separated, interval extended to 1s
                 subprocess.run(['tmux', 'send-keys', '-t', target, '-l', escaped], check=True)
-                time.sleep(0.8)
+                time.sleep(1.0)
                 subprocess.run(['tmux', 'send-keys', '-t', target, 'Enter'], check=True)
 
-                # 🚀 Force execution of double Enter protocol
-                time.sleep(0.3)
+                # 🚀 Force execution of triple Enter protocol (matching internal_matrix_rotate)
+                time.sleep(1.0)
+                subprocess.run(['tmux', 'send-keys', '-t', target, 'Enter'], check=True)
+                time.sleep(1.0)
                 subprocess.run(['tmux', 'send-keys', '-t', target, 'Enter'], check=True)
                 self.last_inject_time = time.time()
                 return True
