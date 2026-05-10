@@ -126,8 +126,20 @@ def main():
     else:
         open(temp_log, 'w').close()
         
+    # 🚀 強化手段 0: 等待 CLI 閒置。避免與正在輸出的 LLM 撞車
+    print("⏳ 等待 CLI 進入閒置狀態 (> 提示符)...")
+    idle_wait = 30 # 最多等待 30 秒
+    start_idle = time.time()
+    while time.time() - start_idle < idle_wait:
+        res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
+        lines = res.stdout.strip().split('\n')
+        if lines and lines[-1].strip() == ">":
+            break
+        time.sleep(2)
     
-    # 🚀 強化手段 1: 前置喚醒。先發送 Enter 確保 CLI 處於活動狀態
+    # 🚀 強化手段 1: 前置喚醒與畫面淨空
+    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-l"])
+    time.sleep(1.5)
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
     time.sleep(1.0)
 
