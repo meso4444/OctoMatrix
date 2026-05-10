@@ -161,27 +161,27 @@ class CommandHandler:
                     CURRENT_AGENT = found['name']
                     self.notifier.notify(msg.source, 'custom', {'content': f'⚡ <b>Conversation switched successfully</b>\n Current active Agent: <code>{CURRENT_AGENT}</code>'})
             return True
-        elif cmd_content in ['/status', 'status', 'status', '/health', 'health']:
+        elif cmd_content in ['/status', '/health']:
             self._send_status(msg); return True
-        elif cmd_content in ['/help', 'help', 'help', 'help']:
+        elif cmd_content == '/help':
             self._send_help(msg); return True
-        elif cmd_content in ['/menu', '/start', 'menu', 'start', 'menu']:
+        elif cmd_content in ['/menu', '/start']:
             self._send_menu(msg); return True
-        elif cmd_content in ['/interrupt', '/stop', 'interrupt', 'stop', 'interrupt']:
+        elif cmd_content in ['/interrupt', '/stop']:
             if not check_cooldown(target_agent, 'interrupt'):
                 self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> Operation cooling down, please try again later.'})
                 return True
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'C-c'], check=False)
             self.notifier.notify(msg.source, 'custom', {'content': f'🛑 Interrupt signal sent to <b>[{target_agent}]</b>'})
             return True
-        elif cmd_content in ['/clear', 'clear', 'clear', 'clear context', 'reset']:
+        elif cmd_content == '/clear':
             if not check_cooldown(target_agent, 'clear'):
                 self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> Operation cooling down, please try again later.'})
                 return True
             self.injector.inject('/clear', target_agent)
             self.notifier.notify(msg.source, 'custom', {'content': f'🧹 Cleared screen and context for <b>[{target_agent}]</b>'})
             return True
-        elif cmd_content in ['/resume_latest', 'resume context', 'resume latest state']:
+        elif cmd_content == '/resume_latest':
             if not check_cooldown(target_agent, 'resume_latest'):
                 self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> Operation cooling down, please try again later.'})
                 return True
