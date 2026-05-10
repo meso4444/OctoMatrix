@@ -201,7 +201,7 @@ class CommandHandler:
                 engine_doc_name = "AGENTS.md"
             else:
                 engine_doc_name = "GEMINI.md"
-            check_prompt = f"[System Prompt]This task does not send notification to user. Check AGENT_PROTOCOL.md content, confirm whether {engine_doc_name} specification is complete, and update"
+            check_prompt = f"[System Prompt]This task does not send notification to user. Check AGENT_PROTOCOL.md and agent_home_rules.md content, confirm whether {engine_doc_name} specification is complete, and update"
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '-l', check_prompt], check=False)
             time.sleep(0.5)
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'Enter'], check=False)

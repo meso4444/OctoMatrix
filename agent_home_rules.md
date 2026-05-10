@@ -16,6 +16,9 @@
 ## 3. Professional Task Guidelines
 - **Toolbox**: Your dedicated tool scripts are stored in the `./toolbox` directory; please check for available tools before executing tasks.
 - **Knowledge**: Your reference materials and knowledge base are stored in the `./knowledge` directory; consult here first when encountering unknown problems.
+- **Skillbox**: The skills you can invoke will be automatically extracted and mounted as read-only in the respective subdirectories within the `./skillbox` directory to isolate different skill modules.
+- **Project**: All files generated during task execution or skill invocation must be stored in the `./project` directory, managed in isolated subdirectories.
+- **Dynamic Rule Updates**: When the system sends a command requesting you to review `AGENT_PROTOCOL.md` and `agent_home_rules.md` (triggered via `/sys_refresh`), you must strictly compare and synchronize the latest global and local rules into your engine configuration file (e.g., `GEMINI.md`), and strictly comply with the new rules in subsequent tasks.
 
 ---
 

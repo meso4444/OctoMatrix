@@ -6,6 +6,7 @@ import os
 import sys
 import yaml
 import shutil
+import subprocess
 
 # Define paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -118,8 +119,59 @@ def apply_manual_templates(agent_name, home_path, engine):
         return True # Indicates manual specification exists
     return False
 
+def deploy_skills(agents):
+    """Deploy Skills and implement Immutable locking"""
+    skills_base_dir = os.path.join(BASE_DIR, 'skills')
+    if not os.path.exists(skills_base_dir):
+        return
+
+    # First find which archive files exist in the root directory
+    available_archives = {}
+    for item in os.listdir(skills_base_dir):
+        if item.endswith('.zip'):
+            available_archives[item[:-4]] = os.path.join(skills_base_dir, item)
+        elif item.endswith('.tar.gz'):
+            available_archives[item[:-7]] = os.path.join(skills_base_dir, item)
+
+    for agent in agents:
+        agent_name = agent['name']
+        agent_skills = agent.get('skills', [])
+        if not agent_skills: continue
+
+        skillbox_dir = os.path.join(AGENT_HOME_BASE, agent_name, 'skillbox')
+
+        # 1. Restore permissions and clear old skills
+        if os.path.exists(skillbox_dir):
+            subprocess.run(['chmod', '-R', 'u+w', skillbox_dir], check=False)
+            # Clear subdirectories
+            for item in os.listdir(skillbox_dir):
+                item_path = os.path.join(skillbox_dir, item)
+                if os.path.isdir(item_path):
+                    shutil.rmtree(item_path, ignore_errors=True)
+                else:
+                    try:
+                        os.remove(item_path)
+                    except: pass
+
+        # 2. Extract needed skills
+        for skill in agent_skills:
+            if skill in available_archives:
+                archive_path = available_archives[skill]
+                target_dir = os.path.join(skillbox_dir, skill)
+                os.makedirs(target_dir, exist_ok=True)
+                try:
+                    shutil.unpack_archive(archive_path, target_dir)
+                    print(f"   📦 {agent_name} mounted skill: {skill}")
+                except Exception as e:
+                    print(f"   ❌ {agent_name} failed to extract skill {skill}: {e}")
+
+        # 3. Lock with read-only permissions (remove write permission for all, keep read and execute)
+        if os.path.exists(skillbox_dir) and os.listdir(skillbox_dir):
+            subprocess.run(['chmod', '-R', 'a-w,a+rX', skillbox_dir], check=False)
+            print(f"   🔒 {agent_name}'s skillbox has been locked to read-only")
+
 def main():
-    print("🧬 Initializing Agent ecosystem...")
+    print("🧬  Initializing Agent ecosystem...")
     config = load_config()
     agents = config.get('agents', [])
     groups = config.get('collaboration_groups', [])
@@ -134,8 +186,11 @@ def main():
         # 2. Check manual templates
         apply_manual_templates(name, home, engine)
 
-    # 3. Create collaboration links
+    # 3. Setup collaboration links
     setup_collaboration_links(agents, groups)
+
+    # 4. Deploy Skills
+    deploy_skills(agents)
 
     print("✅ Environment initialization completed")
 

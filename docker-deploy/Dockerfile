@@ -66,8 +66,9 @@ COPY AGENT_PROTOCOL.md /app/octomatrix/
 COPY agent_home_rules.md /app/octomatrix/
 COPY agent_rule_gen_template.txt /app/octomatrix/
 
-# 複製工具目錄
+# 複製工具與技能目錄
 COPY tools/ /app/octomatrix/tools/
+COPY skills/ /app/octomatrix/skills/
 
 # 複製容器入口腳本
 COPY docker-deploy/scripts/entrypoint.sh /app/octomatrix/docker-deploy/scripts/
