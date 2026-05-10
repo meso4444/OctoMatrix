@@ -43,7 +43,7 @@ WORKDIR /app/octomatrix
 # 安裝 Python 依賴
 RUN pip install --no-cache-dir flask requests pyyaml apscheduler pillow discord.py slack-sdk websockets aiohttp
 
-# 複製 Python 腳本
+# 4. 複製核心原始碼與設定檔 (複製所需的最少檔案)
 COPY config.py /app/octomatrix/
 COPY octo_router.py /app/octomatrix/
 COPY telegram_gateway.py /app/octomatrix/
@@ -54,20 +54,21 @@ COPY octo_reaper.py /app/octomatrix/
 COPY auto_permission_responder.py /app/octomatrix/
 COPY setup_agent_env.py /app/octomatrix/
 
-# 複製 Bash 腳本
+# 5. 複製啟動與管理腳本
 COPY start_octo_services.sh /app/octomatrix/
 COPY status_octo_services.sh /app/octomatrix/
 COPY stop_octo_services.sh /app/octomatrix/
 COPY start_ngrok.sh /app/octomatrix/
 
-# 複製設定範本與文件
+# 6. 複製模板與規則
 COPY message_templates.yaml /app/octomatrix/
 COPY AGENT_PROTOCOL.md /app/octomatrix/
 COPY agent_home_rules.md /app/octomatrix/
 COPY agent_rule_gen_template.txt /app/octomatrix/
 
-# 複製工具目錄
+# 7. 複製 Tools 與 Skills
 COPY tools/ /app/octomatrix/tools/
+COPY skills/ /app/octomatrix/skills/
 
 # 複製容器入口腳本
 COPY docker-deploy/scripts/entrypoint.sh /app/octomatrix/docker-deploy/scripts/

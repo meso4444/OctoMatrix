@@ -201,7 +201,7 @@ class CommandHandler:
                 engine_doc_name = "AGENTS.md"
             else:
                 engine_doc_name = "GEMINI.md"
-            check_prompt = f"【系統提示】此任務不發送通知給用戶。檢視AGENT_PROTOCOL.md內容,確認{engine_doc_name}的規範是否完備,並更新"
+            check_prompt = f"【系統提示】此任務不發送通知給用戶。檢視 AGENT_PROTOCOL.md 與 agent_home_rules.md 內容,確認{engine_doc_name}的規範是否完備,並更新"
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '-l', check_prompt], check=False)
             time.sleep(0.5)
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'Enter'], check=False)

@@ -23,7 +23,7 @@ def load_config():
 def setup_agent_dirs(agent_name):
     """建立單一 Agent 的目錄結構"""
     home = os.path.join(AGENT_HOME_BASE, agent_name)
-    subdirs = ['toolbox', 'knowledge', 'my_shared_space', 'downloads_temp']
+    subdirs = ['toolbox', 'knowledge', 'my_shared_space', 'downloads_temp', 'project', 'skillbox']
     
     for d in subdirs:
         path = os.path.join(home, d)
@@ -118,6 +118,57 @@ def apply_manual_templates(agent_name, home_path, engine):
         return True # 代表已有人工規範
     return False
 
+def deploy_skills(agents):
+    """部署 Skills 並實作 Immutable 鎖定"""
+    skills_base_dir = os.path.join(BASE_DIR, 'skills')
+    if not os.path.exists(skills_base_dir):
+        return
+
+    # 先找到主層有哪些壓縮檔
+    available_archives = {}
+    for item in os.listdir(skills_base_dir):
+        if item.endswith('.zip'):
+            available_archives[item[:-4]] = os.path.join(skills_base_dir, item)
+        elif item.endswith('.tar.gz'):
+            available_archives[item[:-7]] = os.path.join(skills_base_dir, item)
+
+    for agent in agents:
+        agent_name = agent['name']
+        agent_skills = agent.get('skills', [])
+        if not agent_skills: continue
+        
+        skillbox_dir = os.path.join(AGENT_HOME_BASE, agent_name, 'skillbox')
+        
+        # 1. 恢復權限並清空舊的 skills
+        if os.path.exists(skillbox_dir):
+            subprocess.run(['chmod', '-R', 'u+w', skillbox_dir], check=False)
+            # 清空子目錄
+            for item in os.listdir(skillbox_dir):
+                item_path = os.path.join(skillbox_dir, item)
+                if os.path.isdir(item_path):
+                    shutil.rmtree(item_path, ignore_errors=True)
+                else:
+                    try:
+                        os.remove(item_path)
+                    except: pass
+                    
+        # 2. 解壓縮需要的 skills
+        for skill in agent_skills:
+            if skill in available_archives:
+                archive_path = available_archives[skill]
+                target_dir = os.path.join(skillbox_dir, skill)
+                os.makedirs(target_dir, exist_ok=True)
+                try:
+                    shutil.unpack_archive(archive_path, target_dir)
+                    print(f"   📦 {agent_name} 掛載技能: {skill}")
+                except Exception as e:
+                    print(f"   ❌ {agent_name} 解壓技能 {skill} 失敗: {e}")
+                    
+        # 3. 鎖定唯讀權限 (移除所有人的寫入權限，保留讀取與執行權限)
+        if os.path.exists(skillbox_dir) and os.listdir(skillbox_dir):
+            subprocess.run(['chmod', '-R', 'a-w,a+rX', skillbox_dir], check=False)
+            print(f"   🔒 {agent_name} 的 skillbox 已鎖定唯讀權限")
+
 def main():
     print("🧬  正在初始化 Agent 生態環境...")
     config = load_config()
@@ -136,6 +187,9 @@ def main():
         
     # 3. 建立協作連結
     setup_collaboration_links(agents, groups)
+    
+    # 4. 部署 Skills
+    deploy_skills(agents)
     
     print("✅ 環境初始化完成")
 
