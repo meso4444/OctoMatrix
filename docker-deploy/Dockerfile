@@ -71,7 +71,7 @@ COPY tools/ /app/octomatrix/tools/
 COPY skills/ /app/octomatrix/skills/
 
 # 8. 預先編譯 Skills (在建置階段安裝系統套件與依賴並重新打包)
-# 這會解壓縮所有技能包，尋找 setup.sh 並執行，然後將包含 node_modules 的完整目錄重新打包
+# 這會解壓縮所有技能包，尋找 setup.sh 與 requirements.txt 並執行，然後將包含 node_modules 的完整目錄重新打包
 RUN echo "⚙️ 預先執行 Skills 安裝腳本並封裝..." && \
     for archive in /app/octomatrix/skills/*.tar.gz; do \
         if [ -f "$archive" ]; then \
@@ -79,6 +79,12 @@ RUN echo "⚙️ 預先執行 Skills 安裝腳本並封裝..." && \
             tmp_dir="/tmp/skill_build_tmp"; \
             rm -rf "$tmp_dir" && mkdir -p "$tmp_dir"; \
             tar -xzf "$archive" -C "$tmp_dir"; \
+            for req_file in "$tmp_dir"/*/requirements.txt "$tmp_dir"/requirements.txt; do \
+                if [ -f "$req_file" ]; then \
+                    echo "🐍 發現 Python 依賴，正在安裝: $req_file"; \
+                    pip install --no-cache-dir -r "$req_file"; \
+                fi; \
+            done; \
             for setup_script in "$tmp_dir"/*/setup.sh "$tmp_dir"/setup.sh; do \
                 if [ -f "$setup_script" ]; then \
                     echo "🚀 執行安裝腳本: $setup_script"; \
