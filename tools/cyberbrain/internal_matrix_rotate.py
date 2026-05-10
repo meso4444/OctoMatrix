@@ -130,17 +130,17 @@ def main():
 
     # 🚀 Strengthening Method 1: Pre-wakeup and clear. Send Enter first to ensure a clean Prompt
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-    time.sleep(1.0)
+    time.sleep(2.0)
 
-    # 🚀 Strengthening Method 2: Anti-autocomplete mechanism. Add trailing space to prevent CLI from treating it as incomplete
-    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear "]) 
+    # 🚀 Strengthening Method 2: Send clean /clear command
+    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear"]) 
     time.sleep(1.5) # Wait for string to be fully input
 
-    # 🚀 Strengthening Method 3: Slow and certain Enter execution
+    # 🚀 Strengthening Method 3: Slow and certain Enter execution (2s delay)
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-    time.sleep(1.0)
+    time.sleep(2.0)
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-    time.sleep(1.0)
+    time.sleep(2.0)
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"]) # Triple Enter insurance
     print(f"⏳ Waiting for {ENGINE} CLI to execute /clear reset (Precise detection mode)...")
     max_wait = 300 # Max wait 300 seconds
