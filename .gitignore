@@ -22,3 +22,5 @@
 /awake.yaml*
 /*token*
 /*secret*
+/skills/*.tar.gz
+/skills/*.zip
