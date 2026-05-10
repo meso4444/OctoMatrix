@@ -300,10 +300,7 @@ def main():
     # Step 5: Unlock and pending injection
     # ==========================================
     lock_file = "octo_cyberbrain/inject_block.lock"
-    pending_file = "octo_cyberbrain/pending_inject.txt"
-    if os.path.exists(lock_file):
-        os.remove(lock_file)
-        
+    pending_file = "octo_cyberbrain/pending_inject.txt"        
     if os.path.exists(pending_file):
         try:
             with open(pending_file, 'r', encoding='utf-8') as f:
@@ -324,6 +321,9 @@ def main():
             os.remove(pending_file)
         except Exception as e:
             print(f"❌ Error processing accumulated commands: {e}")
+
+    if os.path.exists(lock_file):
+        os.remove(lock_file)
 
 if __name__ == "__main__":
     main()
