@@ -116,9 +116,9 @@ def main():
     else:
         open(temp_log, 'w').close()
         
-    # Powerful interruption and screen clearing (ultimate insurance mode)
-    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
-    time.sleep(2.0) # Give sufficient time to interrupt current task
+    # Remove powerful interruption (User requirement: do not ctrl+c the previous instruction)
+    # subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
+    # time.sleep(2.0) # Give sufficient time to interrupt current task
 
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear"])
     time.sleep(1.5) # Wait for string to be fully input
