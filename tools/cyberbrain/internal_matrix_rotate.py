@@ -239,7 +239,7 @@ def main():
     # ==========================================
     # Step 4: Soul reincarnation injection (Neural Reset Injection)
     # ==========================================
-    prompt = f"[System Prompt]Please execute python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot to get keywords, then execute `python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"keyword1\" \"keyword2\"` in one go to perform Shell GHOST deep-dive, and re-promote adherence to {ENGINE_DOC_NAME} upon completion. This task does not need to send message to user"
+    prompt = f"[System Prompt]Please execute python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot to get keywords, then execute `python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"keyword1\" \"keyword2\"` in one go to perform Shell GHOST deep-dive, and re-promote adherence to {ENGINE_DOC_NAME} upon completion. This task does not need to send message to user. Then confirm whether octo_cyberbrain/task_memo.txt exists. If it exists, read it to resume the task, and delete task_memo.txt after reading."
 
     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", prompt])
     time.sleep(2.0) # Long prompt needs longer input wait time
