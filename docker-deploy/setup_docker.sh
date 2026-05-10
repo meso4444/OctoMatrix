@@ -274,9 +274,6 @@ while true; do
                 echo "📄 Generated new awake configuration file: awake.${INSTANCE_NAME}.yaml"
             fi
 
-            echo "📦 Dynamically resolving dependencies for registered skills..."
-            python3 "$SCRIPT_DIR/extract_skill_deps.py" "$INSTANCE_NAME"
-
             # Create container credentials persistence directory
             mkdir -p "$SCRIPT_DIR/container_home/$INSTANCE_NAME"
             chmod 750 "$SCRIPT_DIR/container_home/$INSTANCE_NAME"
