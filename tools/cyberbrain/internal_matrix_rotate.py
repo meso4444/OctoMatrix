@@ -9,9 +9,20 @@ import time
 from datetime import datetime
 
 # ==========================================
-# 1. Read environment variable landing file
+# 1. 定位與環境變數加固
 # ==========================================
-ENV_FILE = "octo_cyberbrain/.cyberbrain_env"
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+AGENT_HOME = os.path.dirname(SCRIPT_DIR)
+ENV_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/.cyberbrain_env")
+
+# 定義鎖檔路徑 (絕對路徑)
+LOCK_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/inject_block.lock")
+FLAG_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/.rotation_flag")
+SHELL_LOG = os.path.join(AGENT_HOME, "octo_cyberbrain/shell/octo_shell.log")
+TEMP_LOG = os.path.join(AGENT_HOME, "octo_cyberbrain/shell/temp.log")
+PENDING_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/pending_inject.txt")
+TASK_MEMO = os.path.join(AGENT_HOME, "octo_cyberbrain/task_memo.txt")
+
 def load_env():
     env = {}
     if os.path.exists(ENV_FILE):
@@ -23,11 +34,15 @@ def load_env():
     return env
 
 def get_config(agent_name=None):
-    # Search up for config.py
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    if os.path.basename(base_dir) == 'agent_home':
-        base_dir = os.path.dirname(base_dir)
-    sys.path.append(base_dir)
+    # 上溯尋找 config.py (Agent Home 的上一層是 OctoMatrix root)
+    # 結構: OctoMatrix/agent_home/Aleister/octo_cyberbrain/internal_matrix_rotate.py
+    # 所以 AGENT_HOME 是 Aleister
+    # OctoMatrix Root 是 AGENT_HOME 的上一層的上一層
+    octo_root = os.path.dirname(os.path.dirname(AGENT_HOME))
+    
+    if octo_root not in sys.path:
+        sys.path.append(octo_root)
+    
     engine_doc_name = "GEMINI.md"
     engine = "gemini"
     try:
@@ -47,15 +62,14 @@ def get_config(agent_name=None):
     except Exception:
         return 12, 50, "GEMINI.md", "gemini"
 
-
-# 🔍 Environment adaptation: auto-locate Tmux Socket
+# 🔍 環境自適應：自動定位 Tmux Socket
 def get_tmux_cmd():
     return ["tmux"]
 
 TMUX_BASE = get_tmux_cmd()
 
 # ==========================================
-# Helper functions
+# 工具函數
 # ==========================================
 def load_json(path):
     if os.path.exists(path):
@@ -93,28 +107,37 @@ def union_dedup(source_set_kws, source_set_paths, target_kw_path, target_path_pa
     with open(target_path_path, 'w', encoding='utf-8') as f:
         json.dump(merged_paths, f, ensure_ascii=False, indent=2)
 
+def cleanup():
+    # 🚀 統一清理 Flag 與 Lock，防止死鎖
+    print("🧹 執行最後的清理程序...")
+    for f in [LOCK_FILE, FLAG_FILE]:
+        if os.path.exists(f):
+            try:
+                os.remove(f)
+                print(f"   已移除: {f}")
+            except Exception as e:
+                print(f"   移除失敗 {f}: {e}")
+
 def main():
-    # 🚀 Use .rotation_flag as a process lock to prevent spawning multiple Rotate ghost processes upon consecutive Updater calls
-    flag_file = "octo_cyberbrain/.rotation_flag"
-    if not os.path.exists(flag_file):
-        print("⚠️ Rotation Flag not found, aborting program.")
+    if not os.path.exists(FLAG_FILE):
+        print(f"⚠️ 找不到 Rotation Flag ({FLAG_FILE})，中止程序。")
         sys.exit(0)
-
-    if os.path.getsize(flag_file) > 0:
-        print("⚠️ Detected an existing rotation process running (Flag already locked), skipping this launch.")
+        
+    if os.path.getsize(FLAG_FILE) > 0:
+        print("⚠️ 偵測到已有重置進程正在執行 (Flag 已鎖定)，跳過本次啟動。")
         sys.exit(0)
-
+    
     try:
-        # Write semantic lock marker to prevent duplicate starts
-        with open(flag_file, 'w') as f:
-            f.write("Handover to internal_matrix_rotate.py")
-
+        # 寫入語義化鎖定標記，防止重複啟動
+        with open(FLAG_FILE, 'w') as f:
+            f.write("移交 internal_matrix_rotate.py")
+        
         env = load_env()
         AGENT_NAME = env.get("AGENT_NAME")
         TMUX_SESSION_NAME = env.get("TMUX_SESSION_NAME")
         
         if not AGENT_NAME or not TMUX_SESSION_NAME:
-            print("❌ Unable to get AGENT_NAME or TMUX_SESSION_NAME. Aborting rotation.")
+            print(f"❌ 無法取得 AGENT_NAME 或 TMUX_SESSION_NAME (來源: {ENV_FILE})。中止重置。")
             sys.exit(1)
 
         TMUX_TARGET = f"{TMUX_SESSION_NAME}:{AGENT_NAME}"
@@ -122,8 +145,8 @@ def main():
         TS = datetime.now().strftime("%Y-%m-%d_%H%M")
         MONTH_TS = datetime.now().strftime("%Y-%m")
         YEAR_TS = datetime.now().strftime("%Y")
-
-        # Choose markers based on engine (strict case-sensitive)
+        
+        # 根據引擎選擇對應的提示符 (嚴格大小寫)
         if ENGINE == 'claude':
             prompt_markers = ['Claude']
         elif ENGINE == 'codex':
@@ -132,64 +155,57 @@ def main():
             prompt_markers = ['Gemini']
 
         # ==========================================
-        # Step 1: Physical interruption and zero-disturbance dump
+        # Step 1: 物理中斷與零幹擾轉儲
         # ==========================================
-        shell_log = "octo_cyberbrain/shell/octo_shell.log"
-        temp_log = "octo_cyberbrain/shell/temp.log"
-
-        if os.path.exists(shell_log):
-            shutil.copy2(shell_log, temp_log)
+        if os.path.exists(SHELL_LOG):
+            shutil.copy2(SHELL_LOG, TEMP_LOG)
         else:
-            open(temp_log, 'w').close()
-
-        print(f"⏳ Injecting /clear and starting periodic Enter attempts (every 3s, up to 100 times)...")
-        # 🚀 Strengthening Method 1: Pre-wakeup. Send Enter first to ensure CLI is active
+            open(TEMP_LOG, 'w').close()
+            
+        print(f"⏳ 注入 /clear 並開始週期性嘗試 Enter (每 3 秒一次，共 100 次)...")
+        # 🚀 強化手段 1: 前置喚醒。先發送 Enter 確保 CLI 處於活動狀態
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-
-        # 🚀 Strengthening Method 2: Inject /clear command (only once)
+        
+        # 🚀 強化手段 2: 注入 /clear 指令 (僅一次)
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear"]) 
-
+        
         cleared = False
         for i in range(100):
-            # 🚀 Strengthening Method 3: Continuously fire Enter to trigger execution
+            # 🚀 強化手段 3: 持續擊發 Enter 試圖觸發執行
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
 
-            time.sleep(3.0) # Wait 3s to observe results
+            time.sleep(3.0) # 等待 3 秒觀察結果
 
-            # Check for reset success
+            # 檢測是否重置成功
             res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
             screen = res.stdout
             if any(marker in screen for marker in prompt_markers):
                 cleared = True
-                print(f"✅ Attempt {i+1} successful! Detected {ENGINE} startup markers.")
+                print(f"✅ 第 {i+1} 次嘗試成功！偵測到 {ENGINE} 啟動關鍵字。")
                 break
-            print(f"⚠️ Attempt {i+1} failed (CLI busy), firing Enter again in 3 seconds...")
-
+            print(f"⚠️ 第 {i+1} 次嘗試失敗 (CLI 忙碌中)，3 秒後續發 Enter...")
+        
         if not cleared:
-            print("⚠️ Timeout: Failed to detect reset markers after 100 attempts, canceling injection.")
-            if os.path.exists(temp_log):
-                shutil.copy2(temp_log, shell_log)
-                os.remove(temp_log)
+            print("⚠️ 逾時 100 次嘗試仍未偵測到重置關鍵字，取消注入。")
+            if os.path.exists(TEMP_LOG):
+                shutil.copy2(TEMP_LOG, SHELL_LOG)
+                os.remove(TEMP_LOG)
             
-            # Send recovery prompt to let Agent resume previous task
-            recovery_prompt = "[System Prompt] System maintenance timed out and was canceled. Please confirm whether octo_cyberbrain/task_memo.txt exists. If it exists, read it to resume the interrupted task, and delete task_memo.txt after reading."
+            # 發送恢復提示，讓 Agent 接續先前的任務
+            recovery_prompt = "[System Prompt] Maintenance timeout cancelled. Please check if octo_cyberbrain/task_memo.txt exists. If it does, read it and resume the interrupted task, then delete it after reading."
             escaped_rec = recovery_prompt.replace('!', '！').replace('$', '\\$')
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", escaped_rec])
             time.sleep(1.0)
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
             time.sleep(0.5)
 
-            # Ensure accumulated user commands are not abandoned
-            lock_file = "octo_cyberbrain/inject_block.lock"
-            pending_file = "octo_cyberbrain/pending_inject.txt"
-            flag_file = "octo_cyberbrain/.rotation_flag"
-
-            if os.path.exists(pending_file):
+            # 確保積累的用戶指令不會被拋棄
+            if os.path.exists(PENDING_FILE):
                 try:
-                    with open(pending_file, 'r', encoding='utf-8') as f:
+                    with open(PENDING_FILE, 'r', encoding='utf-8') as f:
                         pending_content = f.read().strip()
                     if pending_content:
-                        sys_prompt = "\n\n[System Prompt]This command is from Matrix user, please reply to the user first before starting the task. Before starting the task, if the keywords mentioned by the user or the task lacks complete context, proactively perform a keyword dive into shell records to check if there is related context in the records. If the execution direction is clear, execute it. If it is unclear, pause the task first and reply to the user with a recap of the related records to confirm the direction with the user, but it is strictly prohibited to mention to the user that you performed shell dive related operations; After task completion, complete the following [SOP]:\n[Step 1 - Report]: Execute `python3 toolbox/matrix_notifier.py` to send task message or file to user with Avatar emoji.\n[Step 2 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.\n[Step 3 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"Semantic Outline\" --keywords \"Keyword1,Keyword2\" --paths \"/FilePath1,/FilePath2\"` to imprint task status to GHOST."
+                        sys_prompt = "\n\n[System Prompt] This command is from Matrix user, please reply to the user first before starting the task. Before starting the task, if the keywords or task mentioned by the user lack complete context, actively perform keyword shell deep dive to confirm if there is relevant context in the records. If the execution direction is clear, execute it. If it is unclear, pause the task first and reply to the user with a recap of the relevant records to confirm the direction, but do not mention to the user that you performed shell deep dive related operations. After task completion, complete the following [SOP]:\n[Step 1 - Report]: Execute `python3 toolbox/matrix_notifier.py` to send task message or file to user with Avatar emoji.\n[Step 2 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.\n[Step 3 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"Semantic Outline\" --keywords \"Keyword1,Keyword2\" --paths \"/FilePath1,/FilePath2\"` to imprint task status to GHOST."
                         final_message = pending_content + sys_prompt
                         escaped = final_message.replace('!', '！').replace('$', '\\$')
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", escaped], check=True)
@@ -197,75 +213,71 @@ def main():
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
                         time.sleep(0.3)
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
-                        print("📩 Successfully injected accumulated user commands!")
-                    os.remove(pending_file)
+                        print("📩 Pending user commands injected successfully!")
+                    os.remove(PENDING_FILE)
                 except Exception as e:
-                    print(f"❌ Error processing accumulated commands: {e}")
+                    print(f"❌ Error processing pending commands: {e}")
             
-            # 🚀 Unified cleanup of flag and lock
-            for f in [lock_file, flag_file]:
-                if os.path.exists(f):
-                    try: os.remove(f)
-                    except: pass
+            # 這裡不需手動清理，交由 finally 處理
             sys.exit(1)
-
-        open(shell_log, 'w').close() # Instant clear
+        
+        open(SHELL_LOG, 'w').close() # Instant clear
         
         # ==========================================
-        # Step 2: Shell compression and 12-snapshot rolling merge
+        # Step 2: Shell 壓縮與 12 份滾動歸併
         # ==========================================
-        zst_target = f"octo_cyberbrain/shell/octo_shell.log.{TS}.zst"
+        zst_target = os.path.join(AGENT_HOME, f"octo_cyberbrain/shell/octo_shell.log.{TS}.zst")
         try:
-            subprocess.run(["zstd", "-T0", "--rm", temp_log, "-o", zst_target], stdout=subprocess.DEVNULL, check=True)
+            subprocess.run(["zstd", "-T0", "--rm", TEMP_LOG, "-o", zst_target], stdout=subprocess.DEVNULL, check=True)
         except FileNotFoundError:
-            print("⚠️ zstd command not found, skipping compression, saving raw log file")
-            os.rename(temp_log, f"octo_cyberbrain/shell/octo_shell.log.{TS}.bak")
+            print("⚠️ zstd command not found, skipping compression, saving raw log instead")
+            os.rename(TEMP_LOG, os.path.join(AGENT_HOME, f"octo_cyberbrain/shell/octo_shell.log.{TS}.bak"))
         except subprocess.CalledProcessError as e:
             print(f"⚠️ zstd compression failed: {e}")
-            os.rename(temp_log, f"octo_cyberbrain/shell/octo_shell.log.{TS}.bak")
+            os.rename(TEMP_LOG, os.path.join(AGENT_HOME, f"octo_cyberbrain/shell/octo_shell.log.{TS}.bak"))
         
         # Check Snapshot count
-        snaps = sorted(glob.glob("octo_cyberbrain/shell/octo_shell.log.*-*-*_*.zst"))
+        snaps = sorted(glob.glob(os.path.join(AGENT_HOME, "octo_cyberbrain/shell/octo_shell.log.*-*-*_*.zst")))
         if len(snaps) > LIMIT:
             oldest = snaps[0]
-            monthly_target = f"octo_cyberbrain/shell/octo_shell.log.{MONTH_TS}.zst"
+            monthly_target = os.path.join(AGENT_HOME, f"octo_cyberbrain/shell/octo_shell.log.{MONTH_TS}.zst")
             with open(monthly_target, 'ab') as out_f, open(oldest, 'rb') as in_f:
                 out_f.write(in_f.read())
             os.remove(oldest)
             
         # Check Monthly count
-        months = sorted(glob.glob("octo_cyberbrain/shell/octo_shell.log.????-??.zst"))
+        months = sorted(glob.glob(os.path.join(AGENT_HOME, "octo_cyberbrain/shell/octo_shell.log.????-??.zst")))
         if len(months) > LIMIT:
             oldest = months[0]
-            yearly_target = f"octo_cyberbrain/shell/octo_shell.log.{YEAR_TS}.zst"
+            yearly_target = os.path.join(AGENT_HOME, f"octo_cyberbrain/shell/octo_shell.log.{YEAR_TS}.zst")
             with open(yearly_target, 'ab') as out_f, open(oldest, 'rb') as in_f:
                 out_f.write(in_f.read())
             os.remove(oldest)
 
         # ==========================================
-        # Step 3: Ghost distillation and 12-snapshot rolling merge
+        # Step 3: Ghost 蒸餾與 12 份滾動歸併
         # ==========================================
-        ghost_file = "octo_cyberbrain/ghost/octo_ghost.json"
-        ghost_snap = f"octo_cyberbrain/ghost/octo_ghost.{TS}.json"
+        ghost_file = os.path.join(AGENT_HOME, "octo_cyberbrain/ghost/octo_ghost.json")
+        ghost_snap = os.path.join(AGENT_HOME, f"octo_cyberbrain/ghost/octo_ghost.{TS}.json")
         
         if os.path.exists(ghost_file):
             shutil.copy2(ghost_file, ghost_snap)
         
         # Check Snapshot count
-        g_snaps = sorted(glob.glob("octo_cyberbrain/ghost/octo_ghost.*-*-*_*.json"))
+        g_snaps = sorted(glob.glob(os.path.join(AGENT_HOME, "octo_cyberbrain/ghost/octo_ghost.*-*-*_*.json")))
         if len(g_snaps) > LIMIT:
             oldest_snap = g_snaps[0]
             data = load_json(oldest_snap)
             kw_set = set(data.get("keywords", []))
             path_set = set(data.get("file_paths", []))
             
-            m_kw_target = f"octo_cyberbrain/ghost/octo_ghost_kw.{MONTH_TS}.json"
-            m_path_target = f"octo_cyberbrain/ghost/octo_ghost_path.{MONTH_TS}.json"
+            m_kw_target = os.path.join(AGENT_HOME, f"octo_cyberbrain/ghost/octo_ghost_kw.{MONTH_TS}.json")
+            m_path_target = os.path.join(AGENT_HOME, f"octo_cyberbrain/ghost/octo_ghost_path.{MONTH_TS}.json")
             union_dedup(kw_set, path_set, m_kw_target, m_path_target)
             os.remove(oldest_snap)
             
         # Check Monthly count
-        m_kws = sorted(glob.glob("octo_cyberbrain/ghost/octo_ghost_kw.????-??.json"))
+        m_kws = sorted(glob.glob(os.path.join(AGENT_HOME, "octo_cyberbrain/ghost/octo_ghost_kw.????-??.json")))
         if len(m_kws) > LIMIT:
             oldest_m_kw = m_kws[0]
             oldest_m_path = oldest_m_kw.replace("_kw.", "_path.")
@@ -277,74 +289,65 @@ def main():
             if os.path.exists(oldest_m_path):
                 path_set = set(load_json(oldest_m_path))
                 
-            y_kw_target = f"octo_cyberbrain/ghost/octo_ghost_kw.{YEAR_TS}.json"
-            y_path_target = f"octo_cyberbrain/ghost/octo_ghost_path.{YEAR_TS}.json"
+            y_kw_target = os.path.join(AGENT_HOME, f"octo_cyberbrain/ghost/octo_ghost_kw.{YEAR_TS}.json")
+            y_path_target = os.path.join(AGENT_HOME, f"octo_cyberbrain/ghost/octo_ghost_path.{YEAR_TS}.json")
             union_dedup(kw_set, path_set, y_kw_target, y_path_target)
             
             os.remove(oldest_m_kw)
             if os.path.exists(oldest_m_path):
                 os.remove(oldest_m_path)
 
-        # Reset Active Ghost
+        # 重置 Active Ghost
         save_json(ghost_file, {"keywords": [], "file_paths": [], "semantic_outline": []})
 
         # ==========================================
-        # Step 4: Soul reincarnation injection (Neural Reset Injection)
+        # Step 4: 靈魂重塑注入 (Neural Reset Injection)
         # ==========================================
-        prompt = f"[System Prompt]Please execute python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot to get keywords, then execute `python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"keyword1\" \"keyword2\"` in one go to perform Shell GHOST deep-dive, and re-promote adherence to {ENGINE_DOC_NAME} upon completion. This task does not need to send message to user. Then confirm whether octo_cyberbrain/task_memo.txt exists. If it exists, read it to resume the task, and delete task_memo.txt after reading."
+        prompt = f"[System Prompt] Please execute python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot to get keywords, then bring all retrieved keywords into a single execution of 'python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"Keyword1\" \"Keyword2\"' for Shell GHOST deep dive. Once complete, re-establish compliance with {ENGINE_DOC_NAME}. This task does not require sending messages to the user. Next, verify if octo_cyberbrain/task_memo.txt exists; if so, read it to resume the task and then delete task_memo.txt."
 
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", prompt])
-        time.sleep(2.0) # Long prompt needs longer input wait time
+        time.sleep(2.0) # 長 Prompt 需要更長的輸入等待時間
         
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
         time.sleep(0.5)
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
         time.sleep(0.5)
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"]) # Triple Enter insurance
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"]) # 三重 Enter 保險
 
         # ==========================================
-        # Step 5: Unlock and pending injection
+        # Step 5: 積累指令注入 (Pending injection)
         # ==========================================
-        lock_file = "octo_cyberbrain/inject_block.lock"
-        pending_file = "octo_cyberbrain/pending_inject.txt"
-        flag_file = "octo_cyberbrain/.rotation_flag"
-        
-        if os.path.exists(pending_file):
+        if os.path.exists(PENDING_FILE):
             try:
-                with open(pending_file, 'r', encoding='utf-8') as f:
+                with open(PENDING_FILE, 'r', encoding='utf-8') as f:
                     pending_content = f.read().strip()
                     
                 if pending_content:
-                    # Append regular system prompt
-                    sys_prompt = f"\n\n[System Prompt]This command is from Matrix user, please reply to the user first before starting the task. Before starting the task, if the keywords mentioned by the user or the task lacks complete context, proactively perform a keyword dive into shell records to check if there is related context in the records. If the execution direction is clear, execute it. If it is unclear, pause the task first and reply to the user with a recap of the related records to confirm the direction with the user, but it is strictly prohibited to mention to the user that you performed shell dive related operations; After task completion, complete the following [SOP]:\n[Step 1 - Report]: Execute `python3 toolbox/matrix_notifier.py` to send task message or file to user with Avatar emoji.\n[Step 2 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.\n[Step 3 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"Semantic Outline\" --keywords \"Keyword1,Keyword2\" --paths \"/FilePath1,/FilePath2\"` to imprint task status to GHOST."
+                    # 補上常規系統提示
+                    sys_prompt = f"\n\n[System Prompt] This command is from Matrix user, please reply to the user first before starting the task. Before starting the task, if the keywords or task mentioned by the user lack complete context, actively perform keyword shell deep dive to confirm if there is relevant context in the records. If the execution direction is clear, execute it. If it is unclear, pause the task first and reply to the user with a recap of the relevant records to confirm the direction, but do not mention to the user that you performed shell deep dive related operations. After task completion, complete the following [SOP]:\n[Step 1 - Report]: Execute `python3 toolbox/matrix_notifier.py` to send task message or file to user with Avatar emoji.\n[Step 2 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.\n[Step 3 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"Semantic Outline\" --keywords \"Keyword1,Keyword2\" --paths \"/FilePath1,/FilePath2\"` to imprint task status to GHOST."
                     final_message = pending_content + sys_prompt
                     escaped = final_message.replace('!', '！').replace('$', '\\$')
                     
-                    # Inject in one go without triggering Ctrl+C
+                    # 以不觸發 Ctrl+C 的方式一次性注入
                     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", escaped], check=True)
                     time.sleep(1.0)
                     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
                     time.sleep(0.3)
                     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
-                    print("📩 Successfully injected accumulated user commands!")
+                    print("📩 Pending user commands injected successfully!")
                 
-                os.remove(pending_file)
+                os.remove(PENDING_FILE)
             except Exception as e:
-                print(f"❌ Error processing accumulated commands: {e}")
+                print(f"❌ 處理積累指令時發生錯誤: {e}")
 
-        # 🚀 Unified cleanup of flag and lock
-        for f in [lock_file, flag_file]:
-            if os.path.exists(f):
-                try: os.remove(f)
-                except: pass
-
-    except Exception as e:
-        print(f"❌ Exception occurred during rotation: {e}")
-        # Try to cleanup on exception, reaper will retry next time
-        for f in [lock_file, flag_file]:
-            if os.path.exists(f):
-                try: os.remove(f)
-                except: pass
-
-if __name__ == "__main__":
-    main()
+    except BaseException as e:
+        # 捕捉包含 SystemExit 在內的所有異常，確保清理執行
+        if isinstance(e, SystemExit):
+            if e.code == 0: # 正常退出不報錯
+                pass
+            else:
+                print(f"❌ 程序因 sys.exit({e.code}) 中止")
+        else:
+            print(f"❌ 重置過程中發生異常: {e}")
+    finally:
+        cleanup()
