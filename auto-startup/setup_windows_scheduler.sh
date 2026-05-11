@@ -7,6 +7,20 @@ echo "🔧 正在呼叫 Windows PowerShell 設定開機自啟..."
 # 獲取腳本所在目錄 (解決從根目錄執行時的路徑錯誤)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# 0. 尋找 powershell.exe 路徑
+PS_CMD="powershell.exe"
+if ! command -v $PS_CMD &> /dev/null; then
+    # 嘗試常見的 Windows 路徑
+    COMMON_PS_PATH="/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
+    if [ -f "$COMMON_PS_PATH" ]; then
+        PS_CMD="$COMMON_PS_PATH"
+    else
+        echo "❌ 錯誤: 找不到 powershell.exe。請確保您在 WSL 環境中且 Windows 路徑已加入 PATH。"
+        exit 1
+    fi
+fi
+
+
 # 1. 取得 setup_autostart.ps1 的 Windows 路徑
 PS1_PATH=$(wslpath -w "$SCRIPT_DIR/setup_autostart.ps1")
 
@@ -49,7 +63,7 @@ echo "📍 啟動器路徑: $BAT_PATH"
 
 # 4. 觸發 Windows UAC 並執行 .bat
 # 使用 cmd /c 來執行 .bat，這樣最穩
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \
+$PS_CMD -NoProfile -ExecutionPolicy Bypass -Command \
     "Start-Process cmd -Verb RunAs -ArgumentList '/c \"$BAT_PATH\"'"
 
 echo ""
