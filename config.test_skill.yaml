@@ -1,0 +1,27 @@
+# ==========================================
+# OctoMatrix 配置檔案
+# ==========================================
+server:
+  host: 127.0.0.1
+  telegram_gateway_port: 11440
+  ngrok_api_port: 4040
+router:
+  host: 127.0.0.1
+  port: 12210
+
+agents:
+  - name: test_agent
+    engine: claude
+    skills:
+      - travel-itinerary-toolkit
+
+default_active_agent: "test_agent"
+collaboration_groups: []
+menu: []
+octo_cyberbrain:
+  ghost_check_interval_sec: 60
+  ghost_compression_threshold_kb: 70
+  ghost_long_term_compression_limit: 12
+  ghost_awake_context_depth: 50
+tmux:
+  session_name: "ai_test_skill"
