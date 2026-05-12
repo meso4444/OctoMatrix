@@ -351,3 +351,6 @@ def main():
             print(f"❌ 重置過程中發生異常: {e}")
     finally:
         cleanup()
+
+if __name__ == "__main__":
+    main()
