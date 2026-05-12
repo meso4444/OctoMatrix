@@ -1,26 +1,36 @@
-# Auto-generated exclusions from test environment
-/.env
-/.flask_port
-/.last_source
-/.ngrok.pid
-/.router_port
-/.runtime_state
-/__pycache__/
+# 🚀 OctoMatrix Hardened Git Exclusion Policy
+
+# 【全域排除】 確保在任何子目錄中皆生效
+**/__pycache__/
+**/.env*
+**/.flask_port*
+**/.last_source*
+**/.ngrok.pid*
+**/.router_port*
+**/.runtime_state*
+**/.last_update*
+**/*.log*
+**/*.token*
+**/*.secret*
+**/*.bak*
+**/*.tmp*
+
+# 【特定目錄與資糧】 物理隔離
 /agent_home/
-/docker-deploy/.env*
-/docker-deploy/__pycache__/
-/docker-deploy/awake.*.yaml
-/docker-deploy/config.*.yaml
 /docker-deploy/container_home/
+
+# 【動態配置與建置檔案】 強化排除
+/docker-deploy/config.*.yaml
+/docker-deploy/awake.*.yaml
 /docker-deploy/docker-compose.*.yml
-/ngrok.log
-/tools/avatar/__pycache__/
-/tools/cyberbrain/__pycache__/
-/tools/notification/__pycache__/
-/webhook_secret.token
+/docker-deploy/dynamic_*.sh
+/docker-deploy/dynamic_*.txt
+
+# 【設定與憑證】 最高等級防外流
 /config.yaml*
 /awake.yaml*
-/*token*
-/*secret*
+/webhook_secret.token*
+
+# 【技能包】 僅留存於本地共用空間
 /skills/*.tar.gz
 /skills/*.zip
