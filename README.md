@@ -57,6 +57,23 @@ graph TD
 
 ---
 
+## 🎭 角色感知與視覺呈現 (Role-play & Avatar Aesthetics)
+
+OctoMatrix 不僅賦予 Agent 執行任務的能力，更強調其「自我認知」與「視覺情緒」。
+
+透過深度的系統提示與情境設定，每位 Agent 皆具備獨特的性格、語氣與職責。伴隨每次的對話與狀態回報，Agent 會自動根據當下情境（如：思考、開心、抱歉、靈光一閃）選擇並發送對應的 Avatar 表情圖檔，為冷硬的終端機對話注入充滿溫度的靈魂。
+
+<p align="center">
+  <img src="assets/mosaic_black.png" alt="Mosaic Divider" width="100%" style="max-width: 800px; margin-bottom: 20px;" />
+</p>
+<p align="center">
+  <img src="assets/aleister_avatar_collage.png" alt="Aleister Avatar" width="48%" />
+  &nbsp;
+  <img src="assets/gupa_avatar_collage.png" alt="Gupa Avatar" width="48%" />
+</p>
+
+---
+
 ## 📖 取得通訊通道憑證 (至少擇一)
 
 ### 1. 獲取 Telegram 憑證 (最簡單)
