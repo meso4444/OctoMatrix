@@ -207,6 +207,44 @@ docker compose -f docker-compose.[設定的實例名稱].yml up -d --build
 
 ---
 
+## 🛠️ 開機自啟與進階部署 (Auto-Startup & Deployment)
+
+OctoMatrix 支援將服務設定為系統常駐（不死鳥模式），讓您的 AI 團隊在主機重啟後能自動復活。
+* **Linux 環境**：請參考 [`auto-startup`](./auto-startup) 目錄下的說明文件，透過 Systemd 建立背景服務。
+* **Windows 系統**：建議透過 WSL (Windows Subsystem for Linux) 進行部署，請參考 [`windows-wsl-setup`](./windows-wsl-setup) 目錄，透過內附的腳本可快速建立無縫的 AI 運行環境。
+
+---
+
+## 🎒 技能擴充 (Skills)
+
+OctoMatrix 提供高度模組化的技能擴充機制。
+
+1. **新增技能包**：只需將開發好的技能包（支援 `.tar.gz` 或 `.zip` 格式）放置於 [`skills`](./skills) 目錄下即可。
+2. **建議架構**：為了確保技能能在各環境中無縫運作，強烈建議您的技能包內包含：
+   * `requirements.txt`：宣告所需的 Python 依賴。
+   * `setup.sh`：用於安裝系統層級的依賴包（如 apt-get 套件）或 Node.js 等其他套件。
+3. **註冊技能**：透過 `./setup_config.sh` 設定精靈，您可以為個別的 Agent 勾選並註冊其專屬的技能包。若使用 Docker 部署，這些技能的依賴會在 Image 建置階段自動完成安裝與預編譯。
+
+---
+
+## ⌨️ 內建指令與功能說明 (Built-in Commands)
+
+除了自然語言對話外，您可以透過通訊軟體發送系統指令來管理 Agent 的狀態。
+**注意：Telegram 與 Discord 請使用斜線 `/` 作為前綴，Slack 請使用驚嘆號 `!` 作為前綴。**
+
+* **`/status`**：查看所有 Agent 的存活狀態、已註冊的喚醒任務以及各通訊通道的連線健康度。
+* **`/switch [Agent名稱]`**：切換當前頻道正在對話的目標 Agent。
+* **`/clear`**：清除通訊視窗畫面，並徹底重置該 Agent 的對話上下文與短期記憶，但不影響已刻印的 GHOST 記憶。
+* **`/interrupt`**：向活躍的 Agent 發送 Ctrl+C，強制中斷可能卡死或陷入無窮迴圈的執行程序。
+* **`/fix [Agent名稱]`**：執行重啟序列（退出再重新啟動 Agent 程序），用於嘗試修復崩潰的 Agent。
+* **`/capture [Agent名稱]`**：擷取指定 Agent 運行視窗最近 50 行的終端機輸出，可用於檢查底層的執行報錯。
+* **`/inspect [Agent名稱]`**：指派當前的活躍 Agent，深潛進入目標 Agent 的終端機視窗執行診斷與巡檢。
+* **`/resume_latest`**：當發生非預期的中斷時，嘗試從 CLI 的本地快取中恢復最近一次的對話紀錄。
+* **`/sys_refresh`**：檢查並強制更新 Agent 所遵守的系統協定與行為規範。
+* **`/menu`**：在支援的平臺上（如 Telegram）彈出實體管理按鍵選單，方便手機用戶點擊操作。
+
+---
+
 ## ⏰ 喚醒系統 (Awake System)
 
 當系統啟動並與 Agent 建立連線後，可以直接透過對話要求 Agent 建立定時「喚醒」任務。例如可以吩咐它在每天早晨自動喚醒並統整當日新聞，或是定期巡檢特定系統狀態。所有排程的建立與撤銷皆可直接透過自然語言對話完成。
