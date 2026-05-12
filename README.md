@@ -57,6 +57,23 @@ graph TD
 
 ---
 
+## 🎭 Role Perception & Avatar Aesthetics
+
+OctoMatrix not only empowers Agents with task execution capabilities but also emphasizes their "self-awareness" and "visual emotion."
+
+Through deep system prompts and contextual settings, each Agent is imbued with a unique personality, tone, and set of responsibilities. Accompanying every conversation and status report, the Agent automatically selects and sends a corresponding Avatar emoji based on the current context (e.g., thinking, happy, apologetic, eureka moment), injecting a warm soul into the cold terminal dialogue.
+
+<p align="center">
+  <img src="assets/mosaic_black.png" alt="Mosaic Divider" width="100%" style="max-width: 800px; margin-bottom: 20px;" />
+</p>
+<p align="center">
+  <img src="assets/aleister_avatar_collage.png" alt="Aleister Avatar" width="48%" />
+  &nbsp;
+  <img src="assets/gupa_avatar_collage.png" alt="Gupa Avatar" width="48%" />
+</p>
+
+---
+
 ## 📖 Obtaining Communication Channel Credentials (Choose at least one)
 
 ### 1. Obtaining Telegram Credentials (Simplest)
