@@ -163,8 +163,13 @@ def main():
             open(TEMP_LOG, 'w').close()
             
         print(f"⏳ Injecting /clear and starting periodic Enter retries (every 3 seconds, 100 times total)...")
-        # 🚀 Hardening Means 1: Pre-wake. Send Enter first to ensure CLI is active.
+        # 🚀 Hardening Means 1: Pre-wake (Force clear). [Ctrl+C] + [Enter] -> wait 6s -> [Ctrl+C] + [Enter]
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+        time.sleep(6.0)
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+        time.sleep(1.0)
         
         # 🚀 Hardening Means 2: Inject /clear command (only once)
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear"]) 
@@ -185,6 +190,25 @@ def main():
                 break
             print(f"⚠️ Attempt {i+1} failed (CLI is busy), sending Enter again in 3 seconds...")
         
+        if not cleared:
+            print("⚠️ Timeout after 100 attempts, reset keyword not detected. Attempting ultimate fallback [Ctrl+C] -> 6s -> [Ctrl+C]...")
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
+            time.sleep(6.0)
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
+            time.sleep(3.0)
+            res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
+            if any(marker in res.stdout for marker in prompt_markers):
+                cleared = True
+                print("✅ Ultimate fallback successful! Detected startup keyword.")
+            else:
+                print("❌ Ultimate fallback failed. Sending SOS message. Cancelling injection.")
+                help_msg = f"{AGENT_NAME} 可能卡在時空夾縫中, 如果 {AGENT_NAME} 還是沒有回覆訊息, 嘗試切換至其他 Agent 輸入 「/fix {AGENT_NAME}」讓其他 Agent 幫忙拯救 {AGENT_NAME}"
+                escaped_help = help_msg.replace('!', '！').replace('$', '\\$')
+                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", escaped_help])
+                time.sleep(1.0)
+                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+                time.sleep(0.5)
+
         if not cleared:
             print("⚠️ Timeout after 100 attempts, reset keyword not detected. Cancelling injection.")
             if os.path.exists(TEMP_LOG):

@@ -16,9 +16,11 @@ def get_reaper_config():
     return polling_interval, threshold_kb
 
 def notify_agent(agent_name):
+    import subprocess
     # Call matrix_notifier or the internal router API
     router_host = getattr(config, 'ROUTER_HOST', '127.0.0.1')
     router_port = getattr(config, 'ROUTER_PORT', 12210)
+    session_name = getattr(config, 'TMUX_SESSION_NAME', 'chat_agent')
 
     # Create inject_block.lock for blocking
     agent_dir = os.path.join(base_dir, 'agent_home', agent_name)
@@ -26,12 +28,22 @@ def notify_agent(agent_name):
     os.makedirs(os.path.dirname(lock_file), exist_ok=True)
     open(lock_file, 'w').close()
 
+    # Inject double Ctrl+C with 6s interval before sending prompt to interrupt stuck tasks
+    try:
+        target = f"{session_name}:{agent_name}"
+        subprocess.run(["tmux", "send-keys", "-t", target, "C-c"])
+        time.sleep(6)
+        subprocess.run(["tmux", "send-keys", "-t", target, "C-c"])
+        time.sleep(1)
+    except Exception as e:
+        print(f"[Reaper] Failed to execute double Ctrl+C: {e}")
+
     # Inject command to Agent (implicit maintenance mode)
     inject_url = f"http://{router_host}:{router_port}/inject"
     payload = {
         "source": "reaper",
         "user_id": "system",
-        "content": "[System Prompt] If there is an ongoing task, please pause it and save the current task status to octo_cyberbrain/task_memo.txt to ensure the task can be resumed sequentially after the GHOST reset. Then, please use parameter mode to execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"semantic outline\" --keywords \"keywords\" --paths \"paths\"` to update GHOST status, no need to send message to user",
+        "content": "[System Prompt] If there is an ongoing task, please pause it and save the current task status to octo_cyberbrain/task_memo.txt. Then, please use parameter mode to execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"semantic outline\" --keywords \"keywords\" --paths \"paths\"` to update GHOST status, no need to send message to user",
         "metadata": {
             "target_agent": agent_name
         }
