@@ -207,6 +207,44 @@ docker compose -f docker-compose.[configured instance name].yml up -d --build
 
 ---
 
+## 🛠️ Auto-Startup & Advanced Deployment
+
+OctoMatrix supports configuring the service as a background daemon (Phoenix Mode), allowing your AI team to automatically resurrect after a host reboot.
+* **Linux Environment**: Please refer to the documentation in the [`auto-startup`](./auto-startup) directory to set up background services via Systemd.
+* **Windows System**: We recommend deploying via WSL (Windows Subsystem for Linux). Please check the [`windows-wsl-setup`](./windows-wsl-setup) directory, which provides scripts for a quick and seamless AI environment setup.
+
+---
+
+## 🎒 Skill Expansion
+
+OctoMatrix provides a highly modular skill expansion mechanism.
+
+1. **Adding Skill Packages**: Simply place your developed skill packages (supports `.tar.gz` or `.zip` formats) into the [`skills`](./skills) directory.
+2. **Recommended Structure**: To ensure skills run seamlessly across all environments, it is strongly recommended that your skill package includes:
+   * `requirements.txt`: To declare required Python dependencies.
+   * `setup.sh`: To install system-level dependencies (like apt-get packages) or other packages such as Node.js.
+3. **Registering Skills**: Through the `./setup_config.sh` wizard, you can select and register specific skill packages for individual Agents. If using Docker deployment, the dependencies for these skills will be automatically installed and pre-compiled during the Image build phase.
+
+---
+
+## ⌨️ Built-in Commands & Features
+
+In addition to natural language conversation, you can send system commands through communication platforms to manage the status of your Agents.
+**Note: Use a slash `/` as the prefix for Telegram and Discord, and an exclamation mark `!` as the prefix for Slack.**
+
+* **`/status`**: View the survival status of all Agents, registered awake tasks, and the connection health of each communication channel.
+* **`/switch [Agent Name]`**: Switch the target Agent you are currently talking to in the channel.
+* **`/clear`**: Clear the communication window and completely reset the Agent's conversation context and short-term memory, without affecting the imprinted GHOST memory.
+* **`/interrupt`**: Send a Ctrl+C to the active Agent to forcefully interrupt processes that might be stuck or in an infinite loop.
+* **`/fix [Agent Name]`**: Execute a restart sequence (quit and restart the Agent process) to attempt to recover a crashed Agent.
+* **`/capture [Agent Name]`**: Capture the last 50 lines of terminal output from the specified Agent's running window, useful for checking underlying execution errors.
+* **`/inspect [Agent Name]`**: Assign the current active Agent to deep dive into the target Agent's terminal window for diagnostics and inspection.
+* **`/resume_latest`**: In the event of an unexpected interruption, attempt to restore the most recent conversation record from the CLI's local cache.
+* **`/sys_refresh`**: Check and forcefully update the system protocols and behavioral rules that the Agent must follow.
+* **`/menu`**: Pop up a physical management key menu on supported platforms (like Telegram) for easy tapping by mobile users.
+
+---
+
 ## ⏰ Awake System
 
 After the system starts and establishes a connection with Agent, you can directly request the Agent to create scheduled "awake" tasks through conversation. For example, you can instruct it to automatically wake up every morning and summarize the day's news, or periodically check specific system states. All schedule creation and cancellation can be completed directly through natural language conversation.
