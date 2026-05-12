@@ -1,26 +1,36 @@
-# Auto-generated exclusions from test environment
-/.env
-/.flask_port
-/.last_source
-/.ngrok.pid
-/.router_port
-/.runtime_state
-/__pycache__/
+# 🚀 OctoMatrix Hardened Git Exclusion Policy
+
+# [Global Exclusions] Effective in any directory
+**/__pycache__/
+**/.env*
+**/.flask_port*
+**/.last_source*
+**/.ngrok.pid*
+**/.router_port*
+**/.runtime_state*
+**/.last_update*
+**/*.log*
+**/*.token*
+**/*.secret*
+**/*.bak*
+**/*.tmp*
+
+# [Specific Directories and Data] Physical isolation
 /agent_home/
-/docker-deploy/.env*
-/docker-deploy/__pycache__/
-/docker-deploy/awake.*.yaml
-/docker-deploy/config.*.yaml
 /docker-deploy/container_home/
+
+# [Dynamic Config and Build Files] Hardened exclusions
+/docker-deploy/config.*.yaml
+/docker-deploy/awake.*.yaml
 /docker-deploy/docker-compose.*.yml
-/ngrok.log
-/tools/avatar/__pycache__/
-/tools/cyberbrain/__pycache__/
-/tools/notification/__pycache__/
-/webhook_secret.token
+/docker-deploy/dynamic_*.sh
+/docker-deploy/dynamic_*.txt
+
+# [Configs and Credentials] Maximum leakage prevention
 /config.yaml*
 /awake.yaml*
-/*token*
-/*secret*
+/webhook_secret.token*
+
+# [Skill Packages] Local shared space only
 /skills/*.tar.gz
 /skills/*.zip
