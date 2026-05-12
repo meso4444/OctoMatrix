@@ -9,13 +9,13 @@ import time
 from datetime import datetime
 
 # ==========================================
-# 1. 定位與環境變數加固
+# 1. Path and Environment Hardening
 # ==========================================
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 AGENT_HOME = os.path.dirname(SCRIPT_DIR)
 ENV_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/.cyberbrain_env")
 
-# 定義鎖檔路徑 (絕對路徑)
+# Define lock and log paths (Absolute Paths)
 LOCK_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/inject_block.lock")
 FLAG_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/.rotation_flag")
 SHELL_LOG = os.path.join(AGENT_HOME, "octo_cyberbrain/shell/octo_shell.log")
@@ -34,10 +34,10 @@ def load_env():
     return env
 
 def get_config(agent_name=None):
-    # 上溯尋找 config.py (Agent Home 的上一層是 OctoMatrix root)
-    # 結構: OctoMatrix/agent_home/Aleister/octo_cyberbrain/internal_matrix_rotate.py
-    # 所以 AGENT_HOME 是 Aleister
-    # OctoMatrix Root 是 AGENT_HOME 的上一層的上一層
+    # Search upwards for config.py (Agent Home's parent is OctoMatrix root)
+    # Structure: OctoMatrix/agent_home/Aleister/octo_cyberbrain/internal_matrix_rotate.py
+    # So AGENT_HOME is Aleister
+    # OctoMatrix Root is the parent of the parent of AGENT_HOME
     octo_root = os.path.dirname(os.path.dirname(AGENT_HOME))
     
     if octo_root not in sys.path:
@@ -62,14 +62,14 @@ def get_config(agent_name=None):
     except Exception:
         return 12, 50, "GEMINI.md", "gemini"
 
-# 🔍 環境自適應：自動定位 Tmux Socket
+# 🔍 Environment Adaptation: Locate Tmux Socket
 def get_tmux_cmd():
     return ["tmux"]
 
 TMUX_BASE = get_tmux_cmd()
 
 # ==========================================
-# 工具函數
+# Utility Functions
 # ==========================================
 def load_json(path):
     if os.path.exists(path):
@@ -108,36 +108,36 @@ def union_dedup(source_set_kws, source_set_paths, target_kw_path, target_path_pa
         json.dump(merged_paths, f, ensure_ascii=False, indent=2)
 
 def cleanup():
-    # 🚀 統一清理 Flag 與 Lock，防止死鎖
-    print("🧹 執行最後的清理程序...")
+    # 🚀 Centralized cleanup for Flag and Lock to prevent deadlock
+    print("🧹 Executing final cleanup procedure...")
     for f in [LOCK_FILE, FLAG_FILE]:
         if os.path.exists(f):
             try:
                 os.remove(f)
-                print(f"   已移除: {f}")
+                print(f"   Removed: {f}")
             except Exception as e:
-                print(f"   移除失敗 {f}: {e}")
+                print(f"   Removal failed for {f}: {e}")
 
 def main():
     if not os.path.exists(FLAG_FILE):
-        print(f"⚠️ 找不到 Rotation Flag ({FLAG_FILE})，中止程序。")
+        print(f"⚠️ Rotation Flag not found ({FLAG_FILE}), aborting.")
         sys.exit(0)
         
     if os.path.getsize(FLAG_FILE) > 0:
-        print("⚠️ 偵測到已有重置進程正在執行 (Flag 已鎖定)，跳過本次啟動。")
+        print("⚠️ Detected an existing reset process (Flag is locked), skipping.")
         sys.exit(0)
     
     try:
-        # 寫入語義化鎖定標記，防止重複啟動
+        # Write semantic lock marker to prevent duplicate startup
         with open(FLAG_FILE, 'w') as f:
-            f.write("移交 internal_matrix_rotate.py")
+            f.write("Handing over to internal_matrix_rotate.py")
         
         env = load_env()
         AGENT_NAME = env.get("AGENT_NAME")
         TMUX_SESSION_NAME = env.get("TMUX_SESSION_NAME")
         
         if not AGENT_NAME or not TMUX_SESSION_NAME:
-            print(f"❌ 無法取得 AGENT_NAME 或 TMUX_SESSION_NAME (來源: {ENV_FILE})。中止重置。")
+            print(f"❌ Failed to get AGENT_NAME or TMUX_SESSION_NAME (Source: {ENV_FILE}). Aborting reset.")
             sys.exit(1)
 
         TMUX_TARGET = f"{TMUX_SESSION_NAME}:{AGENT_NAME}"
@@ -146,7 +146,7 @@ def main():
         MONTH_TS = datetime.now().strftime("%Y-%m")
         YEAR_TS = datetime.now().strftime("%Y")
         
-        # 根據引擎選擇對應的提示符 (嚴格大小寫)
+        # Select corresponding prompt markers based on engine (strict case-sensitive)
         if ENGINE == 'claude':
             prompt_markers = ['Claude']
         elif ENGINE == 'codex':
@@ -155,43 +155,43 @@ def main():
             prompt_markers = ['Gemini']
 
         # ==========================================
-        # Step 1: 物理中斷與零幹擾轉儲
+        # Step 1: Physical Interruption and Zero-interference Dump
         # ==========================================
         if os.path.exists(SHELL_LOG):
             shutil.copy2(SHELL_LOG, TEMP_LOG)
         else:
             open(TEMP_LOG, 'w').close()
             
-        print(f"⏳ 注入 /clear 並開始週期性嘗試 Enter (每 3 秒一次，共 100 次)...")
-        # 🚀 強化手段 1: 前置喚醒。先發送 Enter 確保 CLI 處於活動狀態
+        print(f"⏳ Injecting /clear and starting periodic Enter retries (every 3 seconds, 100 times total)...")
+        # 🚀 Hardening Means 1: Pre-wake. Send Enter first to ensure CLI is active.
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
         
-        # 🚀 強化手段 2: 注入 /clear 指令 (僅一次)
+        # 🚀 Hardening Means 2: Inject /clear command (only once)
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear"]) 
         
         cleared = False
         for i in range(100):
-            # 🚀 強化手段 3: 持續擊發 Enter 試圖觸發執行
+            # 🚀 Hardening Means 3: Continuously trigger Enter to trigger execution
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
 
-            time.sleep(3.0) # 等待 3 秒觀察結果
+            time.sleep(3.0) # Wait 3 seconds to observe the result
 
-            # 檢測是否重置成功
+            # Detect if reset was successful
             res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
             screen = res.stdout
             if any(marker in screen for marker in prompt_markers):
                 cleared = True
-                print(f"✅ 第 {i+1} 次嘗試成功！偵測到 {ENGINE} 啟動關鍵字。")
+                print(f"✅ Attempt {i+1} successful! Detected {ENGINE} startup keyword.")
                 break
-            print(f"⚠️ 第 {i+1} 次嘗試失敗 (CLI 忙碌中)，3 秒後續發 Enter...")
+            print(f"⚠️ Attempt {i+1} failed (CLI is busy), sending Enter again in 3 seconds...")
         
         if not cleared:
-            print("⚠️ 逾時 100 次嘗試仍未偵測到重置關鍵字，取消注入。")
+            print("⚠️ Timeout after 100 attempts, reset keyword not detected. Cancelling injection.")
             if os.path.exists(TEMP_LOG):
                 shutil.copy2(TEMP_LOG, SHELL_LOG)
                 os.remove(TEMP_LOG)
             
-            # 發送恢復提示，讓 Agent 接續先前的任務
+            # Send recovery prompt to let Agent resume the previous task
             recovery_prompt = "[System Prompt] Maintenance timeout cancelled. Please check if octo_cyberbrain/task_memo.txt exists. If it does, read it and resume the interrupted task, then delete it after reading."
             escaped_rec = recovery_prompt.replace('!', '！').replace('$', '\\$')
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", escaped_rec])
@@ -199,32 +199,36 @@ def main():
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
             time.sleep(0.5)
 
-            # 確保積累的用戶指令不會被拋棄
+            # Ensure accumulated user commands are not discarded
             if os.path.exists(PENDING_FILE):
                 try:
                     with open(PENDING_FILE, 'r', encoding='utf-8') as f:
                         pending_content = f.read().strip()
                     if pending_content:
+                        # Append normal system prompt
                         sys_prompt = "\n\n[System Prompt] This command is from Matrix user, please reply to the user first before starting the task. Before starting the task, if the keywords or task mentioned by the user lack complete context, actively perform keyword shell deep dive to confirm if there is relevant context in the records. If the execution direction is clear, execute it. If it is unclear, pause the task first and reply to the user with a recap of the relevant records to confirm the direction, but do not mention to the user that you performed shell deep dive related operations. After task completion, complete the following [SOP]:\n[Step 1 - Report]: Execute `python3 toolbox/matrix_notifier.py` to send task message or file to user with Avatar emoji.\n[Step 2 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.\n[Step 3 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"Semantic Outline\" --keywords \"Keyword1,Keyword2\" --paths \"/FilePath1,/FilePath2\"` to imprint task status to GHOST."
                         final_message = pending_content + sys_prompt
                         escaped = final_message.replace('!', '！').replace('$', '\\$')
+                        
+                        # Inject at once without triggering Ctrl+C
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", escaped], check=True)
                         time.sleep(1.0)
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
                         time.sleep(0.3)
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
                         print("📩 Pending user commands injected successfully!")
+                    
                     os.remove(PENDING_FILE)
                 except Exception as e:
                     print(f"❌ Error processing pending commands: {e}")
             
-            # 這裡不需手動清理，交由 finally 處理
+            # No need to manually clean up here, let finally handle it
             sys.exit(1)
         
         open(SHELL_LOG, 'w').close() # Instant clear
         
         # ==========================================
-        # Step 2: Shell 壓縮與 12 份滾動歸併
+        # Step 2: Shell Compression and 12-slot Rolling Merge
         # ==========================================
         zst_target = os.path.join(AGENT_HOME, f"octo_cyberbrain/shell/octo_shell.log.{TS}.zst")
         try:
@@ -255,7 +259,7 @@ def main():
             os.remove(oldest)
 
         # ==========================================
-        # Step 3: Ghost 蒸餾與 12 份滾動歸併
+        # Step 3: Ghost Distillation and 12-slot Rolling Merge
         # ==========================================
         ghost_file = os.path.join(AGENT_HOME, "octo_cyberbrain/ghost/octo_ghost.json")
         ghost_snap = os.path.join(AGENT_HOME, f"octo_cyberbrain/ghost/octo_ghost.{TS}.json")
@@ -297,25 +301,25 @@ def main():
             if os.path.exists(oldest_m_path):
                 os.remove(oldest_m_path)
 
-        # 重置 Active Ghost
+        # Reset Active Ghost
         save_json(ghost_file, {"keywords": [], "file_paths": [], "semantic_outline": []})
 
         # ==========================================
-        # Step 4: 靈魂重塑注入 (Neural Reset Injection)
+        # Step 4: Neural Reset Injection
         # ==========================================
         prompt = f"[System Prompt] Please execute python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot to get keywords, then bring all retrieved keywords into a single execution of 'python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"Keyword1\" \"Keyword2\"' for Shell GHOST deep dive. Once complete, re-establish compliance with {ENGINE_DOC_NAME}. This task does not require sending messages to the user. Next, verify if octo_cyberbrain/task_memo.txt exists; if so, read it to resume the task and then delete task_memo.txt."
 
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", prompt])
-        time.sleep(2.0) # 長 Prompt 需要更長的輸入等待時間
+        time.sleep(2.0) # Longer prompt needs more input wait time
         
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
         time.sleep(0.5)
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
         time.sleep(0.5)
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"]) # 三重 Enter 保險
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"]) # Triple Enter safety
 
         # ==========================================
-        # Step 5: 積累指令注入 (Pending injection)
+        # Step 5: Pending Injection
         # ==========================================
         if os.path.exists(PENDING_FILE):
             try:
@@ -323,12 +327,12 @@ def main():
                     pending_content = f.read().strip()
                     
                 if pending_content:
-                    # 補上常規系統提示
+                    # Append normal system prompt
                     sys_prompt = f"\n\n[System Prompt] This command is from Matrix user, please reply to the user first before starting the task. Before starting the task, if the keywords or task mentioned by the user lack complete context, actively perform keyword shell deep dive to confirm if there is relevant context in the records. If the execution direction is clear, execute it. If it is unclear, pause the task first and reply to the user with a recap of the relevant records to confirm the direction, but do not mention to the user that you performed shell deep dive related operations. After task completion, complete the following [SOP]:\n[Step 1 - Report]: Execute `python3 toolbox/matrix_notifier.py` to send task message or file to user with Avatar emoji.\n[Step 2 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.\n[Step 3 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"Semantic Outline\" --keywords \"Keyword1,Keyword2\" --paths \"/FilePath1,/FilePath2\"` to imprint task status to GHOST."
                     final_message = pending_content + sys_prompt
                     escaped = final_message.replace('!', '！').replace('$', '\\$')
                     
-                    # 以不觸發 Ctrl+C 的方式一次性注入
+                    # Inject at once without triggering Ctrl+C
                     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", escaped], check=True)
                     time.sleep(1.0)
                     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
@@ -338,16 +342,19 @@ def main():
                 
                 os.remove(PENDING_FILE)
             except Exception as e:
-                print(f"❌ 處理積累指令時發生錯誤: {e}")
+                print(f"❌ Error processing pending commands: {e}")
 
     except BaseException as e:
-        # 捕捉包含 SystemExit 在內的所有異常，確保清理執行
+        # Catch all exceptions including SystemExit to ensure cleanup
         if isinstance(e, SystemExit):
-            if e.code == 0: # 正常退出不報錯
+            if e.code == 0: # Normal exit does not error
                 pass
             else:
-                print(f"❌ 程序因 sys.exit({e.code}) 中止")
+                print(f"❌ Process aborted due to sys.exit({e.code})")
         else:
-            print(f"❌ 重置過程中發生異常: {e}")
+            print(f"❌ Exception occurred during reset: {e}")
     finally:
         cleanup()
+
+if __name__ == "__main__":
+    main()
