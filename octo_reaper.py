@@ -28,15 +28,13 @@ def notify_agent(agent_name):
     os.makedirs(os.path.dirname(lock_file), exist_ok=True)
     open(lock_file, 'w').close()
 
-    # 注入前先執行 2 回合間隔 6 秒的 Ctrl+C，強制打斷可能卡住的任務
+    # 注入前先執行 1 回合 Ctrl+C 並等待 6 秒，後續交由 Router 補上第二發 Ctrl+C 強制打斷
     try:
         target = f"{session_name}:{agent_name}"
         subprocess.run(["tmux", "send-keys", "-t", target, "C-c"])
         time.sleep(6)
-        subprocess.run(["tmux", "send-keys", "-t", target, "C-c"])
-        time.sleep(1)
     except Exception as e:
-        print(f"[Reaper] 執行雙重 Ctrl+C 失敗: {e}")
+        print(f"[Reaper] 執行前置 Ctrl+C 失敗: {e}")
 
     # 注入指令給 Agent (隱性維護模式)
     inject_url = f"http://{router_host}:{router_port}/inject"
