@@ -28,15 +28,13 @@ def notify_agent(agent_name):
     os.makedirs(os.path.dirname(lock_file), exist_ok=True)
     open(lock_file, 'w').close()
 
-    # Inject double Ctrl+C with 6s interval before sending prompt to interrupt stuck tasks
+    # Inject single Ctrl+C and wait 6s, letting Router inject the second Ctrl+C to interrupt stuck tasks
     try:
         target = f"{session_name}:{agent_name}"
         subprocess.run(["tmux", "send-keys", "-t", target, "C-c"])
         time.sleep(6)
-        subprocess.run(["tmux", "send-keys", "-t", target, "C-c"])
-        time.sleep(1)
     except Exception as e:
-        print(f"[Reaper] Failed to execute double Ctrl+C: {e}")
+        print(f"[Reaper] Failed to execute pre-wake Ctrl+C: {e}")
 
     # Inject command to Agent (implicit maintenance mode)
     inject_url = f"http://{router_host}:{router_port}/inject"
