@@ -163,8 +163,13 @@ def main():
             open(TEMP_LOG, 'w').close()
             
         print(f"⏳ 注入 /clear 並開始週期性嘗試 Enter (每 3 秒一次，共 100 次)...")
-        # 🚀 強化手段 1: 前置喚醒。先發送 Enter 確保 CLI 處於活動狀態
+        # 🚀 強化手段 1: 前置喚醒 (暴力淨空)。[Ctrl+C] + [Enter] -> 等待 6 秒 -> [Ctrl+C] + [Enter]
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+        time.sleep(6.0)
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+        time.sleep(1.0)
         
         # 🚀 強化手段 2: 注入 /clear 指令 (僅一次)
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear"]) 
@@ -186,7 +191,26 @@ def main():
             print(f"⚠️ 第 {i+1} 次嘗試失敗 (CLI 忙碌中)，3 秒後續發 Enter...")
         
         if not cleared:
-            print("⚠️ 逾時 100 次嘗試仍未偵測到重置關鍵字，取消注入。")
+            print("⚠️ 逾時 100 次嘗試仍未偵測到重置關鍵字，嘗試終極保險 [Ctrl+C] -> 6s -> [Ctrl+C]...")
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
+            time.sleep(6.0)
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
+            time.sleep(3.0)
+            res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
+            if any(marker in res.stdout for marker in prompt_markers):
+                cleared = True
+                print("✅ 終極保險救援成功！偵測到啟動關鍵字。")
+            else:
+                print("❌ 終極保險救援失敗，發送求救訊息。取消注入。")
+                help_msg = f"{AGENT_NAME} 可能卡在時空夾縫中, 如果 {AGENT_NAME} 還是沒有回覆訊息, 嘗試切換至其他 Agent 輸入 「/fix {AGENT_NAME}」讓其他 Agent 幫忙拯救 {AGENT_NAME}"
+                escaped_help = help_msg.replace('!', '！').replace('$', '\\$')
+                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", escaped_help])
+                time.sleep(1.0)
+                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+                time.sleep(0.5)
+
+        if not cleared:
+            print("⚠️ 重置失敗流程處理中...")
             if os.path.exists(TEMP_LOG):
                 shutil.copy2(TEMP_LOG, SHELL_LOG)
                 os.remove(TEMP_LOG)

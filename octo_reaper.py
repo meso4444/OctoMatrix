@@ -16,9 +16,11 @@ def get_reaper_config():
     return polling_interval, threshold_kb
 
 def notify_agent(agent_name):
+    import subprocess
     # Call matrix_notifier or the internal router API
     router_host = getattr(config, 'ROUTER_HOST', '127.0.0.1')
     router_port = getattr(config, 'ROUTER_PORT', 12210)
+    session_name = getattr(config, 'TMUX_SESSION_NAME', 'chat_agent')
     
     # 建立 inject_block.lock 進行阻塞
     agent_dir = os.path.join(base_dir, 'agent_home', agent_name)
@@ -26,12 +28,22 @@ def notify_agent(agent_name):
     os.makedirs(os.path.dirname(lock_file), exist_ok=True)
     open(lock_file, 'w').close()
 
+    # 注入前先執行 2 回合間隔 6 秒的 Ctrl+C，強制打斷可能卡住的任務
+    try:
+        target = f"{session_name}:{agent_name}"
+        subprocess.run(["tmux", "send-keys", "-t", target, "C-c"])
+        time.sleep(6)
+        subprocess.run(["tmux", "send-keys", "-t", target, "C-c"])
+        time.sleep(1)
+    except Exception as e:
+        print(f"[Reaper] 執行雙重 Ctrl+C 失敗: {e}")
+
     # 注入指令給 Agent (隱性維護模式)
     inject_url = f"http://{router_host}:{router_port}/inject"
     payload = {
         "source": "reaper",
         "user_id": "system",
-        "content": "【系統提示】 若有任務進行中，請先中斷任務，把當前任務狀態記錄到octo_cyberbrain/task_memo.txt,確保GHOST重置後順序接續任務。接著請使用參數模式執行 `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"語義大綱\" --keywords \"關鍵字\" --paths \"路徑\"` 來更新GHOST 狀態,不需發送訊息給用戶",
+        "content": "【系統提示】 若有任務進行中，請先中斷任務，把當前任務狀態記錄到octo_cyberbrain/task_memo.txt。接著請使用參數模式執行 `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"語義大綱\" --keywords \"關鍵字\" --paths \"路徑\"` 來更新GHOST 狀態,不需發送訊息給用戶",
         "metadata": {
             "target_agent": agent_name
         }
