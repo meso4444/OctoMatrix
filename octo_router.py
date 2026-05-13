@@ -319,9 +319,9 @@ tmux send-keys -t target 您的訊息內容 && sleep 1 && tmux send-keys -t targ
             for j in jobs:
                 nr = j.get('next_run_time', '未喚醒').split('.')[0]
                 p = j.get('prompt', '無指令')
-                if len(p) > 40: p = p[:37] + "..."
-                awake_list.append(f"• <b>{j.get('id', '?')}</b>\n  └ 觸發: {j.get('trigger', '?')}\n  └ 指令: <code>{p}</code>\n  └ 下次: {nr}")
-        
+                if len(p) > 500: p = p[:497] + "..."
+                awake_list.append(f"• <b>{j.get('id', '?')}</b>\n  └ 對象: {j.get('target_agent', '未指定')}\n  └ 觸發: {j.get('trigger', '?')}\n  └ 指令: <code>{p}</code>\n  └ 下次: {nr}")
+
         channels_status = []
         try:
             tg_stat = "🟢" if subprocess.run(['curl', '-s', f'http://localhost:{TELEGRAM_GATEWAY_PORT}/health'], timeout=2).returncode == 0 else "🔴"
