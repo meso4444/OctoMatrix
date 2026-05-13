@@ -319,8 +319,8 @@ tmux send-keys -t target Your message content && sleep 1 && tmux send-keys -t ta
             for j in jobs:
                 nr = j.get('next_run_time', 'Not awoken').split('.')[0]
                 p = j.get('prompt', 'No command')
-                if len(p) > 40: p = p[:37] + "..."
-                awake_list.append(f"• <b>{j.get('id', '?')}</b>\n  └ Trigger: {j.get('trigger', '?')}\n  └ Command: <code>{p}</code>\n  └ Next: {nr}")
+                if len(p) > 500: p = p[:497] + "..."
+                awake_list.append(f"• <b>{j.get('id', '?')}</b>\n  └ Target: {j.get('target_agent', 'Unspecified')}\n  └ Trigger: {j.get('trigger', '?')}\n  └ Command: <code>{p}</code>\n  └ Next: {nr}")
 
         channels_status = []
         try:

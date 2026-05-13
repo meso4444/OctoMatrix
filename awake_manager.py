@@ -154,6 +154,7 @@ class AwakeManager:
                 "id": job.id,
                 "trigger": str(job.trigger),
                 "next_run_time": job.next_run_time.strftime("%Y-%m-%d %H:%M:%S") if job.next_run_time else "None",
+                "target_agent": original_task.get('target_agent') or original_task.get('agent') or "Unspecified",
                 "prompt": original_task.get('prompt') or original_task.get('command') or "No command"
             })
         return {"status": "ok", "total": len(jobs_info), "jobs": jobs_info}
