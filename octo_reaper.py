@@ -31,8 +31,17 @@ def notify_agent(agent_name):
     # 注入前先執行 1 回合 Ctrl+C 並等待 6 秒，後續交由 Router 補上第二發 Ctrl+C 強制打斷
     try:
         target = f"{session_name}:{agent_name}"
-        subprocess.run(["tmux", "send-keys", "-t", target, "C-c"])
-        time.sleep(6)
+        agents = getattr(config, 'AGENTS', [])
+        engine = next((a.get('engine', '').lower() for a in agents if a['name'] == agent_name), 'gemini')
+        if engine == 'codex':
+            res = subprocess.run(["tmux", "capture-pane", "-p", "-t", target], capture_output=True, text=True)
+            lines = [line for line in res.stdout.split('\n') if line.strip()]
+            if 'Working (' in '\n'.join(lines[-20:]):
+                subprocess.run(["tmux", "send-keys", "-t", target, "C-c"])
+                time.sleep(6)
+        else:
+            subprocess.run(["tmux", "send-keys", "-t", target, "C-c"])
+            time.sleep(6)
     except Exception as e:
         print(f"[Reaper] 執行前置 Ctrl+C 失敗: {e}")
 

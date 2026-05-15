@@ -84,6 +84,28 @@ class AtomicInjector:
             return result.returncode == 0
         except: return False
 
+    def send_interrupt(self, agent_name: str) -> bool:
+        target = f"{self.session_name}:{agent_name}"
+        target_info = get_agent_info(agent_name)
+        engine = target_info.get('engine', '').lower() if target_info else 'gemini'
+        
+        if engine == 'codex':
+            try:
+                res = subprocess.run(['tmux', 'capture-pane', '-p', '-t', target], capture_output=True, text=True)
+                lines = [line for line in res.stdout.split('\n') if line.strip()]
+                if 'Working (' in '\n'.join(lines[-20:]):
+                    subprocess.run(['tmux', 'send-keys', '-t', target, 'C-c'], check=False)
+                    time.sleep(0.5)
+                    return True
+                return False
+            except Exception as e:
+                logger.error(f"❌ [Injector] capture-pane failed: {e}")
+                return False
+        else:
+            subprocess.run(['tmux', 'send-keys', '-t', target, 'C-c'], check=False)
+            time.sleep(0.5)
+            return True
+
     def inject(self, content: str, agent_name: str, interrupt_first: bool = False) -> bool:
         with self.lock:
             try:
@@ -98,9 +120,8 @@ class AtomicInjector:
                 target = f"{self.session_name}:{agent_name}"
                 
                 if interrupt_first:
-                    # 🚀 用戶主動中斷：先送出 Ctrl+C 中斷可能的長時間執行任務
-                    subprocess.run(['tmux', 'send-keys', '-t', target, 'C-c'], check=True)
-                    time.sleep(0.5)
+                    # 🚀 Codex 狀態感知中斷，其他引擎無條件中斷
+                    self.send_interrupt(agent_name)
 
                 escaped = content.replace('!', '！').replace('$', '\\$')
                 
@@ -171,13 +192,26 @@ class CommandHandler:
             if not check_cooldown(target_agent, 'interrupt'):
                 self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> 操作冷卻中，請稍後再試。'})
                 return True
-            subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'C-c'], check=False)
-            self.notifier.notify(msg.source, 'custom', {'content': f'🛑 已發送中斷訊號至 <b>[{target_agent}]</b>'})
+            target_info = get_agent_info(target_agent)
+            engine = target_info.get('engine', '').lower() if target_info else 'gemini'
+            if engine == 'codex':
+                target = f'{TMUX_SESSION_NAME}:{target_agent}'
+                res = subprocess.run(['tmux', 'capture-pane', '-p', '-t', target], capture_output=True, text=True)
+                lines = [line for line in res.stdout.split('\n') if line.strip()]
+                if 'Working (' in '\n'.join(lines[-20:]):
+                    subprocess.run(['tmux', 'send-keys', '-t', target, 'C-c'], check=False)
+                    self.notifier.notify(msg.source, 'custom', {'content': f'🛑 已發送中斷訊號至 <b>[{target_agent}]</b>'})
+                else:
+                    self.notifier.notify(msg.source, 'custom', {'content': f'⚠️ <b>[{target_agent}]</b> 處於空閒狀態，略過中斷。'})
+            else:
+                subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'C-c'], check=False)
+                self.notifier.notify(msg.source, 'custom', {'content': f'🛑 已發送中斷訊號至 <b>[{target_agent}]</b>'})
             return True
         elif cmd_content == '/clear':
             if not check_cooldown(target_agent, 'clear'):
                 self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> 操作冷卻中，請稍後再試。'})
                 return True
+            self.injector.send_interrupt(target_agent)
             self.injector.inject('/clear', target_agent)
             self.notifier.notify(msg.source, 'custom', {'content': f'🧹 已清除 <b>[{target_agent}]</b> 的畫面與上下文'})
             return True
