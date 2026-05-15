@@ -164,10 +164,22 @@ def main():
             
         print(f"⏳ Injecting /clear and starting periodic Enter retries (every 3 seconds, 100 times total)...")
         # 🚀 Hardening Means 1: Pre-wake (Force clear). [Ctrl+C] + [Enter] -> wait 6s -> [Ctrl+C] + [Enter]
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
+        if ENGINE == 'codex':
+            res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
+            lines = [line for line in res.stdout.split('\n') if line.strip()]
+            if 'Working (' in '\n'.join(lines[-20:]):
+                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
+        else:
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
         time.sleep(6.0)
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
+        if ENGINE == 'codex':
+            res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
+            lines = [line for line in res.stdout.split('\n') if line.strip()]
+            if 'Working (' in '\n'.join(lines[-20:]):
+                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
+        else:
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
         time.sleep(1.0)
         
@@ -192,9 +204,21 @@ def main():
         
         if not cleared:
             print("⚠️ Timeout after 100 attempts, reset keyword not detected. Attempting ultimate fallback [Ctrl+C] -> 6s -> [Ctrl+C]...")
-            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
+            if ENGINE == 'codex':
+                res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
+                lines = [line for line in res.stdout.split('\n') if line.strip()]
+                if 'Working (' in '\n'.join(lines[-20:]):
+                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
+            else:
+                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
             time.sleep(6.0)
-            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
+            if ENGINE == 'codex':
+                res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
+                lines = [line for line in res.stdout.split('\n') if line.strip()]
+                if 'Working (' in '\n'.join(lines[-20:]):
+                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
+            else:
+                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
             time.sleep(3.0)
             res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
             if any(marker in res.stdout for marker in prompt_markers):
