@@ -47,14 +47,8 @@ Agents should follow the "outline first, then keywords & paths" process below to
 2. **Sending Examples**:
 
 ```bash
-# Send test notification
-python3 toolbox/matrix_notifier.py '🧪 {agent_name} Test message: System operating normally!'
-
 # General response
 python3 toolbox/matrix_notifier.py '💬 Hello! I am {agent_name}\nI have received your message and am responding'
-
-# System interaction confirmation
-python3 toolbox/matrix_notifier.py '🤖 {agent_name} Command received\nProcessing your request...'
 
 # Send document (with description)
 python3 toolbox/matrix_notifier.py --file document /path/to/report.pdf '📄 Task Completion Report'
@@ -79,8 +73,6 @@ python3 toolbox/matrix_notifier.py --file audio /tmp/notification.wav 'Voice con
 # Attach corresponding emotion image when sending message
 python3 toolbox/matrix_notifier.py --file photo avatar/emojis/happy.png 'Task completed! System operating normally'
 
-# Send Avatar Base (comprehensive emotional display)
-python3 toolbox/matrix_notifier.py --file photo avatar/base.png 'I am {agent_name}, current status is good'
 ```
 ---
 
