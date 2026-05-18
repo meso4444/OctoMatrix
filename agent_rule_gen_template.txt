@@ -7,7 +7,7 @@ Now, based on the following two important specification documents (please read t
 === Reference Document 1: Constitution (Core Rules) ===
 File path: {rules_path}
 
-=== Reference Document 2: Notification System Operation Guidelines ===
+=== Reference Document 2: Core System Operating Protocol ===
 File path: {protocol_path}
 
 === Reference Document 3: Team Collaboration Context ===
