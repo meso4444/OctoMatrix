@@ -48,14 +48,8 @@ Agent 應在完成階段性任務後，遵循以下「先大綱、後關鍵字&�
 2. **發送範例**：
 
 ```bash
-# 發送測試通知
-python3 toolbox/matrix_notifier.py '🧪 {agent_name} 測試訊息：系統正常運作！'
-
 # 一般回應
 python3 toolbox/matrix_notifier.py '💬 您好！我是 {agent_name}\n已收到您的訊息並正在回應'
-
-# 系統互動確認
-python3 toolbox/matrix_notifier.py '🤖 {agent_name} 收到指令\n正在處理您的請求...'
 
 # 發送文檔（帶說明）
 python3 toolbox/matrix_notifier.py --file document /path/to/report.pdf '📄 任務完成報告'
@@ -80,8 +74,6 @@ python3 toolbox/matrix_notifier.py --file audio /tmp/notification.wav '語音確
 # 發送訊息時附加對應的心情圖檔
 python3 toolbox/matrix_notifier.py --file photo avatar/emojis/happy.png '任務完成了！系統正常運作'
 
-# 發送 Avatar Base（綜合情感展示）
-python3 toolbox/matrix_notifier.py --file photo avatar/base.png '我是 {agent_name}，目前狀態良好'
 ```
 ---
 
