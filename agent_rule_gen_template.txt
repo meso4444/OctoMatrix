@@ -16,7 +16,7 @@ File path: {protocol_path}
 === Your Task ===
 Please read the above two documents, integrate their content, and write a customized self-awareness based on your responsibility description ({agent_usecase}).
 Special attention:
-1. The notification system operation guidelines should be **completely copied** except for the document title section, no omissions allowed.
+1. The core system operating protocol should be **completely copied** except for the document title section, no omissions allowed.
 2. Based on "Team Collaboration Context," add a "Collaboration Partners" section to your work handbook, clearly listing who you know to find for what tasks.
 
 === Visual Identity Construction Task ===
