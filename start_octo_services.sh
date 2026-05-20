@@ -313,7 +313,7 @@ try:
             print(f"     🔄 Executing conversation recovery process…")
 
             # Step 1: Input /resume command
-            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '-l', '/resume']), check=True)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '-l', '--', '/resume']), check=True)
             time.sleep(0.5)
 
             # Step 2: Execute /resume (enter menu)
@@ -325,7 +325,7 @@ try:
             time.sleep(1)
 
             # Step 4: Input q (handle Gemini without previous conversation)
-            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '-l', 'q']), check=True)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '-l', '--', 'q']), check=True)
             time.sleep(0.5)
 
             # Step 5: Ctrl+C to ensure exit from menu
@@ -364,7 +364,7 @@ try:
                 prompt_content = pf.read()
 
             # Use send-keys -l (literal) to simulate typing, bypassing paste mode
-            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '-l', prompt_content]), check=True)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '-l', '--', prompt_content]), check=True)
             time.sleep(0.5)
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
 

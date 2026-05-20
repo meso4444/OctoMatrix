@@ -126,7 +126,7 @@ class AtomicInjector:
                 escaped = content.replace('!', '！').replace('$', '\\$')
 
                 # 🚀 Physical injection hardening: text and Enter physically separated
-                subprocess.run(['tmux', 'send-keys', '-t', target, '-l', escaped], check=True)
+                subprocess.run(['tmux', 'send-keys', '-t', target, '-l', '--', escaped], check=True)
                 time.sleep(0.8)
                 subprocess.run(['tmux', 'send-keys', '-t', target, 'Enter'], check=True)
 
@@ -237,7 +237,7 @@ class CommandHandler:
             else:
                 engine_doc_name = "GEMINI.md"
             check_prompt = f"[System Prompt]This task does not send notification to user. Check AGENT_PROTOCOL.md and agent_home_rules.md content, confirm whether {engine_doc_name} specification is complete, and update"
-            subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '-l', check_prompt], check=False)
+            subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '-l', '--', check_prompt], check=False)
             time.sleep(0.5)
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'Enter'], check=False)
             self.notifier.notify(msg.source, 'custom', {'content': f'🔄 Sent specification update command to <b>[{target_agent}]</b>'})
