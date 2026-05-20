@@ -254,9 +254,7 @@ def main():
                         pending_content = f.read().strip()
                     if pending_content:
                         # Append normal system prompt
-                        sys_prompt = f"""
-
-[System Prompt] This command is from Matrix User {getattr(config, 'MATRIX_USERNAME', 'User')}. Please execute `python3 toolbox/matrix_notifier.py` to reply to the user first before starting the task. Before starting the task, if the keywords mentioned by the user or the task lacks complete context, proactively perform a keyword dive into shell records to check if there is related context in the records. If the execution direction is clear, execute it. If it is unclear, pause the task first and reply to the user with a recap of the related records to confirm the direction with the user, but it is strictly prohibited to mention to the user that you performed shell dive related operations; After task completion, complete the following [SOP]:
+                        sys_prompt = f"""Execute the following [SOP]:
 [Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png` to quickly respond to {getattr(config, 'MATRIX_USERNAME', 'User')} and resonate emotionally via sticker.
 [Step 1 - Identify]: Identify whether {getattr(config, 'MATRIX_USERNAME', 'User')}'s message is a task or a greeting. If it's a task, proceed to Step2; if it's a greeting, execute `python3 toolbox/matrix_notifier.py 'Received your greeting!'` to respond to {getattr(config, 'MATRIX_USERNAME', 'User')}'s greeting, and do not execute subsequent Steps.
 [Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py 'Received command, processing...'` to quickly respond to {getattr(config, 'MATRIX_USERNAME', 'User')} and preview the initial direction of the task.
@@ -265,8 +263,11 @@ def main():
 [Step 5 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png` to resonate emotionally with {getattr(config, 'MATRIX_USERNAME', 'User')} via sticker again before reporting task results.
 [Step 6 - Report]: Execute `python3 toolbox/matrix_notifier.py 'Task completion report:'` to summarize and report the task results and use --file to send related files to {getattr(config, 'MATRIX_USERNAME', 'User')}.
 [Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
-[Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST."""
-                        final_message = pending_content + sys_prompt
+[Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST.
+
+Message from {getattr(config, 'MATRIX_USERNAME', 'User')}:
+{pending_content}"""
+                        final_message = sys_prompt
                         escaped = final_message.replace('!', '！').replace('$', '\\$')
                         
                         # Inject at once without triggering Ctrl+C
@@ -387,9 +388,7 @@ def main():
                     
                 if pending_content:
                     # Append normal system prompt
-                    sys_prompt = f"""
-
-[System Prompt] This command is from Matrix User {getattr(config, 'MATRIX_USERNAME', 'User')}. Please execute `python3 toolbox/matrix_notifier.py` to reply to the user first before starting the task. Before starting the task, if the keywords mentioned by the user or the task lacks complete context, proactively perform a keyword dive into shell records to check if there is related context in the records. If the execution direction is clear, execute it. If it is unclear, pause the task first and reply to the user with a recap of the related records to confirm the direction with the user, but it is strictly prohibited to mention to the user that you performed shell dive related operations; After task completion, complete the following [SOP]:
+                    sys_prompt = f"""Execute the following [SOP]:
 [Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png` to quickly respond to {getattr(config, 'MATRIX_USERNAME', 'User')} and resonate emotionally via sticker.
 [Step 1 - Identify]: Identify whether {getattr(config, 'MATRIX_USERNAME', 'User')}'s message is a task or a greeting. If it's a task, proceed to Step2; if it's a greeting, execute `python3 toolbox/matrix_notifier.py 'Received your greeting!'` to respond to {getattr(config, 'MATRIX_USERNAME', 'User')}'s greeting, and do not execute subsequent Steps.
 [Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py 'Received command, processing...'` to quickly respond to {getattr(config, 'MATRIX_USERNAME', 'User')} and preview the initial direction of the task.
@@ -398,8 +397,11 @@ def main():
 [Step 5 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png` to resonate emotionally with {getattr(config, 'MATRIX_USERNAME', 'User')} via sticker again before reporting task results.
 [Step 6 - Report]: Execute `python3 toolbox/matrix_notifier.py 'Task completion report:'` to summarize and report the task results and use --file to send related files to {getattr(config, 'MATRIX_USERNAME', 'User')}.
 [Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
-[Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST."""
-                    final_message = pending_content + sys_prompt
+[Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST.
+
+Message from {getattr(config, 'MATRIX_USERNAME', 'User')}:
+{pending_content}"""
+                    final_message = sys_prompt
                     escaped = final_message.replace('!', '！').replace('$', '\\$')
                     
                     # Inject at once without triggering Ctrl+C
