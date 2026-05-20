@@ -126,7 +126,7 @@ class AtomicInjector:
                 escaped = content.replace('!', '！').replace('$', '\\$')
                 
                 # 🚀 物理注入硬化：文字與 Enter 物理分離
-                subprocess.run(['tmux', 'send-keys', '-t', target, '-l', escaped], check=True)
+                subprocess.run(['tmux', 'send-keys', '-t', target, '-l', '--', escaped], check=True)
                 time.sleep(0.8)
                 subprocess.run(['tmux', 'send-keys', '-t', target, 'Enter'], check=True)
                 
@@ -237,7 +237,7 @@ class CommandHandler:
             else:
                 engine_doc_name = "GEMINI.md"
             check_prompt = f"【系統提示】此任務不發送通知給用戶。檢視 AGENT_PROTOCOL.md 與 agent_home_rules.md 內容,確認{engine_doc_name}的規範是否完備,並更新"
-            subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '-l', check_prompt], check=False)
+            subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '-l', '--', check_prompt], check=False)
             time.sleep(0.5)
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'Enter'], check=False)
             self.notifier.notify(msg.source, 'custom', {'content': f'🔄 已向 <b>[{target_agent}]</b> 發送規範更新指令'})

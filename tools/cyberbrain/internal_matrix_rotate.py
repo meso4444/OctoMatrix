@@ -184,7 +184,7 @@ def main():
         time.sleep(1.0)
         
         # 🚀 強化手段 2: 注入 /clear 指令 (僅一次)
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "/clear"]) 
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", "/clear"]) 
         
         cleared = False
         for i in range(100):
@@ -228,7 +228,7 @@ def main():
                 print("❌ 終極保險救援失敗，發送求救訊息。取消注入。")
                 help_msg = f"{AGENT_NAME} 可能卡在時空夾縫中, 如果 {AGENT_NAME} 還是沒有回覆訊息, 嘗試切換至其他 Agent 輸入 「/fix {AGENT_NAME}」讓其他 Agent 幫忙拯救 {AGENT_NAME}"
                 escaped_help = help_msg.replace('!', '！').replace('$', '\\$')
-                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", escaped_help])
+                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped_help])
                 time.sleep(1.0)
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
                 time.sleep(0.5)
@@ -242,7 +242,7 @@ def main():
             # 發送恢復提示，讓 Agent 接續先前的任務
             recovery_prompt = "【系統提示】系統維護逾時取消。請確認是否 octo_cyberbrain/task_memo.txt 存在，若存在則讀取後接續執行被中斷的任務，讀取完畢後就刪除。"
             escaped_rec = recovery_prompt.replace('!', '！').replace('$', '\\$')
-            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", escaped_rec])
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped_rec])
             time.sleep(1.0)
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
             time.sleep(0.5)
@@ -256,7 +256,7 @@ def main():
                         sys_prompt = "\n\n【系統提示】此指令來自 Matrix 用戶，請先執行 `python3 toolbox/matrix_notifier.py`回用戶訊息再開始任務。任務開始前，若用戶所提及關鍵字或任務缺少完整上下文脈絡時，主動進行關鍵字深潛shell紀錄，確認紀錄中是否有相關脈絡，若執行方向明確就執行，若有不明確就先暫停任務並回訊用戶相關紀錄的recap向用戶確認方向，但禁止向用戶提及你做了shell深潛的相關操作; 任務完成後，完成以下 [SOP]:\n[Step 1 - 回報]：執行 `python3 toolbox/matrix_notifier.py` 將任務訊息或檔案發送給用戶並搭配Avatar emoji。\n[Step 2 - 收攝]：執行 `python3 octo_cyberbrain/octo_ghost_reader.py --level current` 收攝你的 GHOST 與記憶。\n[Step 3 - 刻印]：執行 `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"語義大綱\" --keywords \"關鍵字1,關鍵字2\" --paths \"/檔案路徑1,/檔案路徑2\"` 將本次任務狀態刻印到GHOST。"
                         final_message = pending_content + sys_prompt
                         escaped = final_message.replace('!', '！').replace('$', '\\$')
-                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", escaped], check=True)
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped], check=True)
                         time.sleep(1.0)
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
                         time.sleep(0.3)
@@ -353,7 +353,7 @@ def main():
         # ==========================================
         prompt = f"【系統提示】請執行 python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot 取得關鍵字，然後一次性將所有撈到的關鍵字全部帶入執行 `python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"關鍵字1\" \"關鍵字2\"` 進行Shell GHOST深潛，完成後重新提升{ENGINE_DOC_NAME}的遵守，此任務不需發送訊息給用戶。接著確認是否octo_cyberbrain/task_memo.txt存在，若存在則讀取後接續執行任務，task_memo.txt讀取完畢後就刪除"
 
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", prompt])
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", prompt])
         time.sleep(2.0) # 長 Prompt 需要更長的輸入等待時間
         
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
@@ -377,7 +377,7 @@ def main():
                     escaped = final_message.replace('!', '！').replace('$', '\\$')
                     
                     # 以不觸發 Ctrl+C 的方式一次性注入
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", escaped], check=True)
+                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped], check=True)
                     time.sleep(1.0)
                     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
                     time.sleep(0.3)

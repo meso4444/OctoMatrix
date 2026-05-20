@@ -393,7 +393,27 @@ if __name__ == '__main__':
     parser.add_argument('--keyboard', help='JSON string for TG custom keyboard')
     parser.add_argument('--get-id', action='store_true', help='Helper to find Telegram Chat ID')
     
-    args = parser.parse_args()
+    # Intercept sys.argv to safely handle dash-prefixed messages
+    import sys
+    known_flags = {'--file': 2, '--caption': 1, '--template': 1, '--software': 1, '--keyboard': 1, '--get-id': 0, '-h': 0, '--help': 0}
+    new_argv = []
+    i = 1
+    while i < len(sys.argv):
+        arg = sys.argv[i]
+        if arg in known_flags:
+            new_argv.append(arg)
+            n = known_flags[arg]
+            for _ in range(n):
+                i += 1
+                if i < len(sys.argv):
+                    new_argv.append(sys.argv[i])
+        else:
+            new_argv.append('--')
+            new_argv.extend(sys.argv[i:])
+            break
+        i += 1
+
+    args = parser.parse_args(new_argv)
 
     if args.get_id:
         if not TELEGRAM_BOT_TOKEN: print("❌ Missing TELEGRAM_BOT_TOKEN"); sys.exit(1)
