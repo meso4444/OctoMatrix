@@ -182,6 +182,13 @@ def telegram_webhook():
                 
                 forward_to_router(doc_prompt, user_id, username, metadata={'file_type': 'file', 'local_path': local_path})
         
+        # 🎭 處理貼圖 (Sticker)
+        elif 'sticker' in msg_data:
+            sticker = msg_data['sticker']
+            emoji = sticker.get('emoji', '貼圖')
+            sticker_prompt = f"【系統提示】用戶傳送了一個貼圖：{emoji}"
+            forward_to_router(sticker_prompt, user_id, username, metadata={'file_type': 'sticker'})
+        
         return jsonify({'status': 'ok'})
     except Exception as e:
         logger.error(f"❌ Webhook 異常: {e}")

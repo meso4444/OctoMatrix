@@ -195,14 +195,40 @@ class TelegramSender:
         except: return False
 
     def send_file(self, chat_id: str, file_path: str, file_type: str = 'document', caption: str = '', **kwargs) -> bool:
+        is_temp_webp = False
+        target_path = file_path
         try:
-            method = {'photo': 'sendPhoto', 'video': 'sendVideo', 'audio': 'sendAudio'}.get(file_type, 'sendDocument')
-            param = 'photo' if file_type == 'photo' else ('video' if file_type == 'video' else ('audio' if file_type == 'audio' else 'document'))
-            with open(file_path, 'rb') as f:
-                data = {'chat_id': chat_id, 'caption': caption[:1000], 'parse_mode': 'HTML'}
+            # 貼圖特化處理：自動轉換為 WebP 且強制不帶 caption
+            if file_type == 'sticker':
+                if not file_path.lower().endswith('.webp'):
+                    try:
+                        from PIL import Image
+                        target_path = file_path + ".webp"
+                        Image.open(file_path).save(target_path, "WEBP")
+                        is_temp_webp = True
+                    except Exception as e:
+                        logger.warning(f"[Notifier] 貼圖轉換失敗: {e}")
+                caption = "" # 貼圖強制不帶文字
+
+            method_map = {'photo': 'sendPhoto', 'video': 'sendVideo', 'audio': 'sendAudio', 'sticker': 'sendSticker'}
+            method = method_map.get(file_type, 'sendDocument')
+            
+            param_map = {'photo': 'photo', 'video': 'video', 'audio': 'audio', 'sticker': 'sticker'}
+            param = param_map.get(file_type, 'document')
+            
+            with open(target_path, 'rb') as f:
+                data = {'chat_id': chat_id, 'parse_mode': 'HTML'}
+                if caption:
+                    data['caption'] = caption[:1000]
                 resp = requests.post(f"{self.api_url}/{method}", files={param: f}, data=data, timeout=30)
                 return resp.status_code == 200
-        except: return False
+        except Exception as e:
+            logger.error(f"[Notifier] Telegram 發送檔案失敗: {e}")
+            return False
+        finally:
+            if is_temp_webp and os.path.exists(target_path):
+                try: os.remove(target_path)
+                except: pass
 
 
 class DiscordSender:
@@ -386,7 +412,7 @@ def get_source_info():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='OctoMatrix Matrix Notifier CLI (Multi-Channel)')
     parser.add_argument('message', nargs='*', help='Message content')
-    parser.add_argument('--file', nargs=2, metavar=('TYPE', 'PATH'), help='Send a file (type: photo, video, audio, document)')
+    parser.add_argument('--file', nargs=2, metavar=('TYPE', 'PATH'), help='Send a file (type: photo, video, audio, document, sticker)')
     parser.add_argument('--caption', help='Caption for the file')
     parser.add_argument('--template', default='custom', help='Template ID to use')
     parser.add_argument('--software', help='Software name for template lookup')
