@@ -246,20 +246,20 @@ class CommandHandler:
             parts = content.split()
             if len(parts) > 1:
                 target = parts[1]
-                prompt = (
-                    f"執行以下 [SOP]:\n"
-                    f"[Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png 快速回應 {MATRIX_USERNAME} 透過貼圖產生情感共鳴。\n"
-                    f"[Step 1 - 辨識]：辨識 {MATRIX_USERNAME} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '已收到您的問候！' 回應 {MATRIX_USERNAME} 的問候，並且不執行後續Step。\n"
-                    f"[Step 2 - 預告]：執行 python3 toolbox/matrix_notifier.py '正在檢查 {target} 的狀態...' 快速回應 {MATRIX_USERNAME} 預告任務進行初步方向。\n"
-                    f"[Step 3 - 梳理]：若任務指示和方向明確時，進入Step4; 若任務指示和方向不明確且缺乏完整上下文脈絡時，主動進行關鍵字深潛shell紀錄，若存在明確歷史脈絡，進入Step4，否則就先中止任務並執行 python3 toolbox/matrix_notifier.py '關於 {target} 的檢查，我需要更多具體資訊...' 向 {MATRIX_USERNAME} 詢問具體方向，並且不執行後續Step。\n"
-                    f"[Step 4 - 執行]：正式開始執行任務，並透過 tmux 進入 '{target}' 的視窗，查看其前 50 行狀態並分析。主動撰寫任務過程與成果紀錄的md。 小型任務執行完成後進入Step5; 大型任務於進行期間若步驟較多，應中途執行 python3 toolbox/matrix_notifier.py '正在分析日誌中...' 進行中間進度回報，任務完成後再進入Step5。\n"
-                    f"[Step 5 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/smart.png 於回應任務成果前再次與 {MATRIX_USERNAME} 透過貼圖產生情感共鳴。\n"
-                    f"[Step 6 - 回報]：執行 python3 toolbox/matrix_notifier.py '檢查完成。' 將任務成果彙總回報並使用 --file 將相關日誌發送給 {MATRIX_USERNAME}。\n"
-                    f"[Step 7 - 收攝]：執行 python3 octo_cyberbrain/octo_ghost_reader.py --level current 收攝你的 GHOST 與記憶。\n"
-                    f"[Step 8 - 刻印]：執行 python3 octo_cyberbrain/octo_ghost_updater.py --outline \"檢查了 {target} 的執行狀態\" --keywords \"inspect,{target}\" --paths \"/tmp/inspect_{target}.log\" 將本次任務狀態刻印到GHOST。\n\n"
-                    f"來自 {MATRIX_USERNAME} 的訊息:\n"
-                    f"請幫我檢查 '{target}' 的狀態。"
-                )
+                prompt = f"""執行以下 [SOP]:
+[Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png 快速回應 {MATRIX_USERNAME} 透過貼圖產生情感共鳴。
+[Step 1 - 辨識]：辨識 {MATRIX_USERNAME} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '已收到您的問候！' 回應 {MATRIX_USERNAME} 的問候，並且不執行後續Step。
+[Step 2 - 預告]：執行 python3 toolbox/matrix_notifier.py '收到指令，正在處理中...' 快速回應 {MATRIX_USERNAME} 預告任務進行初步方向。
+[Step 3 - 梳理]：若任務指示和方向明確時，進入Step4; 若任務指示和方向不明確且缺乏完整上下文脈絡時，主動進行關鍵字深潛shell紀錄，若存在明確歷史脈絡，進入Step4，否則就先中止任務並執行 python3 toolbox/matrix_notifier.py '抱歉，我需要更多資訊才能進行...' 向 {MATRIX_USERNAME} 詢問具體方向，並且不執行後續Step。
+[Step 4 - 執行]：正式開始執行任務，並且主動撰寫任務過程與成果紀錄的md。 小型任務執行完成後進入Step5; 大型任務於進行期間若步驟較多，應中途執行 python3 toolbox/matrix_notifier.py '任務進行中，請稍候...' 進行中間進度回報，任務完成後再進入Step5。
+[Step 5 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png 於回應任務成果前再次與 {MATRIX_USERNAME} 透過貼圖產生情感共鳴。
+[Step 6 - 回報]：執行 python3 toolbox/matrix_notifier.py '任務完成報告：' 將任務成果彙總回報並使用 --file 將相關檔案發送給 {MATRIX_USERNAME}。
+[Step 7 - 收攝]：執行 python3 octo_cyberbrain/octo_ghost_reader.py --level current 收攝你的 GHOST 與記憶。
+[Step 8 - 刻印]：執行 python3 octo_cyberbrain/octo_ghost_updater.py --outline "語義大綱" --keywords "關鍵字1,關鍵字2" --paths "/檔案路徑1,/檔案路徑2" 將本次任務狀態刻印到GHOST。
+
+來自 {MATRIX_USERNAME} 的訊息:
+請執行以下檢查任務：
+透過 tmux 進入 '{target}' 的視窗，查看其前 50 行狀態並分析。主動撰寫任務過程與成果紀錄的md。"""
                 self.injector.inject(prompt, target_agent)
                 self.notifier.notify(msg.source, 'custom', {'content': f'🔍 已指派 {target_agent} 檢查 {target}...'})
             return True
@@ -279,28 +279,28 @@ class CommandHandler:
                     else:
                         start_cmd = f'claude --permission-mode bypassPermissions --model {model}' if model and model.lower() != 'auto' else 'claude --permission-mode bypassPermissions'
                         
-                    prompt = f"""執行以下 [SOP]:
-                    [Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png 快速回應 {MATRIX_USERNAME} 透過貼圖產生情感共鳴。
-                    [Step 1 - 辨識]：辨識 {MATRIX_USERNAME} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '已收到您的問候！' 回應 {MATRIX_USERNAME} 的問候，並且不執行後續Step。
-                    [Step 2 - 預告]：執行 python3 toolbox/matrix_notifier.py '正在嘗試修復 {target_name}...' 快速回應 {MATRIX_USERNAME} 預告任務進行初步方向。
-                    [Step 3 - 梳理]：若任務指示和方向明確時，進入Step4; 若任務指示和方向不明確且缺乏完整上下文脈絡時，主動進行關鍵字深潛shell紀錄，若存在明確歷史脈絡，進入Step4，否則就先中止任務並執行 python3 toolbox/matrix_notifier.py '關於修復 {target_name}，我需要更多資訊...' 向 {MATRIX_USERNAME} 詢問具體方向，並且不執行後續Step。
-                    [Step 4 - 執行]：正式開始執行任務，透過 tmux 查找 session "{TMUX_SESSION_NAME}"，進入 "{target_name}" 的視窗，
-                    輸入 /quit 或 /exit 並執行 Enter，等待3秒後執行 pwd 指令確認回到 Linux Shell 後，再執行啟動指令：`{start_cmd}`。
-                    等待5秒啟動完成後，請輸入 `/resume` ,執行 Enter, 等待3秒後再執行1次enter, 以恢復最近一次的對話紀錄。
+                        prompt = f"""執行以下 [SOP]:
+[Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png 快速回應 {MATRIX_USERNAME} 透過貼圖產生情感共鳴。
+[Step 1 - 辨識]：辨識 {MATRIX_USERNAME} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '已收到您的問候！' 回應 {MATRIX_USERNAME} 的問候，並且不執行後續Step。
+[Step 2 - 預告]：執行 python3 toolbox/matrix_notifier.py '收到指令，正在處理中...' 快速回應 {MATRIX_USERNAME} 預告任務進行初步方向。
+[Step 3 - 梳理]：若任務指示和方向明確時，進入Step4; 若任務指示和方向不明確且缺乏完整上下文脈絡時，主動進行關鍵字深潛shell紀錄，若存在明確歷史脈絡，進入Step4，否則就先中止任務並執行 python3 toolbox/matrix_notifier.py '抱歉，我需要更多資訊才能進行...' 向 {MATRIX_USERNAME} 詢問具體方向，並且不執行後續Step。
+[Step 4 - 執行]：正式開始執行任務，並且主動撰寫任務過程與成果紀錄的md。 小型任務執行完成後進入Step5; 大型任務於進行期間若步驟較多，應中途執行 python3 toolbox/matrix_notifier.py '任務進行中，請稍候...' 進行中間進度回報，任務完成後再進入Step5。
+[Step 5 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png 於回應任務成果前再次與 {MATRIX_USERNAME} 透過貼圖產生情感共鳴。
+[Step 6 - 回報]：執行 python3 toolbox/matrix_notifier.py '任務完成報告：' 將任務成果彙總回報並使用 --file 將相關檔案發送給 {MATRIX_USERNAME}。
+[Step 7 - 收攝]：執行 python3 octo_cyberbrain/octo_ghost_reader.py --level current 收攝你的 GHOST 與記憶。
+[Step 8 - 刻印]：執行 python3 octo_cyberbrain/octo_ghost_updater.py --outline "語義大綱" --keywords "關鍵字1,關鍵字2" --paths "/檔案路徑1,/檔案路徑2" 將本次任務狀態刻印到GHOST。
 
-                    【⚠️ 技術限制：Tmux Send-Keys 與 Enter 鍵處理 (嚴格執行)】
-                    必須採用 「文字 -> 延遲 -> Enter」 的三部曲寫法：
-                    tmux send-keys -t target 您的訊息內容 && sleep 1 && tmux send-keys -t target Enter
+來自 {MATRIX_USERNAME} 的訊息:
+請幫我修復 '{target_name}'。
+透過 tmux 查找 session "{TMUX_SESSION_NAME}"，進入 "{target_name}" 的視窗，
+輸入 /quit 或 /exit 並執行 Enter，等待3秒後執行 pwd 指令確認回到 Linux Shell 後，再執行啟動指令：`{start_cmd}`。
+等待5秒啟動完成後，請輸入 `/resume` ,執行 Enter, 等待3秒後再執行1次enter, 以恢復最近一次的對話紀錄。
 
-                    主動撰寫修復過程紀錄的md。 小型任務執行完成後進入Step5; 大型任務於進行期間若步驟較多，應中途執行 python3 toolbox/matrix_notifier.py '正在重啟服務中...' 進行中間進度回報，任務完成後再進入Step5。
-                    [Step 5 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png 於回應任務成果前再次與 {MATRIX_USERNAME} 透過貼圖產生情感共鳴。
-                    [Step 6 - 回報]：執行 python3 toolbox/matrix_notifier.py '修復完成！{target_name} 應已恢復正常運作。' 將任務成果彙總回報給 {MATRIX_USERNAME}。
-                    [Step 7 - 收攝]：執行 python3 octo_cyberbrain/octo_ghost_reader.py --level current 收攝你的 GHOST 與記憶。
-                    [Step 8 - 刻印]：執行 python3 octo_cyberbrain/octo_ghost_updater.py --outline "執行了對 {target_name} 的修復重啟作業" --keywords "fix,{target_name}" --paths "/tmp/fix_{target_name}.log" 將本次任務狀態刻印到GHOST。
+【⚠️ 技術限制：Tmux Send-Keys 與 Enter 鍵處理 (嚴格執行)】
+必須採用 「文字 -> 延遲 -> Enter」 的三部曲寫法：
+tmux send-keys -t target 您的訊息內容 && sleep 1 && tmux send-keys -t target Enter
 
-                    來自 {MATRIX_USERNAME} 的訊息:
-                    請幫我修復 '{target_name}'。"
-                    """
+主動撰寫修復過程紀錄的md。"""
                     self.injector.inject(prompt, target_agent)
                     self.notifier.notify(msg.source, 'custom', {'content': f'🚑 已指派 <b>[{target_agent}]</b> 去修復 <b>[{target_name}]</b> (引擎: {engine})...'})
                 else:
