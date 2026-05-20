@@ -245,13 +245,29 @@ class DiscordSender:
             return success
         except: return False
 
-    def send_file(self, channel_id: str, file_path: str, caption: str = '', **kwargs) -> bool:
+    def send_file(self, channel_id: str, file_path: str, file_type: str = 'document', caption: str = '', **kwargs) -> bool:
+        is_temp_webp = False
+        target_path = file_path
         try:
-            with open(file_path, 'rb') as f:
+            if file_type == 'sticker':
+                if not file_path.lower().endswith('.webp'):
+                    try:
+                        from PIL import Image
+                        target_path = file_path + ".webp"
+                        Image.open(file_path).save(target_path, "WEBP")
+                        is_temp_webp = True
+                    except: pass
+                caption = "" # 貼圖模式不帶文字
+
+            with open(target_path, 'rb') as f:
                 data = {'content': caption[:1900]}
-                resp = requests.post(f"{DISCORD_API_URL}/channels/{channel_id}/messages", files={'file': (os.path.basename(file_path), f)}, data=data, headers=self.headers, timeout=30)
+                resp = requests.post(f"{DISCORD_API_URL}/channels/{channel_id}/messages", files={'file': (os.path.basename(target_path), f)}, data=data, headers=self.headers, timeout=30)
                 return resp.status_code in [200, 201]
         except: return False
+        finally:
+            if is_temp_webp and os.path.exists(target_path):
+                try: os.remove(target_path)
+                except: pass
 
 
 class SlackSender:
@@ -277,26 +293,35 @@ class SlackSender:
             logger.error(f"[Notifier] Slack 發送未知異常: {e}")
             return False
 
-    def send_file(self, channel_id: str, file_path: str, caption: str = '', **kwargs) -> bool:
+    def send_file(self, channel_id: str, file_path: str, file_type: str = 'document', caption: str = '', **kwargs) -> bool:
+        is_temp_webp = False
+        target_path = file_path
         try:
+            if file_type == 'sticker':
+                if not file_path.lower().endswith('.webp'):
+                    try:
+                        from PIL import Image
+                        target_path = file_path + ".webp"
+                        Image.open(file_path).save(target_path, "WEBP")
+                        is_temp_webp = True
+                    except: pass
+                caption = "" # 貼圖模式不帶文字
+
             # 使用 files_upload_v2 自動處理全新的三階段上傳流程 (2025+ 規範)
             resp = self.client.files_upload_v2(
                 channel=channel_id,
-                file=file_path,
-                initial_comment=caption[:1900],
-                title=os.path.basename(file_path)
+                file=target_path,
+                initial_comment=caption[:1900] if caption else None,
+                title=os.path.basename(target_path)
             )
-            if resp.get('ok'):
-                return True
-            else:
-                logger.error(f"[Notifier] Slack 文件上傳失敗 (v2): {resp.get('error')}")
-                return False
-        except SlackApiError as e:
-            logger.error(f"[Notifier] Slack API 上傳異常: {e.response['error']}")
-            return False
+            return resp.get('ok', False)
         except Exception as e:
-            logger.error(f"[Notifier] Slack 文件上傳未知異常: {e}")
+            logger.error(f"[Notifier] Slack 檔案發送異常: {e}")
             return False
+        finally:
+            if is_temp_webp and os.path.exists(target_path):
+                try: os.remove(target_path)
+                except: pass
 
 
 # ============================================================================
@@ -358,8 +383,7 @@ class MatrixNotifier:
         if not target_id: target_id = self._get_target_id(target_platform)
         if not target_id: return False
         
-        if target_platform == 'telegram': return sender.send_file(target_id, file_path, file_type, caption)
-        return sender.send_file(target_id, file_path, caption)
+        return sender.send_file(target_id, file_path, file_type, caption)
 
 
 def get_router_url() -> str:
