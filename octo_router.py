@@ -20,7 +20,7 @@ from flask import Flask, request, jsonify
 from config import (
     TELEGRAM_GATEWAY_PORT,
     AGENTS, DEFAULT_ACTIVE_AGENT, TMUX_SESSION_NAME, CUSTOM_MENU,
-    COLLABORATION_GROUPS, get_agent_info, AWAKE_YAML_PATH
+    COLLABORATION_GROUPS, get_agent_info, AWAKE_YAML_PATH, MATRIX_USERNAME
 )
 from tools.notification.matrix_notifier import MatrixNotifier
 from awake_manager import AwakeManager
@@ -247,12 +247,19 @@ class CommandHandler:
             if len(parts) > 1:
                 target = parts[1]
                 prompt = (
-                    f"Enter the '{target}' window via tmux, view the first 50 lines of status and analyze.\n\n"
-                    f"[System Prompt]This command is from Matrix user. After task completion, complete the following [SOP]:\n"
-                    f"[Step 1 - Report]: Execute `python3 toolbox/matrix_notifier.py` to send task message or file to user with Avatar emoji.\n"
-                    f"[Step 2 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.\n"
-                    f"[Step 3 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"Semantic Outline\" --keywords \"Keyword1,Keyword2\" --paths \"/FilePath1,/FilePath2\"` to imprint task status to GHOST."
-                )
+                    f"Execute the following [SOP]:\n"
+                    f"[Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png` to quickly respond to {MATRIX_USERNAME} and resonate emotionally via sticker.\n"
+                    f"[Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If it's a task, proceed to Step2; if it's a greeting, execute `python3 toolbox/matrix_notifier.py 'Received your greeting!'` to respond to {MATRIX_USERNAME}'s greeting, and do not execute subsequent Steps.\n"
+                    f"[Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py 'Checking the status of {target}...'` to quickly respond to {MATRIX_USERNAME} and preview the initial direction of the task.\n"
+                    f"[Step 3 - Clarify]: If the task instruction and direction are clear, proceed to Step4; if the task instruction and direction are unclear and lack complete context, proactively dive into shell keywords to record. If a clear historical context exists, proceed to Step4, otherwise suspend the task and execute `python3 toolbox/matrix_notifier.py 'Regarding the inspection of {target}, I need more specific information...'` to ask {MATRIX_USERNAME} for specific direction, and do not execute subsequent Steps.\n"
+                    f"[Step 4 - Execute]: Officially start the task, enter the '{target}' window via tmux, view the first 50 lines of status and analyze. Proactively write an md recording the task process and results. After completing a small task, proceed to Step5; for large tasks, if there are many steps, you should execute `python3 toolbox/matrix_notifier.py 'Analyzing logs...'` midway to report intermediate progress, and then proceed to Step5 after task completion.\n"
+                    f"[Step 5 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/smart.png` to resonate emotionally with {MATRIX_USERNAME} via sticker again before reporting task results.\n"
+                    f"[Step 6 - Report]: Execute `python3 toolbox/matrix_notifier.py 'Inspection complete.'` to summarize and report the task results and use --file to send related logs to {MATRIX_USERNAME}.\n"
+                    f"[Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.\n"
+                    f"[Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"Checked the execution status of {target}\" --keywords \"inspect,{target}\" --paths \"/tmp/inspect_{target}.log\"` to imprint task status to GHOST.\n\n"
+
+                    f"Message from {MATRIX_USERNAME}:\n"
+                    f"Please check the status of '{target}'.")
                 self.injector.inject(prompt, target_agent)
                 self.notifier.notify(msg.source, 'custom', {'content': f'🔍 Assigned {target_agent} to check {target}...'})
             return True
@@ -272,18 +279,24 @@ class CommandHandler:
                     else:
                         start_cmd = f'claude --permission-mode bypassPermissions --model {model}' if model and model.lower() != 'auto' else 'claude --permission-mode bypassPermissions'
 
-                    prompt = f"""Find session "{TMUX_SESSION_NAME}" via tmux, enter the window of "{target_name}",
-enter /quit or /exit and press Enter, wait 3 seconds then execute pwd command to confirm returning to Linux Shell, then execute startup command: `{start_cmd}`.
-After waiting 5 seconds for startup to complete, please enter `/resume`, press Enter, wait 3 seconds then press enter once more to restore the last conversation record.
+                    prompt = f"""Execute the following [SOP]:
+                    [Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png` to quickly respond to {MATRIX_USERNAME} and resonate emotionally via sticker.
+                    [Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If it's a task, proceed to Step2; if it's a greeting, execute `python3 toolbox/matrix_notifier.py 'Received your greeting!'` to respond to {MATRIX_USERNAME}'s greeting, and do not execute subsequent Steps.
+                    [Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py 'Attempting to fix {target_name}...'` to quickly respond to {MATRIX_USERNAME} and preview the initial direction of the task.
+                    [Step 3 - Clarify]: If the task instruction and direction are clear, proceed to Step4; if the task instruction and direction are unclear and lack complete context, proactively dive into shell keywords to record. If a clear historical context exists, proceed to Step4, otherwise suspend the task and execute `python3 toolbox/matrix_notifier.py 'Regarding fixing {target_name}, I need more information...'` to ask {MATRIX_USERNAME} for specific direction, and do not execute subsequent Steps.
+                    [Step 4 - Execute]: Officially start the task, find session "{TMUX_SESSION_NAME}" via tmux, enter the window of "{target_name}",
+                    enter /quit or /exit and press Enter, wait 3 seconds then execute pwd command to confirm returning to Linux Shell, then execute startup command: `{start_cmd}`.
+                    After waiting 5 seconds for startup to complete, please enter `/resume`, press Enter, wait 3 seconds then press enter once more to restore the last conversation record.
 
-【⚠️ Technical Limitation: Tmux Send-Keys and Enter key handling (strictly execute)】
-Must use the "text -> delay -> Enter" trilogy:
-tmux send-keys -t target Your message content && sleep 1 && tmux send-keys -t target Enter
+                    【⚠️ Technical Limitation: Tmux Send-Keys and Enter key handling (strictly execute)】
+                    Must use the "text -> delay -> Enter" trilogy:
+                    tmux send-keys -t target Your message content && sleep 1 && tmux send-keys -t target Enter
 
-[System Prompt]This command is from Matrix user. After task completion, complete the following [SOP]:
-[Step 1 - Report]: Execute `python3 toolbox/matrix_notifier.py` to send task message or file to user with Avatar emoji.
-[Step 2 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
-[Step 3 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Semantic Outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST."""
+                    After fixing, proceed to Step5.
+                    [Step 5 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/smart.png` to resonate emotionally with {MATRIX_USERNAME} via sticker again before reporting task results.
+                    [Step 6 - Report]: Execute `python3 toolbox/matrix_notifier.py 'Fix complete.'` to summarize and report the task results to {MATRIX_USERNAME}.
+                    [Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
+                    [Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Fixed {target_name}" --keywords "fix,{target_name}" --paths ""` to imprint task status to GHOST."""
                     self.injector.inject(prompt, target_agent)
                     self.notifier.notify(msg.source, 'custom', {'content': f'🚑 Assigned <b>[{target_agent}]</b> to fix <b>[{target_name}]</b> (engine: {engine})...'})
                 else:
@@ -307,8 +320,26 @@ tmux send-keys -t target Your message content && sleep 1 && tmux send-keys -t ta
             except: pass
 
         final_message = content
-        if msg.source != 'awake' and '[System Prompt]' not in content:
-            final_message += f"\n\n[System Prompt]This command is from Matrix user, please execute `python3 toolbox/matrix_notifier.py` to reply to the user first before starting the task. Before starting the task, if the keywords mentioned by the user or the task lacks complete context, proactively perform a keyword dive into shell records to check if there is related context in the records. If the execution direction is clear, execute it. If it is unclear, pause the task first and reply to the user with a recap of the related records to confirm the direction with the user, but it is strictly prohibited to mention to the user that you performed shell dive related operations; After task completion, complete the following [SOP]:\n[Step 1 - Report]: Execute `python3 toolbox/matrix_notifier.py` to send task message or file to user with Avatar emoji.\n[Step 2 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.\n[Step 3 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"Semantic Outline\" --keywords \"Keyword1,Keyword2\" --paths \"/FilePath1,/FilePath2\"` to imprint task status to GHOST."
+
+        # 🛡️ Inject standard SOP (Matrix message processing flow)
+        # ==========================================
+        if msg.source in ['telegram', 'discord', 'slack'] and 'Execute the following [SOP]:' not in content:
+            sop = f"""Execute the following [SOP]:
+[Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png` to quickly respond to {MATRIX_USERNAME} and resonate emotionally via sticker.
+[Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If it's a task, proceed to Step2; if it's a greeting, execute `python3 toolbox/matrix_notifier.py 'Received your greeting!'` to respond to {MATRIX_USERNAME}'s greeting, and do not execute subsequent Steps.
+[Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py 'Received command, processing...'` to quickly respond to {MATRIX_USERNAME} and preview the initial direction of the task.
+[Step 3 - Clarify]: If the task instruction and direction are clear, proceed to Step4; if the task instruction and direction are unclear and lack complete context, proactively dive into shell keywords to record. If a clear historical context exists, proceed to Step4, otherwise suspend the task and execute `python3 toolbox/matrix_notifier.py 'Sorry, I need more information to proceed...'` to ask {MATRIX_USERNAME} for specific direction, and do not execute subsequent Steps.
+[Step 4 - Execute]: Officially start the task, and proactively write an md recording the task process and results. After completing a small task, proceed to Step5; for large tasks, if there are many steps, you should execute `python3 toolbox/matrix_notifier.py 'Task in progress, please wait...'` midway to report intermediate progress, and then proceed to Step5 after task completion.
+[Step 5 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png` to resonate emotionally with {MATRIX_USERNAME} via sticker again before reporting task results.
+[Step 6 - Report]: Execute `python3 toolbox/matrix_notifier.py 'Task completion report:'` to summarize and report the task results and use --file to send related files to {MATRIX_USERNAME}.
+[Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
+[Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST.
+
+[System Prompt] This command is from Matrix user {MATRIX_USERNAME}.
+
+User's message content:
+"""
+            final_message = f"{sop}\n{content}"
 
         # 👻 GHOST physical file blocking and accumulation mechanism
         agent_dir = os.path.join(AGENT_HOME_BASE, target_agent)

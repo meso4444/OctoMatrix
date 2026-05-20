@@ -73,6 +73,11 @@ if _instance_config:
 # 4. Variable mapping and environment variable override (extension: three-channel credential support)
 
 # ==========================================
+# User Information
+# ==========================================
+MATRIX_USERNAME = os.environ.get("MATRIX_USERNAME", _config.get("matrix_username", "User"))
+
+# ==========================================
 # Telegram Platform Configuration
 # ==========================================
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")

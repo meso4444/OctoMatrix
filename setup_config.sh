@@ -25,6 +25,7 @@ if [ -f "$CONFIG_YAML" ]; then
 fi
 
 # Create snapshot for restoration (for Q operation)
+ORIG_MATRIX_USERNAME="${MATRIX_USERNAME:-User}"
 ORIG_TELEGRAM_ENABLED="${TELEGRAM_ENABLED:-true}"
 ORIG_TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-}"
 ORIG_TELEGRAM_CHAT_ID="${TELEGRAM_CHAT_ID:-}"
@@ -46,6 +47,7 @@ ORIG_NGROK_API_PORT="$CUR_NGROK_PORT"
 ORIG_ROUTER_PORT="$CUR_ROUTER_PORT"
 
 # Current working variables
+MATRIX_USERNAME="$ORIG_MATRIX_USERNAME"
 TELEGRAM_ENABLED="$ORIG_TELEGRAM_ENABLED"
 TELEGRAM_BOT_TOKEN="$ORIG_TELEGRAM_BOT_TOKEN"
 TELEGRAM_CHAT_ID="$ORIG_TELEGRAM_CHAT_ID"
@@ -89,6 +91,11 @@ except: sys.exit(2)
 # --- Write .env function ---
 write_env_file() {
     cat > "$ENV_FILE" << EOF
+# =========================================
+# User Information
+# =========================================
+MATRIX_USERNAME=$MATRIX_USERNAME
+
 # =========================================
 # Telegram Configuration
 # =========================================
@@ -173,26 +180,35 @@ while true; do
     echo "=========================================="
 
     # Display current status
-    echo "📊 Current channel status:"
+    echo "📊 Current Status:"
+    echo "  👤 User Nickname: $MATRIX_USERNAME"
     [ "$TELEGRAM_ENABLED" = "true" ] && echo "  ✅ Telegram (Enabled)" || echo "  ⭕ Telegram (Disabled)"
     [ "$DISCORD_ENABLED" = "true" ] && echo "  ✅ Discord  (Enabled)" || echo "  ⭕ Discord  (Disabled)"
     [ "$SLACK_ENABLED" = "true" ] && echo "  ✅ Slack    (Enabled)" || echo "  ⭕ Slack    (Disabled)"
     echo "----------------------------------------"
-    echo " [1] 📱 Configure Telegram and Ngrok Tunnel"
-    echo " [2] 💻 Configure Discord"
-    echo " [3] ⚡ Configure Slack"
-    echo " [4] 🌍 Configure Network and Ports"
-    echo " [5] 🤖 Configure AI Agent Squad and Advanced Parameters"
-    echo " [6] 🔐 AI Agent CLI Authentication Settings"
+    echo " [1] 👤 Configure User Nickname (Username)"
+    echo " [2] 📱 Configure Telegram and Ngrok Tunnel"
+    echo " [3] 💻 Configure Discord"
+    echo " [4] ⚡ Configure Slack"
+    echo " [5] 🌍 Configure Network and Ports"
+    echo " [6] 🤖 Configure AI Agent Squad and Advanced Parameters"
+    echo " [7] 🔐 AI Agent CLI Authentication Settings"
     echo "----------------------------------------"
     echo " [S] 💾 Save Configuration and Start (Save)"
     echo " [C] 🧹 Clear Configuration and Credentials (Clear)"
     echo " [Q] ❌ Abandon Changes and Exit (Quit)"
     echo "=========================================="
 
-    read -p "Please select operation [1-6, S, C, Q]: " choice
+    read -p "Please select operation [1-7, S, C, Q]: " choice
 
-    case $choice in        1)
+    case $choice in
+        1)
+            echo ""
+            echo "👤 User Nickname Configuration"
+            read -p "  Please enter your nickname [current: $MATRIX_USERNAME]: " INPUT_USERNAME
+            MATRIX_USERNAME="${INPUT_USERNAME:-$MATRIX_USERNAME}"
+            ;;
+        2)
             echo ""
             echo "📱 Telegram Configuration"
             read -p "  Enable Telegram? (y/N) [current: $TELEGRAM_ENABLED]: " INPUT_ENABLE
@@ -217,7 +233,7 @@ while true; do
                 TELEGRAM_ENABLED="false"
             fi
             ;;
-        2)
+        3)
             echo ""
             echo "💻 Discord Configuration"
             read -p "  Enable Discord? (y/N) [current: $DISCORD_ENABLED]: " INPUT_ENABLE
@@ -233,7 +249,7 @@ while true; do
                 DISCORD_ENABLED="false"
             fi
             ;;
-        3)
+        4)
             echo ""
             echo "⚡ Slack Configuration"
             read -p "  Enable Slack? (y/N) [current: $SLACK_ENABLED]: " INPUT_ENABLE
@@ -251,7 +267,7 @@ while true; do
                 SLACK_ENABLED="false"
             fi
             ;;
-        4)
+        5)
             echo ""
             echo "🌍 Network and Port Configuration"
             read -p "  1. Telegram Gateway Port [current: $TELEGRAM_GATEWAY_PORT]: " INPUT_TG_PORT
@@ -261,13 +277,13 @@ while true; do
             read -p "  3. Octo Router Port [current: $ROUTER_PORT]: " INPUT_ROUTER_PORT
             ROUTER_PORT="${INPUT_ROUTER_PORT:-$ROUTER_PORT}"
             ;;
-        5)
+        6)
             echo ""
             echo "🤖 Starting configuration wizard to configure Agents and advanced parameters..."
             update_config_yaml
             python3 "$SCRIPT_DIR/config_wizard.py" "$CONFIG_YAML"
             ;;
-        6)
+        7)
             echo ""
             bash "$SCRIPT_DIR/agent_credential_wizard.sh" --local
             ;;
@@ -308,6 +324,7 @@ while true; do
                             [ -f "$ENV_FILE" ] && cp "$ENV_FILE" "${ENV_FILE}.${TIMESTAMP}.bak" && echo "✅ Backed up: $(basename "$ENV_FILE").${TIMESTAMP}.bak"
                         fi
                         # Reset variables
+                        MATRIX_USERNAME="User"
                         TELEGRAM_ENABLED="false"; TELEGRAM_BOT_TOKEN=""; TELEGRAM_CHAT_ID=""; NGROK_AUTHTOKEN=""
                         DISCORD_ENABLED="false"; DISCORD_TOKEN=""; DISCORD_SERVER_ID=""; DISCORD_CHANNEL_ID=""
                         SLACK_ENABLED="false"; SLACK_APP_TOKEN=""; SLACK_BOT_TOKEN=""; SLACK_WORKSPACE_ID=""; SLACK_CHANNEL_ID=""
