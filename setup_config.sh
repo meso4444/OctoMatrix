@@ -25,6 +25,7 @@ if [ -f "$CONFIG_YAML" ]; then
 fi
 
 # 建立還原快照 (用於 Q 操作)
+ORIG_MATRIX_USERNAME="${MATRIX_USERNAME:-User}"
 ORIG_TELEGRAM_ENABLED="${TELEGRAM_ENABLED:-true}"
 ORIG_TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-}"
 ORIG_TELEGRAM_CHAT_ID="${TELEGRAM_CHAT_ID:-}"
@@ -46,6 +47,7 @@ ORIG_NGROK_API_PORT="$CUR_NGROK_PORT"
 ORIG_ROUTER_PORT="$CUR_ROUTER_PORT"
 
 # 當前工作變數
+MATRIX_USERNAME="$ORIG_MATRIX_USERNAME"
 TELEGRAM_ENABLED="$ORIG_TELEGRAM_ENABLED"
 TELEGRAM_BOT_TOKEN="$ORIG_TELEGRAM_BOT_TOKEN"
 TELEGRAM_CHAT_ID="$ORIG_TELEGRAM_CHAT_ID"
@@ -89,6 +91,11 @@ except: sys.exit(2)
 # --- 寫入 .env 函數 ---
 write_env_file() {
     cat > "$ENV_FILE" << EOF
+# =========================================
+# 使用者資訊
+# =========================================
+MATRIX_USERNAME=$MATRIX_USERNAME
+
 # =========================================
 # Telegram 配置
 # =========================================
@@ -173,26 +180,35 @@ while true; do
     echo "=========================================="
     
     # 顯示當前狀態
-    echo "📊 當前通道狀態:"
+    echo "📊 當前狀態:"
+    echo "  👤 使用者暱稱: $MATRIX_USERNAME"
     [ "$TELEGRAM_ENABLED" = "true" ] && echo "  ✅ Telegram (啟用)" || echo "  ⭕ Telegram (停用)"
     [ "$DISCORD_ENABLED" = "true" ] && echo "  ✅ Discord  (啟用)" || echo "  ⭕ Discord  (停用)"
     [ "$SLACK_ENABLED" = "true" ] && echo "  ✅ Slack    (啟用)" || echo "  ⭕ Slack    (停用)"
     echo "----------------------------------------"
-    echo " [1] 📱 設定 Telegram 與 Ngrok 隧道"
-    echo " [2] 💻 設定 Discord"
-    echo " [3] ⚡ 設定 Slack"
-    echo " [4] 🌍 設定網路與連接埠 (Ports)"
-    echo " [5] 🤖 設定 AI Agent 軍團與進階參數"
-    echo " [6] 🔐 AI Agent CLI 認證設定"
+    echo " [1] 👤 設定使用者暱稱 (Username)"
+    echo " [2] 📱 設定 Telegram 與 Ngrok 隧道"
+    echo " [3] 💻 設定 Discord"
+    echo " [4] ⚡ 設定 Slack"
+    echo " [5] 🌍 設定網路與連接埠 (Ports)"
+    echo " [6] 🤖 設定 AI Agent 軍團與進階參數"
+    echo " [7] 🔐 AI Agent CLI 認證設定"
     echo "----------------------------------------"
     echo " [S] 💾 儲存設定並啟動 (Save)"
     echo " [C] 🧹 清除設定與憑證 (Clear)"
     echo " [Q] ❌ 放棄變更退出 (Quit)"
     echo "=========================================="
 
-    read -p "請選擇操作 [1-6, S, C, Q]: " choice
+    read -p "請選擇操作 [1-7, S, C, Q]: " choice
 
-    case $choice in        1)
+    case $choice in
+        1)
+            echo ""
+            echo "👤 使用者暱稱設定"
+            read -p "  請輸入您的暱稱 [目前: $MATRIX_USERNAME]: " INPUT_USERNAME
+            MATRIX_USERNAME="${INPUT_USERNAME:-$MATRIX_USERNAME}"
+            ;;
+        2)
             echo ""
             echo "📱 Telegram 設定"
             read -p "  啟用 Telegram? (y/N) [目前: $TELEGRAM_ENABLED]: " INPUT_ENABLE
@@ -200,7 +216,7 @@ while true; do
                 TELEGRAM_ENABLED="true"
                 read -p "  1. Bot Token [目前: ${TELEGRAM_BOT_TOKEN:-未設定}]: " INPUT_BOT_TOKEN
                 TELEGRAM_BOT_TOKEN="${INPUT_BOT_TOKEN:-$TELEGRAM_BOT_TOKEN}"
-                
+
                 # 自動獲取 Chat ID
                 DETECTED_CHAT_ID=""
                 if [ -n "$TELEGRAM_BOT_TOKEN" ]; then
@@ -209,7 +225,7 @@ while true; do
                 fi
                 read -p "  2. Chat ID [目前/自動: ${DETECTED_CHAT_ID:-$TELEGRAM_CHAT_ID}]: " INPUT_CHAT_ID
                 TELEGRAM_CHAT_ID="${INPUT_CHAT_ID:-${DETECTED_CHAT_ID:-$TELEGRAM_CHAT_ID}}"
-                
+
                 echo "  🌐 ngrok 配置 (Telegram Webhook 必要項目)"
                 read -p "  3. ngrok Authtoken [目前: ${NGROK_AUTHTOKEN:-未設定}]: " INPUT_NGROK
                 NGROK_AUTHTOKEN="${INPUT_NGROK:-$NGROK_AUTHTOKEN}"
@@ -217,7 +233,7 @@ while true; do
                 TELEGRAM_ENABLED="false"
             fi
             ;;
-        2)
+        3)
             echo ""
             echo "💻 Discord 設定"
             read -p "  啟用 Discord? (y/N) [目前: $DISCORD_ENABLED]: " INPUT_ENABLE
@@ -233,7 +249,7 @@ while true; do
                 DISCORD_ENABLED="false"
             fi
             ;;
-        3)
+        4)
             echo ""
             echo "⚡ Slack 設定"
             read -p "  啟用 Slack? (y/N) [目前: $SLACK_ENABLED]: " INPUT_ENABLE
@@ -251,7 +267,7 @@ while true; do
                 SLACK_ENABLED="false"
             fi
             ;;
-        4)
+        5)
             echo ""
             echo "🌍 網路與連接埠設定"
             read -p "  1. Telegram Gateway Port [目前: $TELEGRAM_GATEWAY_PORT]: " INPUT_TG_PORT
@@ -261,13 +277,13 @@ while true; do
             read -p "  3. Octo Router Port [目前: $ROUTER_PORT]: " INPUT_ROUTER_PORT
             ROUTER_PORT="${INPUT_ROUTER_PORT:-$ROUTER_PORT}"
             ;;
-        5)
+        6)
             echo ""
             echo "🤖 啟動設定精靈配置 Agent 與進階參數..."
             update_config_yaml
             python3 "$SCRIPT_DIR/config_wizard.py" "$CONFIG_YAML"
             ;;
-        6)
+        7)
             echo ""
             bash "$SCRIPT_DIR/agent_credential_wizard.sh" --local
             ;;
@@ -308,6 +324,7 @@ while true; do
                             [ -f "$ENV_FILE" ] && cp "$ENV_FILE" "${ENV_FILE}.${TIMESTAMP}.bak" && echo "✅ 已備份: $(basename "$ENV_FILE").${TIMESTAMP}.bak"
                         fi
                         # 重置變數
+                        MATRIX_USERNAME="User"
                         TELEGRAM_ENABLED="false"; TELEGRAM_BOT_TOKEN=""; TELEGRAM_CHAT_ID=""; NGROK_AUTHTOKEN=""
                         DISCORD_ENABLED="false"; DISCORD_TOKEN=""; DISCORD_SERVER_ID=""; DISCORD_CHANNEL_ID=""
                         SLACK_ENABLED="false"; SLACK_APP_TOKEN=""; SLACK_BOT_TOKEN=""; SLACK_WORKSPACE_ID=""; SLACK_CHANNEL_ID=""

@@ -73,6 +73,11 @@ if _instance_config:
 # 4. 變數映射與環境變數覆蓋 (擴展：三通道憑證支援)
 
 # ==========================================
+# 使用者資訊
+# ==========================================
+MATRIX_USERNAME = os.environ.get("MATRIX_USERNAME", _config.get("matrix_username", "User"))
+
+# ==========================================
 # Telegram 平臺配置
 # ==========================================
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")

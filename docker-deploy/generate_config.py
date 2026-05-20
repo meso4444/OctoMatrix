@@ -81,6 +81,7 @@ def generate_config(instance, data, telegram_gateway_port=11440, ngrok_api_port=
         },
         "agents": agents,
         "default_active_agent": default_agent,
+        "matrix_username": user,
         "octo_cyberbrain": {
             "ghost_check_interval_sec": 60,
             "ghost_compression_threshold_kb": 70,
