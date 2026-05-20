@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 """
 📢 Unified Notifier (matrix_notifier.py)
-Cross-platform notification center - Format translation and automatic fallback
+跨平臺通知中心 - 版型轉譯與自動備援
 
-Responsibilities:
-1. Unified interface: notify(target_platform, template_id, context)
-2. Cross-platform format rendering: compatible with legacy (icon/title/content) and new (platform-specific) templates
-3. Automatic fallback: If primary channel fails, automatically switch to fallback channel
-4. Multi-platform support: TG (HTML) / DS (Markdown) / SL (Plain Text)
+職責：
+1. 統一接口：notify(target_platform, template_id, context)
+2. 跨平臺版型渲染：相容舊版 (icon/title/content) 與新版 (platform-specific) 模板
+3. 自動備援：若主通道失敗，自動轉向備援通道
+4. 多平臺支援：TG (HTML) / DS (Markdown) / SL (Plain Text)
 """
 
 import os
@@ -26,10 +26,10 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
 # ============================================================================
-# Configuration and logging
+# 配置與日誌
 # ============================================================================
 
-# Dynamically load project root directory to sys.path
+# 動態加載專案根目錄到 sys.path
 _current_dir = os.path.dirname(os.path.abspath(__file__))
 _root_dir = _current_dir
 for _ in range(5):
@@ -43,7 +43,7 @@ _log_handlers = [logging.StreamHandler()]
 try:
     _log_handlers.append(logging.FileHandler('/tmp/matrix_notifier.log'))
 except PermissionError:
-    # Prevent multi-user permission conflicts in containers
+    # 防止容器內多用戶權限衝突
     pass
 
 logging.basicConfig(
@@ -53,7 +53,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Notification service configuration
+# 通知服務配置
 try:
     from config import MESSAGE_TEMPLATES_PATH, TELEGRAM_BOT_TOKEN
     TEMPLATES_PATH = MESSAGE_TEMPLATES_PATH
@@ -71,13 +71,13 @@ except ImportError:
     from pathlib import Path
     _cur_dir = Path(__file__).resolve().parent
     CONFIG_PATH = os.getenv('CONFIG_PATH', str(_cur_dir / 'config.yaml'))
-# Platform API endpoints
+# 平臺 API 端點
 DISCORD_API_URL = "https://discord.com/api/v10"
 SLACK_API_URL = "https://slack.com/api"
 
 
 class PlatformEnum(str, Enum):
-    """Communication platform enumeration"""
+    """通訊平臺列舉"""
     TELEGRAM = 'telegram'
     DISCORD = 'discord'
     SLACK = 'slack'
@@ -85,62 +85,62 @@ class PlatformEnum(str, Enum):
 
 
 # ============================================================================
-# Template management
+# 版型管理
 # ============================================================================
 
 class TemplateManager:
     """
-    Message template manager
+    消息版型管理器
     """
 
     def __init__(self, templates_path: str):
         self.templates = self._load_templates(templates_path)
-        logger.info(f"[Notifier] Templates loaded: {templates_path}")
+        logger.info(f"[Notifier] 版型已加載: {templates_path}")
 
     def _load_templates(self, path: str) -> dict:
-        """Load message template configuration"""
+        """加載消息版型配置"""
         try:
             with open(path, 'r', encoding='utf-8') as f:
                 return yaml.safe_load(f)
         except Exception as e:
-            logger.error(f"[Notifier] Template load failed: {e}")
+            logger.error(f"[Notifier] 版型加載失敗: {e}")
             return {}
 
     def render(self, platform: str, template_id: str, context: Dict[str, Any]) -> str:
         """
-        Render message template based on platform
+        根據平臺渲染消息版型
         """
         software = context.get('software')
         all_templates = self.templates.get("templates", {})
         sw_templates = self.templates.get("software_templates", {})
 
-        # 1. Priority lookup for software-specific templates
+        # 1. 優先查找軟體特定版型
         template_entry = None
         if software and software in sw_templates:
             template_entry = sw_templates[software].get(template_id)
-
-        # 2. Fallback to generic template
+        
+        # 2. 回退到通用版型
         if not template_entry:
             template_entry = all_templates.get(template_id, {})
 
         if not template_entry:
-            return context.get('content', f"[Unknown template: {template_id}]")
+            return context.get('content', f"[未知版型: {template_id}]")
 
-        # 3. Get platform-specific content or perform legacy merge
+        # 3. 獲取平臺特定內容或執行 Legacy 合併
         template = template_entry.get(platform)
         if not template:
-            # Handle legacy icon + title + content structure
+            # 處理舊版 icon + title + content 結構
             icon = template_entry.get('icon', '')
             title = template_entry.get('title', '')
             body = template_entry.get('content', '')
-
+            
             if icon or title or body:
                 template = f"{icon} {title}\n\n{body}".strip()
             else:
-                # Avoid converting entire dict to string causing format_map parsing failure
-                template = f"[{template_id}] Notification: {context.get('content', '')}"
-
-        # Prepare base context
+                # 避免將整個 dict 轉成字串導致 format_map 解析失敗
+                template = f"[{template_id}] 通知: {context.get('content', '')}"
+        
+        # 準備基礎上下文
         full_context = {
             'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'platform': platform
@@ -156,9 +156,9 @@ class TemplateManager:
             try:
                 rendered_text = template.format_map(SafeDict(full_context))
             except Exception as e:
-                logger.error(f"[Notifier] Rendering error: {e}")
+                logger.error(f"[Notifier] 渲染異常: {e}")
 
-        # --- Cross-platform tag auto-translation (HTML -> Markdown) ---
+        # --- 跨平臺標籤自動轉譯 (HTML -> Markdown) ---
         if platform == 'discord':
             rendered_text = rendered_text.replace('<b>', '**').replace('</b>', '**')
             rendered_text = rendered_text.replace('<i>', '*').replace('</i>', '*')
@@ -174,7 +174,7 @@ class TemplateManager:
 
 
 # ============================================================================
-# Platform Senders
+# 平臺發送器 (Platform Senders)
 # ============================================================================
 
 class TelegramSender:
@@ -187,7 +187,7 @@ class TelegramSender:
             success = True
             for chunk in chunks:
                 data = {'chat_id': chat_id, 'text': chunk, 'parse_mode': parse_mode}
-                # Telegram-specific keyboard support
+                # Telegram 專屬鍵盤支援
                 if 'reply_markup' in kwargs: data["reply_markup"] = kwargs["reply_markup"]
                 resp = requests.post(f"{self.api_url}/sendMessage", json=data, timeout=5)
                 if resp.status_code != 200: success = False
@@ -195,14 +195,40 @@ class TelegramSender:
         except: return False
 
     def send_file(self, chat_id: str, file_path: str, file_type: str = 'document', caption: str = '', **kwargs) -> bool:
+        is_temp_webp = False
+        target_path = file_path
         try:
-            method = {'photo': 'sendPhoto', 'video': 'sendVideo', 'audio': 'sendAudio'}.get(file_type, 'sendDocument')
-            param = 'photo' if file_type == 'photo' else ('video' if file_type == 'video' else ('audio' if file_type == 'audio' else 'document'))
-            with open(file_path, 'rb') as f:
-                data = {'chat_id': chat_id, 'caption': caption[:1000], 'parse_mode': 'HTML'}
+            # 貼圖特化處理：自動轉換為 WebP 且強制不帶 caption
+            if file_type == 'sticker':
+                if not file_path.lower().endswith('.webp'):
+                    try:
+                        from PIL import Image
+                        target_path = file_path + ".webp"
+                        Image.open(file_path).save(target_path, "WEBP")
+                        is_temp_webp = True
+                    except Exception as e:
+                        logger.warning(f"[Notifier] 貼圖轉換失敗: {e}")
+                caption = "" # 貼圖強制不帶文字
+
+            method_map = {'photo': 'sendPhoto', 'video': 'sendVideo', 'audio': 'sendAudio', 'sticker': 'sendSticker'}
+            method = method_map.get(file_type, 'sendDocument')
+            
+            param_map = {'photo': 'photo', 'video': 'video', 'audio': 'audio', 'sticker': 'sticker'}
+            param = param_map.get(file_type, 'document')
+            
+            with open(target_path, 'rb') as f:
+                data = {'chat_id': chat_id, 'parse_mode': 'HTML'}
+                if caption:
+                    data['caption'] = caption[:1000]
                 resp = requests.post(f"{self.api_url}/{method}", files={param: f}, data=data, timeout=30)
                 return resp.status_code == 200
-        except: return False
+        except Exception as e:
+            logger.error(f"[Notifier] Telegram 發送檔案失敗: {e}")
+            return False
+        finally:
+            if is_temp_webp and os.path.exists(target_path):
+                try: os.remove(target_path)
+                except: pass
 
 
 class DiscordSender:
@@ -241,19 +267,19 @@ class SlackSender:
             for chunk in chunks:
                 resp = self.client.chat_postMessage(channel=channel_id, text=chunk)
                 if not resp.get('ok'):
-                    logger.error(f"[Notifier] Slack send failed: {resp.get('error')}")
+                    logger.error(f"[Notifier] Slack 發送失敗: {resp.get('error')}")
                     success = False
             return success
         except SlackApiError as e:
-            logger.error(f"[Notifier] Slack API error: {e.response['error']}")
+            logger.error(f"[Notifier] Slack API 異常: {e.response['error']}")
             return False
         except Exception as e:
-            logger.error(f"[Notifier] Slack send unknown error: {e}")
+            logger.error(f"[Notifier] Slack 發送未知異常: {e}")
             return False
 
     def send_file(self, channel_id: str, file_path: str, caption: str = '', **kwargs) -> bool:
         try:
-            # Use files_upload_v2 to auto-handle new three-stage upload flow (2025+ standard)
+            # 使用 files_upload_v2 自動處理全新的三階段上傳流程 (2025+ 規範)
             resp = self.client.files_upload_v2(
                 channel=channel_id,
                 file=file_path,
@@ -263,18 +289,18 @@ class SlackSender:
             if resp.get('ok'):
                 return True
             else:
-                logger.error(f"[Notifier] Slack file upload failed (v2): {resp.get('error')}")
+                logger.error(f"[Notifier] Slack 文件上傳失敗 (v2): {resp.get('error')}")
                 return False
         except SlackApiError as e:
-            logger.error(f"[Notifier] Slack API upload error: {e.response['error']}")
+            logger.error(f"[Notifier] Slack API 上傳異常: {e.response['error']}")
             return False
         except Exception as e:
-            logger.error(f"[Notifier] Slack file upload unknown error: {e}")
+            logger.error(f"[Notifier] Slack 文件上傳未知異常: {e}")
             return False
 
 
 # ============================================================================
-# Unified Notifier
+# 統一通知器
 # ============================================================================
 
 class MatrixNotifier:
@@ -299,11 +325,11 @@ class MatrixNotifier:
         return {'telegram': TELEGRAM_CHAT_ID, 'discord': DISCORD_CHANNEL_ID, 'slack': SLACK_CHANNEL_ID}.get(platform)
 
     def notify(self, target_platform: str, template_id: str, context: Dict[str, Any], target_id: Optional[str] = None) -> bool:
-        # Check if platform is enabled
+        # 檢查平臺是否啟用
         try:
             from config import PLATFORMS_ENABLED
             if not PLATFORMS_ENABLED.get(target_platform, True):
-                logger.warning(f"[Notifier] Platform {target_platform} disabled, skipping notification")
+                logger.warning(f"[Notifier] 平臺 {target_platform} 已禁用，跳過通知")
                 return False
         except ImportError:
             pass
@@ -313,16 +339,16 @@ class MatrixNotifier:
         if not sender: return False
         if not target_id: target_id = self._get_target_id(target_platform)
         if not target_id: return False
-
-        # Pass all platform-specific parameters
+        
+        # 傳遞所有 platform-specific 參數
         return sender.send(target_id, message, **context.get('_platform_kwargs', {}))
 
     def notify_file(self, target_platform: str, file_path: str, file_type: str = 'document', caption: str = '', target_id: Optional[str] = None) -> bool:
-        # Check if platform is enabled
+        # 檢查平臺是否啟用
         try:
             from config import PLATFORMS_ENABLED
             if not PLATFORMS_ENABLED.get(target_platform, True):
-                logger.warning(f"[Notifier] Platform {target_platform} disabled, skipping file send")
+                logger.warning(f"[Notifier] 平臺 {target_platform} 已禁用，跳過檔案發送")
                 return False
         except ImportError:
             pass
@@ -331,7 +357,7 @@ class MatrixNotifier:
         if not sender: return False
         if not target_id: target_id = self._get_target_id(target_platform)
         if not target_id: return False
-
+        
         if target_platform == 'telegram': return sender.send_file(target_id, file_path, file_type, caption)
         return sender.send_file(target_id, file_path, caption)
 
@@ -353,14 +379,14 @@ def get_source_info():
     curr = os.path.dirname(os.path.abspath(__file__))
     enabled_platforms = {}
     default_platform = 'telegram'
-
-    # Try to get default primary channel and enabled status from config
+    
+    # 嘗試從配置獲取預設主通道與啟用狀態
     try:
         from config import DEFAULT_PRIMARY_CHANNEL, PLATFORMS_ENABLED
         default_platform = DEFAULT_PRIMARY_CHANNEL
         enabled_platforms = PLATFORMS_ENABLED
-
-        # If default channel is disabled, auto-select first enabled channel
+        
+        # 如果預設通道已禁用，自動選擇第一個啟用的通道
         if not enabled_platforms.get(default_platform, False):
             active = [k for k, v in enabled_platforms.items() if v]
             if active: default_platform = active[0]
@@ -375,7 +401,7 @@ def get_source_info():
                 with open(path, 'r') as f:
                     source = json.load(f)
                     p = source.get('platform')
-                    # If source platform is disabled, force downgrade to default platform
+                    # 如果來源平台被禁用，強制降級到預設平台
                     if enabled_platforms and p and not enabled_platforms.get(p, False):
                         source['platform'] = default_platform
                     return source
@@ -386,13 +412,13 @@ def get_source_info():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='OctoMatrix Matrix Notifier CLI (Multi-Channel)')
     parser.add_argument('message', nargs='*', help='Message content')
-    parser.add_argument('--file', nargs=2, metavar=('TYPE', 'PATH'), help='Send a file (type: photo, video, audio, document)')
+    parser.add_argument('--file', nargs=2, metavar=('TYPE', 'PATH'), help='Send a file (type: photo, video, audio, document, sticker)')
     parser.add_argument('--caption', help='Caption for the file')
     parser.add_argument('--template', default='custom', help='Template ID to use')
     parser.add_argument('--software', help='Software name for template lookup')
     parser.add_argument('--keyboard', help='JSON string for TG custom keyboard')
     parser.add_argument('--get-id', action='store_true', help='Helper to find Telegram Chat ID')
-
+    
     # Intercept sys.argv to safely handle dash-prefixed messages
     import sys
     known_flags = {'--file': 2, '--caption': 1, '--template': 1, '--software': 1, '--keyboard': 1, '--get-id': 0, '-h': 0, '--help': 0}
@@ -426,13 +452,13 @@ if __name__ == '__main__':
 
     source = get_source_info()
     platform = source.get('platform', 'telegram')
-
+    
     target_id = source.get('channel_id')
     if not target_id and platform == 'telegram': target_id = source.get('user_id')
 
     context = {'software': args.software} if args.software else {}
     if args.keyboard:
-        # Only Telegram supports this parameter
+        # 僅 Telegram 支援此參數
         try: context['_platform_kwargs'] = {'reply_markup': json.loads(args.keyboard)}
         except: print("❌ Invalid keyboard JSON")
 
@@ -444,11 +470,11 @@ if __name__ == '__main__':
         if not os.path.exists(f_path): print(f"❌ File not found: {f_path}"); sys.exit(1)
         try:
             with open(f_path, 'rb') as f:
-                # [Optimization] Only send if target_id is valid, avoid passing invalid strings
+                # 【優化】僅在 target_id 有效時發送，避免傳遞無效字串
                 payload = {'platform': platform, 'file_type': f_type, 'caption': caption}
                 if target_id and str(target_id).lower() not in ['none', 'null', 'undefined']:
                     payload['target_id'] = target_id
-
+                    
                 resp = requests.post(f"{router_url}/notify_file", files={'file': f}, data=payload, timeout=30)
                 if resp.status_code == 200: print(f"✅ File sent via Router to {platform}"); sys.exit(0)
                 else: print(f"❌ Router Error: {resp.status_code}"); sys.exit(1)
