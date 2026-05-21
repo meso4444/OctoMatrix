@@ -253,16 +253,12 @@ def main():
                     with open(PENDING_FILE, 'r', encoding='utf-8') as f:
                         pending_content = f.read().strip()
                     if pending_content:
-                        sys_prompt = f"""\n\n【系統提示】此指令來自 Matrix 用戶，請先執行 `python3 toolbox/matrix_notifier.py`回用戶訊息再開始任務。任務開始前，若用戶所提及關鍵字或任務缺少完整上下文脈絡時，主動進行關鍵字深潛shell紀錄，確認紀錄中是否有相關脈絡，若執行方向明確就執行，若有不明確就先暫停任務並回訊用戶相關紀錄的recap向用戶確認方向，但禁止向用戶提及你做了shell深潛的相關操作; 任務完成後，完成以下 [SOP]:
-[Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png 快速回應 {getattr(config, 'MATRIX_USERNAME', 'User')} 透過貼圖產生情感共鳴。
-[Step 1 - 辨識]：辨識 {getattr(config, 'MATRIX_USERNAME', 'User')} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '已收到您的問候！' 回應 {getattr(config, 'MATRIX_USERNAME', 'User')} 的問候，並且不執行後續Step。
-[Step 2 - 預告]：執行 python3 toolbox/matrix_notifier.py '收到指令，正在處理中...' 快速回應 {getattr(config, 'MATRIX_USERNAME', 'User')} 預告任務進行初步方向。
-[Step 3 - 梳理]：若任務指示和方向明確時，進入Step4; 若任務指示和方向不明確且缺乏完整上下文脈絡時，主主動進行關鍵字深潛shell紀錄，若存在明確歷史脈絡，進入Step4，否則就先中止任務並執行 python3 toolbox/matrix_notifier.py '抱歉，我需要更多資訊才能進行...' 向 {getattr(config, 'MATRIX_USERNAME', 'User')} 詢問具體方向，並且不執行後續Step。
-[Step 4 - 執行]：正式開始執行任務，並且主動撰寫任務過程與成果紀錄的md。 小型任務執行完成後進入Step5; 大型任務於進行期間若步驟較多，應中途執行 python3 toolbox/matrix_notifier.py '任務進行中，請稍候...' 進行中間進度回報，任務完成後再進入Step5。
-[Step 5 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png 於回應任務成果前再次與 {getattr(config, 'MATRIX_USERNAME', 'User')} 透過貼圖產生情感共鳴。
-[Step 6 - 回報]：執行 python3 toolbox/matrix_notifier.py '任務完成報告：' 將任務成果彙總回報並使用 --file 將相關檔案發送給 {getattr(config, 'MATRIX_USERNAME', 'User')}。
-[Step 7 - 收攝]：執行 python3 octo_cyberbrain/octo_ghost_reader.py --level current 收攝你的 GHOST 與記憶。
-[Step 8 - 刻印]：執行 python3 octo_cyberbrain/octo_ghost_updater.py --outline "語義大綱" --keywords "關鍵字1,關鍵字2" --paths "/檔案路徑1,/檔案路徑2" 將本次任務狀態刻印到GHOST。"""
+                        sys_prompt = f"""
+
+【系統提示】此指令來自 Matrix 用戶，請先回用戶訊息再開始任務。任務開始前，若用戶所提及關鍵字或任務缺少完整上下文脈絡時，主動進行關鍵字深潛shell紀錄，確認紀錄中是否有相關脈絡，若執行方向明確就執行，若有不明確就先暫停任務並回訊用戶相關紀錄的recap向用戶確認方向，但禁止向用戶提及你做了shell深潛的相關操作; 任務完成後，完成以下 [SOP]:
+[Step 1 - 回報]：執行 `python3 toolbox/matrix_notifier.py` 將任務訊息或檔案發送給用戶並搭配Avatar emoji。
+[Step 2 - 收攝]：執行 `python3 octo_cyberbrain/octo_ghost_reader.py --level current` 收攝你的 GHOST 與記憶。
+[Step 3 - 刻印]：執行 `python3 octo_cyberbrain/octo_ghost_updater.py --outline "語義大綱" --keywords "關鍵字1,關鍵字2" --paths "/檔案路徑1,/檔案路徑2"` 將本次任務狀態刻印到GHOST。"""
                         final_message = pending_content + sys_prompt
                         escaped = final_message.replace('!', '！').replace('$', '\\$')
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped], check=True)
@@ -381,16 +377,12 @@ def main():
                     
                 if pending_content:
                     # 補上常規系統提示
-                    sys_prompt = f"""\n\n【系統提示】此指令來自 Matrix 用戶，請先執行 `python3 toolbox/matrix_notifier.py`回用戶訊息再開始任務。任務開始前，若用戶所提及關鍵字或任務缺少完整上下文脈絡時，主動進行關鍵字深潛shell紀錄，確認紀錄中是否有相關脈絡，若執行方向明確就執行，若有不明確就先暫停任務並回訊用戶相關紀錄的recap向用戶確認方向，但禁止向用戶提及你做了shell深潛的相關操作; 任務完成後，完成以下 [SOP]:
-[Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png 快速回應 {getattr(config, 'MATRIX_USERNAME', 'User')} 透過貼圖產生情感共鳴。
-[Step 1 - 辨識]：辨識 {getattr(config, 'MATRIX_USERNAME', 'User')} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '已收到您的問候！' 回應 {getattr(config, 'MATRIX_USERNAME', 'User')} 的問候，並且不執行後續Step。
-[Step 2 - 預告]：執行 python3 toolbox/matrix_notifier.py '收到指令，正在處理中...' 快速回應 {getattr(config, 'MATRIX_USERNAME', 'User')} 預告任務進行初步方向。
-[Step 3 - 梳理]：若任務指示和方向明確時，進入Step4; 若任務指示和方向不明確且缺乏完整上下文脈絡時，主主動進行關鍵字深潛shell紀錄，若存在明確歷史脈絡，進入Step4，否則就先中止任務並執行 python3 toolbox/matrix_notifier.py '抱歉，我需要更多資訊才能進行...' 向 {getattr(config, 'MATRIX_USERNAME', 'User')} 詢問具體方向，並且不執行後續Step。
-[Step 4 - 執行]：正式開始執行任務，並且主動撰寫任務過程與成果紀錄的md。 小型任務執行完成後進入Step5; 大型任務於進行期間若步驟較多，應中途執行 python3 toolbox/matrix_notifier.py '任務進行中，請稍候...' 進行中間進度回報，任務完成後再進入Step5。
-[Step 5 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png 於回應任務成果前再次與 {getattr(config, 'MATRIX_USERNAME', 'User')} 透過貼圖產生情感共鳴。
-[Step 6 - 回報]：執行 python3 toolbox/matrix_notifier.py '任務完成報告：' 將任務成果彙總回報並使用 --file 將相關檔案發送給 {getattr(config, 'MATRIX_USERNAME', 'User')}。
-[Step 7 - 收攝]：執行 python3 octo_cyberbrain/octo_ghost_reader.py --level current 收攝你的 GHOST 與記憶。
-[Step 8 - 刻印]：執行 python3 octo_cyberbrain/octo_ghost_updater.py --outline "語義大綱" --keywords "關鍵字1,關鍵字2" --paths "/檔案路徑1,/檔案路徑2" 將本次任務狀態刻印到GHOST。"""
+                    sys_prompt = f"""
+
+【系統提示】此指令來自 Matrix 用戶，請先回用戶訊息再開始任務。任務開始前，若用戶所提及關鍵字或任務缺少完整上下文脈絡時，主動進行關鍵字深潛shell紀錄，確認紀錄中是否有相關脈絡，若執行方向明確就執行，若有不明確就先暫停任務並回訊用戶相關紀錄的recap向用戶確認方向，但禁止向用戶提及你做了shell深潛的相關操作; 任務完成後，完成以下 [SOP]:
+[Step 1 - 回報]：執行 `python3 toolbox/matrix_notifier.py` 將任務訊息或檔案發送給用戶並搭配Avatar emoji。
+[Step 2 - 收攝]：執行 `python3 octo_cyberbrain/octo_ghost_reader.py --level current` 收攝你的 GHOST 與記憶。
+[Step 3 - 刻印]：執行 `python3 octo_cyberbrain/octo_ghost_updater.py --outline "語義大綱" --keywords "關鍵字1,關鍵字2" --paths "/檔案路徑1,/檔案路徑2"` 將本次任務狀態刻印到GHOST。"""
                     final_message = pending_content + sys_prompt
                     escaped = final_message.replace('!', '！').replace('$', '\\$')
                     
