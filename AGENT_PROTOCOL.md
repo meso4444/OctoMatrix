@@ -70,8 +70,8 @@ python3 toolbox/matrix_notifier.py --file audio /tmp/notification.wav 'Voice con
 	#### Usage Examples
 
 ```bash
-# Send independent emotion sticker (attached text will be automatically ignored)
-python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png 'Task completed! System operating normally'
+# Send independent emotion sticker
+python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png
 
 ```
 ---
