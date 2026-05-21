@@ -342,7 +342,9 @@ tmux send-keys -t target 您的訊息內容 && sleep 1 && tmux send-keys -t targ
 [Step 8 - 刻印]：執行 python3 octo_cyberbrain/octo_ghost_updater.py --outline \"語義大綱\" --keywords \"關鍵字1,關鍵字2\" --paths \"/檔案路徑1,/檔案路徑2\" 將本次任務狀態刻印到GHOST。
 
 來自 {MATRIX_USERNAME} 的訊息:
-{content}"""
+{content}
+
+【系統提示】請務必嚴格遵守上述 [SOP] 進行回覆。"""
             final_message = sop
         else:
             final_message = content

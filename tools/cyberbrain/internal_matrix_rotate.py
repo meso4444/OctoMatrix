@@ -266,7 +266,9 @@ def main():
 [Step 8 - 刻印]：執行 python3 octo_cyberbrain/octo_ghost_updater.py --outline "語義大綱" --keywords "關鍵字1,關鍵字2" --paths "/檔案路徑1,/檔案路徑2" 將本次任務狀態刻印到GHOST。
 
 來自 {getattr(config, 'MATRIX_USERNAME', 'User')} 的訊息:
-{pending_content}"""
+{pending_content}
+
+【系統提示】請務必嚴格遵守上述 [SOP] 進行回覆。"""
                         final_message = sys_prompt
                         escaped = final_message.replace('!', '！').replace('$', '\\$')
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped], check=True)
@@ -398,7 +400,9 @@ def main():
 [Step 8 - 刻印]：執行 python3 octo_cyberbrain/octo_ghost_updater.py --outline "語義大綱" --keywords "關鍵字1,關鍵字2" --paths "/檔案路徑1,/檔案路徑2" 將本次任務狀態刻印到GHOST。
 
 來自 {getattr(config, 'MATRIX_USERNAME', 'User')} 的訊息:
-{pending_content}"""
+{pending_content}
+
+【系統提示】請務必嚴格遵守上述 [SOP] 進行回覆。"""
                     final_message = sys_prompt
                     escaped = final_message.replace('!', '！').replace('$', '\\$')
                     
