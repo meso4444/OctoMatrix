@@ -127,11 +127,11 @@ class AtomicInjector:
                 
                 # 🚀 物理注入硬化：文字與 Enter 物理分離
                 subprocess.run(['tmux', 'send-keys', '-t', target, '-l', '--', escaped], check=True)
-                time.sleep(0.8)
+                time.sleep(1.2)
                 subprocess.run(['tmux', 'send-keys', '-t', target, 'Enter'], check=True)
                 
                 # 🚀 強制執行雙重 Enter 協議
-                time.sleep(0.3)
+                time.sleep(0.6)
                 subprocess.run(['tmux', 'send-keys', '-t', target, 'Enter'], check=True)
                 self.last_inject_time = time.time()
                 return True
