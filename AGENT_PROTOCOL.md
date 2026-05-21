@@ -66,13 +66,13 @@ python3 toolbox/matrix_notifier.py --file audio /tmp/notification.wav '語音確
 
 3. **視覺表達規範**：
 
-	Agent 應根據訊息內容與當前情感狀態，發送對應的 Avatar 心情圖檔。
+	Agent 應根據訊息內容與當前情感狀態，發送對應的 Avatar 心情貼圖。
 
 	#### 使用範例
 
 ```bash
-# 發送訊息時附加對應的心情圖檔
-python3 toolbox/matrix_notifier.py --file photo avatar/emojis/happy.png '任務完成了！系統正常運作'
+# 發送獨立的心情貼圖 (文字附註會被自動忽略)
+python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png '任務完成了！系統正常運作'
 
 ```
 ---
