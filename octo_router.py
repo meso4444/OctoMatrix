@@ -131,7 +131,7 @@ class AtomicInjector:
                 subprocess.run(['tmux', 'send-keys', '-t', target, 'Enter'], check=True)
 
                 # 🚀 Force execution of double Enter protocol
-                time.sleep(0.6)
+                time.sleep(1.2)
                 subprocess.run(['tmux', 'send-keys', '-t', target, 'Enter'], check=True)
                 self.last_inject_time = time.time()
                 return True
@@ -246,7 +246,8 @@ class CommandHandler:
             parts = content.split()
             if len(parts) > 1:
                 target = parts[1]
-                prompt = f"""Execute the following [SOP]:
+                prompt = f"""【系統提示】
+Execute the following [SOP]:
 [Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png` to quickly respond to {MATRIX_USERNAME} and resonate emotionally via sticker.
 [Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If it's a task, proceed to Step2; if it's a greeting, execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate greeting response}}'` to respond to {MATRIX_USERNAME}'s greeting, and do not execute subsequent Steps.
 [Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate initial preview}}'` to quickly respond to {MATRIX_USERNAME} and preview the initial direction of the task.
@@ -281,7 +282,8 @@ Enter the '{target}' window via tmux, view the first 50 lines of status and anal
                     else:
                         start_cmd = f'claude --permission-mode bypassPermissions --model {model}' if model and model.lower() != 'auto' else 'claude --permission-mode bypassPermissions'
 
-                        prompt = f"""Execute the following [SOP]:
+                        prompt = f"""【系統提示】
+Execute the following [SOP]:
 [Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png` to quickly respond to {MATRIX_USERNAME} and resonate emotionally via sticker.
 [Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If it's a task, proceed to Step2; if it's a greeting, execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate greeting response}}'` to respond to {MATRIX_USERNAME}'s greeting, and do not execute subsequent Steps.
 [Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate initial preview}}'` to quickly respond to {MATRIX_USERNAME} and preview the initial direction of the task.
@@ -332,7 +334,8 @@ Proactively write an md recording the fix process."""
         # 🛡️ Inject standard SOP (Matrix message processing flow)
         # ==========================================
         if msg.source in ['telegram', 'discord', 'slack'] and 'Execute the following [SOP]:' not in content:
-            sop = f"""Execute the following [SOP]:
+            sop = f"""【系統提示】
+Execute the following [SOP]:
 [Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png` to quickly respond to {MATRIX_USERNAME} and resonate emotionally via sticker.
 [Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If it's a task, proceed to Step2; if it's a greeting, execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate greeting response}}'` to respond to {MATRIX_USERNAME}'s greeting, and do not execute subsequent Steps.
 [Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate initial preview}}'` to quickly respond to {MATRIX_USERNAME} and preview the initial direction of the task.

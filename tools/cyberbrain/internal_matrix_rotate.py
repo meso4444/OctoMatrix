@@ -254,7 +254,8 @@ def main():
                         pending_content = f.read().strip()
                     if pending_content:
                         # Append normal system prompt
-                        sys_prompt = f"""Execute the following [SOP]:
+                        sys_prompt = f"""【系統提示】
+Execute the following [SOP]:
 [Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png` to quickly respond to {getattr(config, 'MATRIX_USERNAME', 'User')} and resonate emotionally via sticker.
 [Step 1 - Identify]: Identify whether {getattr(config, 'MATRIX_USERNAME', 'User')}'s message is a task or a greeting. If it's a task, proceed to Step2; if it's a greeting, execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate greeting response}}'` to respond to {getattr(config, 'MATRIX_USERNAME', 'User')}'s greeting, and do not execute subsequent Steps.
 [Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate initial preview}}'` to quickly respond to {getattr(config, 'MATRIX_USERNAME', 'User')} and preview the initial direction of the task.
@@ -388,7 +389,8 @@ Message from {getattr(config, 'MATRIX_USERNAME', 'User')}:
                     
                 if pending_content:
                     # Append normal system prompt
-                    sys_prompt = f"""Execute the following [SOP]:
+                    sys_prompt = f"""【系統提示】
+Execute the following [SOP]:
 [Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png` to quickly respond to {getattr(config, 'MATRIX_USERNAME', 'User')} and resonate emotionally via sticker.
 [Step 1 - Identify]: Identify whether {getattr(config, 'MATRIX_USERNAME', 'User')}'s message is a task or a greeting. If it's a task, proceed to Step2; if it's a greeting, execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate greeting response}}'` to respond to {getattr(config, 'MATRIX_USERNAME', 'User')}'s greeting, and do not execute subsequent Steps.
 [Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate initial preview}}'` to quickly respond to {getattr(config, 'MATRIX_USERNAME', 'User')} and preview the initial direction of the task.
