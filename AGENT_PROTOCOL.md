@@ -65,13 +65,13 @@ python3 toolbox/matrix_notifier.py --file audio /tmp/notification.wav 'Voice con
 
 3. **Visual Expression Standards**:
 
-	Agents should send corresponding Avatar emotion images based on message content and current emotional state.
+	Agents should send corresponding Avatar emotion stickers based on message content and current emotional state.
 
 	#### Usage Examples
 
 ```bash
-# Attach corresponding emotion image when sending message
-python3 toolbox/matrix_notifier.py --file photo avatar/emojis/happy.png 'Task completed! System operating normally'
+# Send independent emotion sticker (attached text will be automatically ignored)
+python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png 'Task completed! System operating normally'
 
 ```
 ---
