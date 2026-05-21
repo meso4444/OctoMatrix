@@ -22,11 +22,7 @@ def notify_agent(agent_name):
     router_port = getattr(config, 'ROUTER_PORT', 12210)
     session_name = getattr(config, 'TMUX_SESSION_NAME', 'chat_agent')
     
-    # 建立 inject_block.lock 進行阻塞
     agent_dir = os.path.join(base_dir, 'agent_home', agent_name)
-    lock_file = os.path.join(agent_dir, 'octo_cyberbrain', 'inject_block.lock')
-    os.makedirs(os.path.dirname(lock_file), exist_ok=True)
-    open(lock_file, 'w').close()
 
     # 注入前先執行 1 回合 Ctrl+C 並等待 6 秒，後續交由 Router 補上第二發 Ctrl+C 強制打斷
     try:
@@ -62,9 +58,6 @@ def notify_agent(agent_name):
         return True
     except Exception as e:
         print(f"[Reaper] 通知 Agent {agent_name} 失敗: {e}")
-        if os.path.exists(lock_file):
-            try: os.remove(lock_file)
-            except: pass
         return False
 
 def main():
@@ -104,14 +97,7 @@ def main():
                         except FileNotFoundError:
                             pass
                     
-                    # 🚀 防呆清除機制：如果未達門檻，清除可能殘留的 inject_block.lock
-                    lock_file = os.path.join(agent_dir, 'octo_cyberbrain', 'inject_block.lock')
-                    if os.path.exists(lock_file):
-                        try:
-                            os.remove(lock_file)
-                            print(f"[Reaper] 移除殘留的 inject_block.lock ({agent_name})")
-                        except FileNotFoundError:
-                            pass
+
         
         time.sleep(polling_interval)
 

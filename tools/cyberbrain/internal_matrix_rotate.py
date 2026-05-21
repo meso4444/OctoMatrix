@@ -16,7 +16,6 @@ AGENT_HOME = os.path.dirname(SCRIPT_DIR)
 ENV_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/.cyberbrain_env")
 
 # 定義鎖檔路徑 (絕對路徑)
-LOCK_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/inject_block.lock")
 FLAG_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/.rotation_flag")
 SHELL_LOG = os.path.join(AGENT_HOME, "octo_cyberbrain/shell/octo_shell.log")
 TEMP_LOG = os.path.join(AGENT_HOME, "octo_cyberbrain/shell/temp.log")
@@ -110,7 +109,7 @@ def union_dedup(source_set_kws, source_set_paths, target_kw_path, target_path_pa
 def cleanup():
     # 🚀 統一清理 Flag 與 Lock，防止死鎖
     print("🧹 執行最後的清理程序...")
-    for f in [LOCK_FILE, FLAG_FILE]:
+    for f in [FLAG_FILE]:
         if os.path.exists(f):
             try:
                 os.remove(f)

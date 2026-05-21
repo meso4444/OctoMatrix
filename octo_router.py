@@ -173,6 +173,11 @@ class CommandHandler:
         cmd_content = content.lower().strip()
         
         # 3. 核心指令處理分支
+        flag_file = os.path.join(AGENT_HOME_BASE, target_agent, 'octo_cyberbrain', '.rotation_flag')
+        if cmd_content.startswith('/') and os.path.exists(flag_file) and msg.source not in ['reaper', 'system_flush']:
+            self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> 系統正在進行 GHOST 深度重整，請待重置完畢後再執行系統指令。'})
+            return True
+
         if cmd_content.startswith('/switch'):
             parts = content.split()
             if len(parts) > 1:
@@ -351,10 +356,10 @@ tmux send-keys -t target 您的訊息內容 && sleep 1 && tmux send-keys -t targ
 
         # 👻 GHOST 實體檔案阻塞與積累機制
         agent_dir = os.path.join(AGENT_HOME_BASE, target_agent)
-        lock_file = os.path.join(agent_dir, 'octo_cyberbrain', 'inject_block.lock')
+        flag_file = os.path.join(agent_dir, 'octo_cyberbrain', '.rotation_flag')
         pending_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_inject.txt')
 
-        if msg.source not in ['reaper', 'system_flush'] and os.path.exists(lock_file):
+        if msg.source not in ['reaper', 'system_flush'] and os.path.exists(flag_file):
             try:
                 with open(pending_file, 'a', encoding='utf-8') as f:
                     if os.path.exists(pending_file) and os.path.getsize(pending_file) > 0:
