@@ -478,10 +478,21 @@ try:
     for agent in AGENTS:
         name = agent['name']
         test_msg = "[System Prompt] Send test message and identify yourself"
-        subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:{name}', test_msg], check=True)
-        time.sleep(0.5)
-        subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:{name}', 'Enter'], check=True)
-        print(f"   ✓ Test message sent to: {name}")
+        agent_dir = os.path.join(os.environ['SCRIPT_DIR'], '..', 'agent_home', name)
+        lock_file = os.path.join(agent_dir, 'octo_cyberbrain', 'inject_block.lock')
+        pending_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_inject.txt')
+        
+        if os.path.exists(lock_file):
+            with open(pending_file, 'a', encoding='utf-8') as f:
+                if os.path.exists(pending_file) and os.path.getsize(pending_file) > 0:
+                    f.write("\n\n")
+                f.write(test_msg)
+            print(f"   ✓ Queued test message for {name}")
+        else:
+            subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:{name}', test_msg], check=True)
+            time.sleep(0.5)
+            subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:{name}', 'Enter'], check=True)
+            print(f"   ✓ Test message sent to: {name}")
 except Exception as e:
     print(f"   ⚠️ Failed to send test message: {e}")
 EOF
