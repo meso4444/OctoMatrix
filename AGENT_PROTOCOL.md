@@ -71,8 +71,8 @@ python3 toolbox/matrix_notifier.py --file audio /tmp/notification.wav '語音確
 	#### 使用範例
 
 ```bash
-# 發送獨立的心情貼圖 (文字附註會被自動忽略)
-python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png '任務完成了！系統正常運作'
+# 發送獨立的心情貼圖
+python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png
 
 ```
 ---
