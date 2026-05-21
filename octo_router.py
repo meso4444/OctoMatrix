@@ -350,7 +350,7 @@ Execute the following [SOP]:
 
 User's message content:
 """
-            final_message = f"{sop}\n{content}"
+            final_message = f"{sop}\n{content}\n\n【系統提示】請務必嚴格遵守上述 [SOP] 進行回覆。"
 
         # 👻 GHOST physical file blocking and accumulation mechanism
         agent_dir = os.path.join(AGENT_HOME_BASE, target_agent)

@@ -267,7 +267,9 @@ Execute the following [SOP]:
 [Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST.
 
 Message from {getattr(config, 'MATRIX_USERNAME', 'User')}:
-{pending_content}"""
+{pending_content}
+
+【系統提示】請務必嚴格遵守上述 [SOP] 進行回覆。"""
                         final_message = sys_prompt
                         escaped = final_message.replace('!', '！').replace('$', '\\$')
                         
@@ -402,7 +404,9 @@ Execute the following [SOP]:
 [Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST.
 
 Message from {getattr(config, 'MATRIX_USERNAME', 'User')}:
-{pending_content}"""
+{pending_content}
+
+【系統提示】請務必嚴格遵守上述 [SOP] 進行回覆。"""
                     final_message = sys_prompt
                     escaped = final_message.replace('!', '！').replace('$', '\\$')
                     
