@@ -253,7 +253,8 @@ def main():
                     with open(PENDING_FILE, 'r', encoding='utf-8') as f:
                         pending_content = f.read().strip()
                     if pending_content:
-                        sys_prompt = f"""執行以下 [SOP]:
+                        sys_prompt = f"""【系統提示】
+執行以下 [SOP]:
 [Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png 快速回應 {getattr(config, 'MATRIX_USERNAME', 'User')} 透過貼圖產生情感共鳴。
 [Step 1 - 辨識]：辨識 {getattr(config, 'MATRIX_USERNAME', 'User')} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '{{自主思考合適的問候回覆}}' 回應 {getattr(config, 'MATRIX_USERNAME', 'User')} 的問候，並且不執行後續Step。
 [Step 2 - 預告]：執行 python3 toolbox/matrix_notifier.py '{{自主思考合適的初步預告}}' 快速回應 {getattr(config, 'MATRIX_USERNAME', 'User')} 預告任務進行初步方向。
@@ -384,7 +385,8 @@ def main():
                     
                 if pending_content:
                     # 補上常規系統提示
-                    sys_prompt = f"""執行以下 [SOP]:
+                    sys_prompt = f"""【系統提示】
+執行以下 [SOP]:
 [Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png 快速回應 {getattr(config, 'MATRIX_USERNAME', 'User')} 透過貼圖產生情感共鳴。
 [Step 1 - 辨識]：辨識 {getattr(config, 'MATRIX_USERNAME', 'User')} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '{{自主思考合適的問候回覆}}' 回應 {getattr(config, 'MATRIX_USERNAME', 'User')} 的問候，並且不執行後續Step。
 [Step 2 - 預告]：執行 python3 toolbox/matrix_notifier.py '{{自主思考合適的初步預告}}' 快速回應 {getattr(config, 'MATRIX_USERNAME', 'User')} 預告任務進行初步方向。

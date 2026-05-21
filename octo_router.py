@@ -131,7 +131,7 @@ class AtomicInjector:
                 subprocess.run(['tmux', 'send-keys', '-t', target, 'Enter'], check=True)
                 
                 # 🚀 強制執行雙重 Enter 協議
-                time.sleep(0.6)
+                time.sleep(1.2)
                 subprocess.run(['tmux', 'send-keys', '-t', target, 'Enter'], check=True)
                 self.last_inject_time = time.time()
                 return True
@@ -246,7 +246,8 @@ class CommandHandler:
             parts = content.split()
             if len(parts) > 1:
                 target = parts[1]
-                prompt = f"""執行以下 [SOP]:
+                prompt = f"""【系統提示】
+執行以下 [SOP]:
 [Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png 快速回應 {MATRIX_USERNAME} 透過貼圖產生情感共鳴。
 [Step 1 - 辨識]：辨識 {MATRIX_USERNAME} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '{{自主思考合適的問候回覆}}' 回應 {MATRIX_USERNAME} 的問候，並且不執行後續Step。
 [Step 2 - 預告]：執行 python3 toolbox/matrix_notifier.py '{{自主思考合適的初步預告}}' 快速回應 {MATRIX_USERNAME} 預告任務進行初步方向。
@@ -279,7 +280,8 @@ class CommandHandler:
                     else:
                         start_cmd = f'claude --permission-mode bypassPermissions --model {model}' if model and model.lower() != 'auto' else 'claude --permission-mode bypassPermissions'
                         
-                        prompt = f"""執行以下 [SOP]:
+                        prompt = f"""【系統提示】
+執行以下 [SOP]:
 [Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png 快速回應 {MATRIX_USERNAME} 透過貼圖產生情感共鳴。
 [Step 1 - 辨識]：辨識 {MATRIX_USERNAME} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '{{自主思考合適的問候回覆}}' 回應 {MATRIX_USERNAME} 的問候，並且不執行後續Step。
 [Step 2 - 預告]：執行 python3 toolbox/matrix_notifier.py '{{自主思考合適的初步預告}}' 快速回應 {MATRIX_USERNAME} 預告任務進行初步方向。
@@ -327,7 +329,8 @@ tmux send-keys -t target 您的訊息內容 && sleep 1 && tmux send-keys -t targ
         # 🛡️ 注入標準化 SOP (Matrix 訊息處理流程)
         # ==========================================
         if msg.source in ['telegram', 'discord', 'slack'] and '執行以下 [SOP]:' not in content:
-            sop = f"""執行以下 [SOP]:
+            sop = f"""【系統提示】
+執行以下 [SOP]:
 [Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png 快速回應 {MATRIX_USERNAME} 透過貼圖產生情感共鳴。
 [Step 1 - 辨識]：辨識 {MATRIX_USERNAME} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '{{自主思考合適的問候回覆}}' 回應 {MATRIX_USERNAME} 的問候，並且不執行後續Step。
 [Step 2 - 預告]：執行 python3 toolbox/matrix_notifier.py '{{自主思考合適的初步預告}}' 快速回應 {MATRIX_USERNAME} 預告任務進行初步方向。
