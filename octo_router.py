@@ -127,11 +127,11 @@ class AtomicInjector:
 
                 # 🚀 Physical injection hardening: text and Enter physically separated
                 subprocess.run(['tmux', 'send-keys', '-t', target, '-l', '--', escaped], check=True)
-                time.sleep(0.8)
+                time.sleep(1.2)
                 subprocess.run(['tmux', 'send-keys', '-t', target, 'Enter'], check=True)
 
                 # 🚀 Force execution of double Enter protocol
-                time.sleep(0.3)
+                time.sleep(0.6)
                 subprocess.run(['tmux', 'send-keys', '-t', target, 'Enter'], check=True)
                 self.last_inject_time = time.time()
                 return True
