@@ -16,7 +16,6 @@ AGENT_HOME = os.path.dirname(SCRIPT_DIR)
 ENV_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/.cyberbrain_env")
 
 # Define lock and log paths (Absolute Paths)
-LOCK_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/inject_block.lock")
 FLAG_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/.rotation_flag")
 SHELL_LOG = os.path.join(AGENT_HOME, "octo_cyberbrain/shell/octo_shell.log")
 TEMP_LOG = os.path.join(AGENT_HOME, "octo_cyberbrain/shell/temp.log")
@@ -110,7 +109,7 @@ def union_dedup(source_set_kws, source_set_paths, target_kw_path, target_path_pa
 def cleanup():
     # 🚀 Centralized cleanup for Flag and Lock to prevent deadlock
     print("🧹 Executing final cleanup procedure...")
-    for f in [LOCK_FILE, FLAG_FILE]:
+    for f in [FLAG_FILE]:
         if os.path.exists(f):
             try:
                 os.remove(f)

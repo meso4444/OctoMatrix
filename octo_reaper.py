@@ -62,9 +62,6 @@ def notify_agent(agent_name):
         return True
     except Exception as e:
         print(f"[Reaper] Failed to notify Agent {agent_name}: {e}")
-        if os.path.exists(lock_file):
-            try: os.remove(lock_file)
-            except: pass
         return False
 
 def main():

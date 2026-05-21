@@ -196,12 +196,8 @@ def main():
     print("🧹 Cleaning up potential residual inject_block.lock, .rotation_flag and temporary files...")
     for agent in agents:
         agent_dir = os.path.join(AGENT_HOME_BASE, agent['name'])
-        lock_file = os.path.join(agent_dir, 'octo_cyberbrain', 'inject_block.lock')
         flag_file = os.path.join(agent_dir, 'octo_cyberbrain', '.rotation_flag')
         pending_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_inject.txt')
-        if os.path.exists(lock_file):
-            try: os.remove(lock_file)
-            except: pass
         if os.path.exists(flag_file):
             try: os.remove(flag_file)
             except: pass

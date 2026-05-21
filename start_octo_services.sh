@@ -479,11 +479,10 @@ try:
         name = agent['name']
         test_msg = "[System Prompt] Send test message and identify yourself"
         agent_dir = os.path.join(os.environ['SCRIPT_DIR'], '..', 'agent_home', name)
-        lock_file = os.path.join(agent_dir, 'octo_cyberbrain', 'inject_block.lock')
         flag_file = os.path.join(agent_dir, 'octo_cyberbrain', '.rotation_flag')
         pending_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_inject.txt')
         
-        if os.path.exists(lock_file) or os.path.exists(flag_file):
+        if os.path.exists(flag_file):
             with open(pending_file, 'a', encoding='utf-8') as f:
                 if os.path.exists(pending_file) and os.path.getsize(pending_file) > 0:
                     f.write("\n\n")
