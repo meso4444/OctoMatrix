@@ -22,11 +22,7 @@ def notify_agent(agent_name):
     router_port = getattr(config, 'ROUTER_PORT', 12210)
     session_name = getattr(config, 'TMUX_SESSION_NAME', 'chat_agent')
 
-    # Create inject_block.lock for blocking
     agent_dir = os.path.join(base_dir, 'agent_home', agent_name)
-    lock_file = os.path.join(agent_dir, 'octo_cyberbrain', 'inject_block.lock')
-    os.makedirs(os.path.dirname(lock_file), exist_ok=True)
-    open(lock_file, 'w').close()
 
     # Inject single Ctrl+C and wait 6s, letting Router inject the second Ctrl+C to interrupt stuck tasks
     try:
@@ -98,15 +94,6 @@ def main():
                         try:
                             os.remove(flag_file)
                             print(f"[Reaper] Removed expired residual Flag ({agent_name})")
-                        except FileNotFoundError:
-                            pass
-
-                    # 🚀 Fail-safe cleanup: If threshold not met, clear any residual inject_block.lock
-                    lock_file = os.path.join(agent_dir, 'octo_cyberbrain', 'inject_block.lock')
-                    if os.path.exists(lock_file):
-                        try:
-                            os.remove(lock_file)
-                            print(f"[Reaper] Removed residual inject_block.lock ({agent_name})")
                         except FileNotFoundError:
                             pass
         

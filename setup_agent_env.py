@@ -192,8 +192,8 @@ def main():
     # 4. Deploy Skills
     deploy_skills(agents)
 
-    # 5. Cleanup residual injection locks
-    print("🧹 Cleaning up potential residual inject_block.lock, .rotation_flag and temporary files...")
+    # 5. Cleanup residual rotation flags and temporary files
+    print("🧹 Cleaning up potential residual .rotation_flag and temporary files...")
     for agent in agents:
         agent_dir = os.path.join(AGENT_HOME_BASE, agent['name'])
         flag_file = os.path.join(agent_dir, 'octo_cyberbrain', '.rotation_flag')
