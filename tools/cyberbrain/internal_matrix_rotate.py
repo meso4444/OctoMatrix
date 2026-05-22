@@ -266,13 +266,13 @@ def main():
                     if pending_content:
                         sys_prompt = f"""【系統提示】
 執行以下 [SOP]:
-[Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png 快速回應 {MATRIX_USERNAME} 透過貼圖產生情感共鳴。
-[Step 1 - 辨識]：辨識 {MATRIX_USERNAME} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '{{自主思考合適的問候回覆}}' 回應 {MATRIX_USERNAME} 的問候，並且不執行後續Step。
-[Step 2 - 預告]：執行 python3 toolbox/matrix_notifier.py '{{自主思考合適的初步預告}}' 快速回應 {MATRIX_USERNAME} 預告任務進行初步方向。
-[Step 3 - 梳理]：若任務指示和方向明確時，進入Step4; 若任務指示和方向不明確且缺乏完整上下文脈絡時，主動進行關鍵字深潛shell紀錄，若存在明確歷史脈絡，進入Step4，否則就先中止任務並執行 python3 toolbox/matrix_notifier.py '{{自主思考合適的詢問或澄清}}' 向 {MATRIX_USERNAME} 詢問具體方向，並且不執行後續Step。
-[Step 4 - 執行]：正式開始執行任務，並且主動撰寫任務過程與成果紀錄的md。 小型任務執行完成後進入Step5; 大型任務於進行期間若步驟較多，應中途執行 python3 toolbox/matrix_notifier.py '{{自主思考合適的進度回報}}' 進行中間進度回報，任務完成後再進入Step5。
-[Step 5 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png 於回應任務成果前再次與 {MATRIX_USERNAME} 透過貼圖產生情感共鳴。
-[Step 6 - 回報]：執行 python3 toolbox/matrix_notifier.py '{{自主思考合適的任務完成報告}}' 將任務成果彙總回報並使用 --file 將相關檔案發送給 {MATRIX_USERNAME}。
+[Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker 發符合當下心情的貼圖。
+[Step 1 - 辨識]：辨識 {MATRIX_USERNAME} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，並自主思考合適的問候回覆}}' 回應，並且不執行後續Step。
+[Step 2 - 預告]：執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，並自主思考合適的初步預告}}' 預告任務進行初步方向。
+[Step 3 - 梳理]：若任務指示明確進入Step4; 若不明確，深潛shell紀錄後若有歷史脈絡進入Step4，否則先中止並執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，自主思考合適的詢問或澄清}}' 詢問具體方向，不執行後續Step。
+[Step 4 - 執行]：正式開始執行任務並撰寫md。小型任務完成後進入Step5; 大型任務中途執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，自主思考合適的進度回報}}' 進行中間進度回報，任務完成後再進入Step5。
+[Step 5 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker 發符合當下心情的貼圖。
+[Step 6 - 回報]：執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，自主思考合適的任務完成報告}}' 彙總回報並使用 --file 發送相關檔案給 {MATRIX_USERNAME}。
 [Step 7 - 收攝]：執行 python3 octo_cyberbrain/octo_ghost_reader.py --level current 收攝你的 GHOST 與記憶。
 [Step 8 - 刻印]：執行 python3 octo_cyberbrain/octo_ghost_updater.py --outline "語義大綱" --keywords "關鍵字1,關鍵字2" --paths "/檔案路徑1,/檔案路徑2" 將本次任務狀態刻印到GHOST。
 
@@ -412,13 +412,13 @@ def main():
                     # 補上常規系統提示
                     sys_prompt = f"""【系統提示】
 執行以下 [SOP]:
-[Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png 快速回應 {MATRIX_USERNAME} 透過貼圖產生情感共鳴。
-[Step 1 - 辨識]：辨識 {MATRIX_USERNAME} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '{{自主思考合適的問候回覆}}' 回應 {MATRIX_USERNAME} 的問候，並且不執行後續Step。
-[Step 2 - 預告]：執行 python3 toolbox/matrix_notifier.py '{{自主思考合適的初步預告}}' 快速回應 {MATRIX_USERNAME} 預告任務進行初步方向。
-[Step 3 - 梳理]：若任務指示和方向明確時，進入Step4; 若任務指示和方向不明確且缺乏完整上下文脈絡時，主動進行關鍵字深潛shell紀錄，若存在明確歷史脈絡，進入Step4，否則就先中止任務並執行 python3 toolbox/matrix_notifier.py '{{自主思考合適的詢問或澄清}}' 向 {MATRIX_USERNAME} 詢問具體方向，並且不執行後續Step。
-[Step 4 - 執行]：正式開始執行任務，並且主動撰寫任務過程與成果紀錄的md。 小型任務執行完成後進入Step5; 大型任務於進行期間若步驟較多，應中途執行 python3 toolbox/matrix_notifier.py '{{自主思考合適的進度回報}}' 進行中間進度回報，任務完成後再進入Step5。
-[Step 5 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png 於回應任務成果前再次與 {MATRIX_USERNAME} 透過貼圖產生情感共鳴。
-[Step 6 - 回報]：執行 python3 toolbox/matrix_notifier.py '{{自主思考合適的任務完成報告}}' 將任務成果彙總回報並使用 --file 將相關檔案發送給 {MATRIX_USERNAME}。
+[Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker 發符合當下心情的貼圖。
+[Step 1 - 辨識]：辨識 {MATRIX_USERNAME} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，並自主思考合適的問候回覆}}' 回應，並且不執行後續Step。
+[Step 2 - 預告]：執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，並自主思考合適的初步預告}}' 預告任務進行初步方向。
+[Step 3 - 梳理]：若任務指示明確進入Step4; 若不明確，深潛shell紀錄後若有歷史脈絡進入Step4，否則先中止並執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，自主思考合適的詢問或澄清}}' 詢問具體方向，不執行後續Step。
+[Step 4 - 執行]：正式開始執行任務並撰寫md。小型任務完成後進入Step5; 大型任務中途執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，自主思考合適的進度回報}}' 進行中間進度回報，任務完成後再進入Step5。
+[Step 5 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker 發符合當下心情的貼圖。
+[Step 6 - 回報]：執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，自主思考合適的任務完成報告}}' 彙總回報並使用 --file 發送相關檔案給 {MATRIX_USERNAME}。
 [Step 7 - 收攝]：執行 python3 octo_cyberbrain/octo_ghost_reader.py --level current 收攝你的 GHOST 與記憶。
 [Step 8 - 刻印]：執行 python3 octo_cyberbrain/octo_ghost_updater.py --outline "語義大綱" --keywords "關鍵字1,關鍵字2" --paths "/檔案路徑1,/檔案路徑2" 將本次任務狀態刻印到GHOST。
 
