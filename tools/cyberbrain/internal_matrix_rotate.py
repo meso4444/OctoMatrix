@@ -183,7 +183,9 @@ def main():
         time.sleep(1.0)
         
         # 🚀 Hardening Means 2: Inject /clear command (only once)
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", "/clear"]) 
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", "/clear"])
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"]) 
         
         cleared = False
         for i in range(100):
@@ -227,7 +229,9 @@ def main():
                 print("❌ Ultimate fallback failed. Sending SOS message. Cancelling injection.")
                 help_msg = f"{AGENT_NAME} 可能卡在時空夾縫中, 如果 {AGENT_NAME} 還是沒有回覆訊息, 嘗試切換至其他 Agent 輸入 「/fix {AGENT_NAME}」讓其他 Agent 幫忙拯救 {AGENT_NAME}"
                 escaped_help = help_msg.replace('!', '！').replace('$', '\\$')
+                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped_help])
+                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
                 time.sleep(1.0)
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
                 time.sleep(0.5)
@@ -241,7 +245,9 @@ def main():
             # Send recovery prompt to let Agent resume the previous task
             recovery_prompt = "[System Prompt] Maintenance timeout cancelled. Please check if octo_cyberbrain/task_memo.txt exists. If it does, read it and resume the interrupted task, then delete it after reading."
             escaped_rec = recovery_prompt.replace('!', '！').replace('$', '\\$')
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped_rec])
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
             time.sleep(1.0)
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
             time.sleep(0.5)
@@ -273,7 +279,9 @@ Message from {getattr(config, 'MATRIX_USERNAME', 'User')}:
                         escaped = final_message.replace('!', '！').replace('$', '\\$')
                         
                         # Inject at once without triggering Ctrl+C
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped], check=True)
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
                         time.sleep(1.0)
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
                         time.sleep(0.3)
@@ -371,7 +379,9 @@ Message from {getattr(config, 'MATRIX_USERNAME', 'User')}:
         # ==========================================
         prompt = f"[System Prompt] Please execute python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot to get keywords, then bring all retrieved keywords into a single execution of 'python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"Keyword1\" \"Keyword2\"' for Shell GHOST deep dive. Once complete, re-establish compliance with {ENGINE_DOC_NAME}. This task does not require sending messages to the user. Next, verify if octo_cyberbrain/task_memo.txt exists; if so, read it to resume the task and then delete task_memo.txt."
 
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", prompt])
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
         time.sleep(2.0) # Longer prompt needs more input wait time
         
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
@@ -379,6 +389,14 @@ Message from {getattr(config, 'MATRIX_USERNAME', 'User')}:
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
         time.sleep(0.5)
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"]) # Triple Enter safety
+
+        # 🚀 Early release of Flag: Sleep 3 seconds then release Flag
+        time.sleep(3.0)
+        if os.path.exists(FLAG_FILE):
+            try:
+                os.remove(FLAG_FILE)
+            except Exception:
+                pass
 
         # ==========================================
         # Step 5: Pending Injection
@@ -410,7 +428,9 @@ Message from {getattr(config, 'MATRIX_USERNAME', 'User')}:
                     escaped = final_message.replace('!', '！').replace('$', '\\$')
                     
                     # Inject at once without triggering Ctrl+C
+                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
                     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped], check=True)
+                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
                     time.sleep(1.0)
                     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
                     time.sleep(0.3)
