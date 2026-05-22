@@ -483,7 +483,7 @@ try:
     session_name = os.environ['TMUX_SESSION_NAME']
     for agent in AGENTS:
         name = agent['name']
-        test_msg = "【系統提示】測試發送訊息並報上名字"
+        test_msg = "【系統提示】發送當下心情貼圖及問候{MATRIX_USERNAME}"
         agent_dir = os.path.join(os.environ['SCRIPT_DIR'], 'agent_home', name)
         flag_file = os.path.join(agent_dir, 'octo_cyberbrain', '.rotation_flag')
         pending_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_inject.txt')
