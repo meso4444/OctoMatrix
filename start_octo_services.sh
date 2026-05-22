@@ -479,11 +479,11 @@ import subprocess
 import time
 sys.path.append(os.environ['SCRIPT_DIR'])
 try:
-    from config import AGENTS
+    from config import AGENTS, MATRIX_USERNAME
     session_name = os.environ['TMUX_SESSION_NAME']
     for agent in AGENTS:
         name = agent['name']
-        test_msg = "【系統提示】執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{mood}.png 發符合當下心情的貼圖，接著執行 python3 toolbox/matrix_notifier.py '{向 {MATRIX_USERNAME} 問候}'"
+        test_msg = f"【系統提示】執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖，接著執行 python3 toolbox/matrix_notifier.py '{{向 {MATRIX_USERNAME} 問候}}'"
         agent_dir = os.path.join(os.environ['SCRIPT_DIR'], 'agent_home', name)
         flag_file = os.path.join(agent_dir, 'octo_cyberbrain', '.rotation_flag')
         pending_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_inject.txt')
