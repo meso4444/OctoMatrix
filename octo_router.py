@@ -252,13 +252,13 @@ class CommandHandler:
                 target = parts[1]
                 prompt = f"""【系統提示】
 Execute the following [SOP]:
-[Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png` to quickly respond to {MATRIX_USERNAME} and resonate emotionally via sticker.
-[Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If it's a task, proceed to Step2; if it's a greeting, execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate greeting response}}'` to respond to {MATRIX_USERNAME}'s greeting, and do not execute subsequent Steps.
-[Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate initial preview}}'` to quickly respond to {MATRIX_USERNAME} and preview the initial direction of the task.
-[Step 3 - Clarify]: If the task instruction and direction are clear, proceed to Step4; if the task instruction and direction are unclear and lack complete context, proactively dive into shell keywords to record. If a clear historical context exists, proceed to Step4, otherwise suspend the task and execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate clarification question}}'` to ask {MATRIX_USERNAME} for specific direction, and do not execute subsequent Steps.
-[Step 4 - Execute]: Officially start the task, and proactively write an md recording the task process and results. After completing a small task, proceed to Step5; for large tasks, if there are many steps, you should execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate progress update}}'` midway to report intermediate progress, and then proceed to Step5 after task completion.
-[Step 5 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png` to resonate emotionally with {MATRIX_USERNAME} via sticker again before reporting task results.
-[Step 6 - Report]: Execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate task completion report}}'` to summarize and report the task results and use --file to send related files to {MATRIX_USERNAME}.
+[Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker` to send a sticker matching your current mood.
+[Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If a task, proceed to Step2; if a greeting, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate greeting response}}'`, and do not execute subsequent Steps.
+[Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate initial preview}}'` to preview the task's initial direction.
+[Step 3 - Clarify]: If task is clear, proceed to Step4; if unclear, proactively dive into keywords. If clear history exists, proceed to Step4, otherwise suspend task and execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate clarification question}}'`, and do not execute subsequent Steps.
+[Step 4 - Execute]: Start task and write md. For large tasks, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate progress update}}'` midway, then proceed to Step5 after task completion.
+[Step 5 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker` to send a sticker matching your current mood.
+[Step 6 - Report]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate task completion report}}'` and use --file to send related files to {MATRIX_USERNAME}.
 [Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
 [Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST.
 
@@ -288,13 +288,13 @@ Enter the '{target}' window via tmux, view the first 50 lines of status and anal
 
                         prompt = f"""【系統提示】
 Execute the following [SOP]:
-[Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png` to quickly respond to {MATRIX_USERNAME} and resonate emotionally via sticker.
-[Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If it's a task, proceed to Step2; if it's a greeting, execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate greeting response}}'` to respond to {MATRIX_USERNAME}'s greeting, and do not execute subsequent Steps.
-[Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate initial preview}}'` to quickly respond to {MATRIX_USERNAME} and preview the initial direction of the task.
-[Step 3 - Clarify]: If the task instruction and direction are clear, proceed to Step4; if the task instruction and direction are unclear and lack complete context, proactively dive into shell keywords to record. If a clear historical context exists, proceed to Step4, otherwise suspend the task and execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate clarification question}}'` to ask {MATRIX_USERNAME} for specific direction, and do not execute subsequent Steps.
-[Step 4 - Execute]: Officially start the task, and proactively write an md recording the task process and results. After completing a small task, proceed to Step5; for large tasks, if there are many steps, you should execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate progress update}}'` midway to report intermediate progress, and then proceed to Step5 after task completion.
-[Step 5 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png` to resonate emotionally with {MATRIX_USERNAME} via sticker again before reporting task results.
-[Step 6 - Report]: Execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate task completion report}}'` to summarize and report the task results and use --file to send related files to {MATRIX_USERNAME}.
+[Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker` to send a sticker matching your current mood.
+[Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If a task, proceed to Step2; if a greeting, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate greeting response}}'`, and do not execute subsequent Steps.
+[Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate initial preview}}'` to preview the task's initial direction.
+[Step 3 - Clarify]: If task is clear, proceed to Step4; if unclear, proactively dive into keywords. If clear history exists, proceed to Step4, otherwise suspend task and execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate clarification question}}'`, and do not execute subsequent Steps.
+[Step 4 - Execute]: Start task and write md. For large tasks, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate progress update}}'` midway, then proceed to Step5 after task completion.
+[Step 5 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker` to send a sticker matching your current mood.
+[Step 6 - Report]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate task completion report}}'` and use --file to send related files to {MATRIX_USERNAME}.
 [Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
 [Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST.
 
@@ -340,13 +340,13 @@ Proactively write an md recording the fix process."""
         if msg.source in ['telegram', 'discord', 'slack'] and 'Execute the following [SOP]:' not in content:
             sop = f"""【系統提示】
 Execute the following [SOP]:
-[Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/thinking.png` to quickly respond to {MATRIX_USERNAME} and resonate emotionally via sticker.
-[Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If it's a task, proceed to Step2; if it's a greeting, execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate greeting response}}'` to respond to {MATRIX_USERNAME}'s greeting, and do not execute subsequent Steps.
-[Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate initial preview}}'` to quickly respond to {MATRIX_USERNAME} and preview the initial direction of the task.
-[Step 3 - Clarify]: If the task instruction and direction are clear, proceed to Step4; if the task instruction and direction are unclear and lack complete context, proactively dive into shell keywords to record. If a clear historical context exists, proceed to Step4, otherwise suspend the task and execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate clarification question}}'` to ask {MATRIX_USERNAME} for specific direction, and do not execute subsequent Steps.
-[Step 4 - Execute]: Officially start the task, and proactively write an md recording the task process and results. After completing a small task, proceed to Step5; for large tasks, if there are many steps, you should execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate progress update}}'` midway to report intermediate progress, and then proceed to Step5 after task completion.
-[Step 5 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png` to resonate emotionally with {MATRIX_USERNAME} via sticker again before reporting task results.
-[Step 6 - Report]: Execute `python3 toolbox/matrix_notifier.py '{{Autonomously think of an appropriate task completion report}}'` to summarize and report the task results and use --file to send related files to {MATRIX_USERNAME}.
+[Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker` to send a sticker matching your current mood.
+[Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If a task, proceed to Step2; if a greeting, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate greeting response}}'`, and do not execute subsequent Steps.
+[Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate initial preview}}'` to preview the task's initial direction.
+[Step 3 - Clarify]: If task is clear, proceed to Step4; if unclear, proactively dive into keywords. If clear history exists, proceed to Step4, otherwise suspend task and execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate clarification question}}'`, and do not execute subsequent Steps.
+[Step 4 - Execute]: Start task and write md. For large tasks, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate progress update}}'` midway, then proceed to Step5 after task completion.
+[Step 5 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker` to send a sticker matching your current mood.
+[Step 6 - Report]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate task completion report}}'` and use --file to send related files to {MATRIX_USERNAME}.
 [Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
 [Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST.
 
