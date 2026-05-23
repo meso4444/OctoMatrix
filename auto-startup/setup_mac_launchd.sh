@@ -18,6 +18,9 @@ fi
 PLIST_NAME="com.octomatrix.agent.plist"
 PLIST_PATH="$HOME/Library/LaunchAgents/$PLIST_NAME"
 
+# 確保腳本具有執行權限
+chmod +x "$START_SCRIPT"
+
 echo "📂 專案根目錄: $OCTO_DIR"
 echo "📝 準備生成設定檔: $PLIST_PATH"
 
@@ -37,8 +40,6 @@ cat <<EOF > "$PLIST_PATH"
         <string>/bin/bash</string>
         <string>$START_SCRIPT</string>
     </array>
-    <key>WorkingDirectory</key>
-    <string>$OCTO_DIR</string>
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
@@ -49,9 +50,9 @@ cat <<EOF > "$PLIST_PATH"
     <key>KeepAlive</key>
     <false/>
     <key>StandardOutPath</key>
-    <string>$OCTO_DIR/mac_autostart.log</string>
+    <string>/tmp/mac_autostart.log</string>
     <key>StandardErrorPath</key>
-    <string>$OCTO_DIR/mac_autostart_error.log</string>
+    <string>/tmp/mac_autostart_error.log</string>
 </dict>
 </plist>
 EOF
