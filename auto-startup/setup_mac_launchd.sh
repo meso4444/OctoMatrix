@@ -7,7 +7,7 @@ echo "=========================================="
 
 # 取得 OctoMatrix 根目錄的絕對路徑
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-OCTO_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
+OCTO_DIR="$(dirname "$SCRIPT_DIR")"
 START_SCRIPT="$OCTO_DIR/start_octo_services.sh"
 
 if [ ! -f "$START_SCRIPT" ]; then
