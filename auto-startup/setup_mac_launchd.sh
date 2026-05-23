@@ -17,6 +17,9 @@ fi
 PLIST_NAME="com.octomatrix.agent.plist"
 PLIST_PATH="$HOME/Library/LaunchAgents/$PLIST_NAME"
 
+# Ensure the target script has execution permissions
+chmod +x "$START_SCRIPT"
+
 echo "📂 Project Root: $OCTO_DIR"
 echo "📝 Generating config file: $PLIST_PATH"
 
@@ -34,8 +37,6 @@ cat <<EOF > "$PLIST_PATH"
         <string>/bin/bash</string>
         <string>$START_SCRIPT</string>
     </array>
-    <key>WorkingDirectory</key>
-    <string>$OCTO_DIR</string>
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
@@ -46,9 +47,9 @@ cat <<EOF > "$PLIST_PATH"
     <key>KeepAlive</key>
     <false/>
     <key>StandardOutPath</key>
-    <string>$OCTO_DIR/mac_autostart.log</string>
+    <string>/tmp/mac_autostart.log</string>
     <key>StandardErrorPath</key>
-    <string>$OCTO_DIR/mac_autostart_error.log</string>
+    <string>/tmp/mac_autostart_error.log</string>
 </dict>
 </plist>
 EOF
