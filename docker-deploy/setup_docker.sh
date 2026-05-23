@@ -156,6 +156,7 @@ while true; do
     [ "$SLACK_ENABLED" = "true" ] && echo "  ✅ Slack    (啟用)" || echo "  ⭕ Slack    (停用)"
     echo "  🌍 時區 (TZ): $TZ"
     echo "----------------------------------------"
+    echo " [U] 👤 設定使用者名稱 (當前: $MATRIX_USERNAME)"
     echo " [1] 📱 設定 Telegram 與 Ngrok 隧道"
     echo " [2] 💻 設定 Discord"
     echo " [3] ⚡ 設定 Slack"
@@ -168,9 +169,16 @@ while true; do
     echo " [Q] ❌ 放棄變更退出 (Quit)"
     echo "=========================================="
     
-    read -p "請選擇操作 [1-6, S, C, Q]: " choice
+    read -p "請選擇操作 [1-6, U, S, C, Q]: " choice
     
     case $choice in
+        [Uu])
+            echo ""
+            read -p "請輸入您的稱呼 (預設: User) [目前: $MATRIX_USERNAME]: " TEMP_USER
+            if [ -n "$TEMP_USER" ]; then
+                MATRIX_USERNAME="$TEMP_USER"
+            fi
+            ;;
         1)
             echo ""
             echo "📱 Telegram 設定"
@@ -287,7 +295,9 @@ while true; do
             echo "✅ 實例設置完成！"
             echo "=========================================="
             echo "🚀 接下來，您可以執行以下指令來操作您的 AI 軍團："
-            echo "1. 建置與啟動容器 (背景執行)："
+            echo "1. 移除舊映像檔並重新建置容器："
+            echo "   docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} down"
+            echo "   docker image rm octomatrix-dev-${INSTANCE_NAME}  # 強制移除底層映像檔以確保重包"
             echo "   docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} up -d --build"
             echo ""
             echo "2. 查看容器運行狀態："
