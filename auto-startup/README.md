@@ -19,6 +19,27 @@ sudo ./auto-startup/install_systemd_octomatrix.sh
 
 ---
 
+## 🍏 macOS 設定 (Launchd)
+
+macOS 系統本身自帶原生的 `launchd` 機制。我們可以直接使用內建指令進行設定，不依賴 `brew`。
+
+### 1. 執行註冊腳本
+在終端機中進入專案目錄，然後執行腳本：
+
+```bash
+# 在專案目錄下
+./auto-startup/setup_mac_launchd.sh
+```
+
+這會在 `~/Library/LaunchAgents/` 下生成設定檔並自動註冊。下次登入 Mac 時，服務就會在背景自動啟動。
+
+若要取消自動啟動，請執行：
+```bash
+launchctl unload ~/Library/LaunchAgents/com.octomatrix.agent.plist
+```
+
+---
+
 ## 🪟 Windows 宿主機設定 (Task Scheduler)
 
 如果您是在 Windows WSL 上運行，為了避免 Windows 更新重啟後服務掛掉，請執行以下步驟。
