@@ -175,11 +175,6 @@ class CommandHandler:
         cmd_content = content.lower().strip()
         
         # 3. 核心指令處理分支
-        flag_file = os.path.join(AGENT_HOME_BASE, target_agent, 'octo_cyberbrain', '.rotation_flag')
-        if cmd_content.startswith('/') and os.path.exists(flag_file) and msg.source not in ['reaper', 'system_flush']:
-            self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> 系統正在進行 GHOST 深度重整，請待重置完畢後再執行系統指令。'})
-            return True
-
         if cmd_content.startswith('/switch'):
             parts = content.split()
             if len(parts) > 1:
