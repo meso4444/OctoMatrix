@@ -295,9 +295,7 @@ while true; do
             echo "✅ 實例設置完成！"
             echo "=========================================="
             echo "🚀 接下來，您可以執行以下指令來操作您的 AI 軍團："
-            echo "1. 移除舊映像檔並重新建置容器："
-            echo "   docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} down"
-            echo "   docker image rm octomatrix-dev-${INSTANCE_NAME}  # 強制移除底層映像檔以確保重包"
+            echo "1. 建置與啟動容器 (背景執行)："
             echo "   docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} up -d --build"
             echo ""
             echo "2. 查看容器運行狀態："
@@ -309,7 +307,7 @@ while true; do
             echo ""
             echo "4. 停止並移除容器："
             echo "   docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} down"
-            echo "=========================================="
+            echo "   docker image rm octomatrix-dev-${INSTANCE_NAME}  # 強制移除底層映像檔以確保重包"
             break
             ;;
         [Cc])
