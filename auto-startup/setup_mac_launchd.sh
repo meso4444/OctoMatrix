@@ -36,6 +36,11 @@ cat <<EOF > "$PLIST_PATH"
     </array>
     <key>WorkingDirectory</key>
     <string>$OCTO_DIR</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
