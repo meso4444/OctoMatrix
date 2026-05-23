@@ -19,6 +19,27 @@ sudo ./auto-startup/install_systemd_octomatrix.sh
 
 ---
 
+## 🍏 macOS Setup (Launchd)
+
+macOS has a native init system called `launchd`. We can use it directly without relying on `brew`.
+
+### 1. Run Registration Script
+In the terminal, go to the project directory and run the script:
+
+```bash
+# From the project directory
+./auto-startup/setup_mac_launchd.sh
+```
+
+This will generate a config file in `~/Library/LaunchAgents/` and register it automatically. The service will start in the background the next time you log into your Mac.
+
+To disable auto-startup, run:
+```bash
+launchctl unload ~/Library/LaunchAgents/com.octomatrix.agent.plist
+```
+
+---
+
 ## 🪟 Windows Host Setup (Task Scheduler)
 
 If you are running on Windows WSL, follow these steps to prevent the service from dying after Windows update reboots.
