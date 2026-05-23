@@ -155,6 +155,7 @@ while true; do
     [ "$SLACK_ENABLED" = "true" ] && echo "  ✅ Slack    (Enabled)" || echo "  ⭕ Slack    (Disabled)"
     echo "  🌍 Timezone (TZ): $TZ"
     echo "----------------------------------------"
+    echo " [U] 👤 Configure Username (Current: $MATRIX_USERNAME)"
     echo " [1] 📱 Configure Telegram & Ngrok Tunnel"
     echo " [2] 💻 Configure Discord"
     echo " [3] ⚡ Configure Slack"
@@ -167,9 +168,16 @@ while true; do
     echo " [Q] ❌ Quit without saving (Quit)"
     echo "=========================================="
     
-    read -p "Select option [1-6, S, C, Q]: " choice
+    read -p "Select option [1-6, U, S, C, Q]: " choice
     
     case $choice in
+        [Uu])
+            echo ""
+            read -p "Enter your name (Default: User) [Current: $MATRIX_USERNAME]: " TEMP_USER
+            if [ -n "$TEMP_USER" ]; then
+                MATRIX_USERNAME="$TEMP_USER"
+            fi
+            ;;
         1)
             echo ""
             echo "📱 Telegram Settings"
@@ -287,7 +295,9 @@ while true; do
             echo "✅ Instance setup complete!"
             echo "=========================================="
             echo "🚀 Next steps, you can use the following commands to operate your AI Army:"
-            echo "1. Build and start containers (background):"
+            echo "1. Clean old images and rebuild containers:"
+            echo "   docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} down"
+            echo "   docker image rm octomatrix-dev-${INSTANCE_NAME}  # Force remove base image to ensure rebuild"
             echo "   docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} up -d --build"
             echo ""
             echo "2. Check container status and logs:"
