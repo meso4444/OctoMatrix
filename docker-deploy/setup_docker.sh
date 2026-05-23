@@ -43,6 +43,7 @@ if [ -f "$ENV_FILE" ]; then
 fi
 
 # 建立還原快照 (用於 Q 操作)
+ORIG_MATRIX_USERNAME="${MATRIX_USERNAME:-User}"
 ORIG_TZ="${TZ:-Asia/Taipei}"
 ORIG_TELEGRAM_ENABLED="${TELEGRAM_ENABLED:-false}"
 ORIG_TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-}"
@@ -59,6 +60,7 @@ ORIG_SLACK_WORKSPACE_ID="${SLACK_WORKSPACE_ID:-}"
 ORIG_SLACK_CHANNEL_ID="${SLACK_CHANNEL_ID:-}"
 
 # 當前工作變數
+MATRIX_USERNAME="$ORIG_MATRIX_USERNAME"
 TZ="$ORIG_TZ"
 TELEGRAM_ENABLED="$ORIG_TELEGRAM_ENABLED"
 TELEGRAM_BOT_TOKEN="$ORIG_TELEGRAM_BOT_TOKEN"
@@ -99,6 +101,7 @@ write_env_file() {
 # =========================================
 # OctoMatrix - $INSTANCE_NAME 環境變數
 # =========================================
+MATRIX_USERNAME=$MATRIX_USERNAME
 TZ=$TZ
 
 # =========================================
