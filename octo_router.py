@@ -175,6 +175,15 @@ class CommandHandler:
         cmd_content = content.lower().strip()
 
         # 3. Core command handling branches
+        interfering_cmds = ['/interrupt', '/clear', '/resume_latest', '/sys_refresh']
+        is_interfering = cmd_content in interfering_cmds or cmd_content.startswith('/inspect') or cmd_content.startswith('/fix')
+
+        if is_interfering:
+            flag_file = os.path.join(AGENT_HOME_BASE, target_agent, 'octo_cyberbrain', '.rotation_flag')
+            if os.path.exists(flag_file) and msg.source not in ['reaper', 'system_flush']:
+                self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> System is undergoing GHOST deep reorganization, please wait until reset completes before executing window-interfering commands.'})
+                return True
+
         if cmd_content.startswith('/switch'):
             parts = content.split()
             if len(parts) > 1:
