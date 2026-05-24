@@ -45,9 +45,12 @@ if ($ArgsList) {
 # S4U allows running without storing password, perfect for background services
 $Principal = New-ScheduledTaskPrincipal -UserId (Whoami) -LogonType S4U
 
+# 4.5 Define Settings (Allow running on battery)
+$Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit 0
+
 # 5. Register Task
 try {
-    Register-ScheduledTask -TaskName $TaskName -Trigger $Trigger -Action $Action -Principal $Principal -Description "OctoMatrix WSL Wake-up (Headless)"
+    Register-ScheduledTask -TaskName $TaskName -Trigger $Trigger -Action $Action -Principal $Principal -Settings $Settings -Description "OctoMatrix WSL Wake-up (Headless)"
     Write-Host ""
     Write-Host "[V] Success! Task '$TaskName' created." -ForegroundColor Green
     Write-Host "    Agent will now start automatically at Windows BOOT (no login required)."
