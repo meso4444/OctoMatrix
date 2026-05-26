@@ -216,6 +216,11 @@ class TelegramSender:
             param_map = {'photo': 'photo', 'video': 'video', 'audio': 'audio', 'sticker': 'sticker'}
             param = param_map.get(file_type, 'document')
             
+            # Auto-detect photo and if it's a gif, change to sendAnimation
+            if file_type == 'photo' and target_path.lower().endswith('.gif'):
+                method = 'sendAnimation'
+                param = 'animation'
+            
             with open(target_path, 'rb') as f:
                 data = {'chat_id': chat_id, 'parse_mode': 'HTML'}
                 if caption:
