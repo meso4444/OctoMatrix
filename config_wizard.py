@@ -514,6 +514,11 @@ def manage_menu():
                 sys_items.append({"label": "📊 系統狀態", "command": "/status"})
                 append_to_menu(sys_items)
                 
+            avatar_items = []
+            if prompt_bool("是否加入視覺形象建構功能 (/avatar_renew)?", True):
+                avatar_items.append({"label": "🎭 重塑形象", "command": "/avatar_renew {input}", "prompt": "請描述您期望的 Agent 視覺形象與性格特徵:"})
+                append_to_menu(avatar_items)
+                
             print("✅ 內建功能鍵已自動置底生成！")
             
         elif choice == 'e':
