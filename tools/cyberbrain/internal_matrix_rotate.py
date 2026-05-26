@@ -144,8 +144,10 @@ def main():
         try:
             import config
             MATRIX_USERNAME = getattr(config, 'MATRIX_USERNAME', 'User')
+            SYS_PREFIX = getattr(config, 'SYS_PREFIX', '【系統提示】')
         except Exception:
             MATRIX_USERNAME = 'User'
+            SYS_PREFIX = '【系統提示】'
 
         TS = datetime.now().strftime("%Y-%m-%d_%H%M")
         MONTH_TS = datetime.now().strftime("%Y-%m")
