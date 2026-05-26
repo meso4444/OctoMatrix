@@ -176,7 +176,7 @@ class CommandHandler:
         
         # 3. 核心指令處理分支
         interfering_cmds = ['/interrupt', '/clear', '/resume_latest', '/sys_refresh']
-        is_interfering = cmd_content in interfering_cmds or cmd_content.startswith('/inspect') or cmd_content.startswith('/fix')
+        is_interfering = cmd_content in interfering_cmds or cmd_content.startswith('/inspect') or cmd_content.startswith('/fix') or cmd_content.startswith('/avatar_renew')
 
         if is_interfering:
             flag_file = os.path.join(AGENT_HOME_BASE, target_agent, 'octo_cyberbrain', '.rotation_flag')
@@ -269,7 +269,7 @@ class CommandHandler:
             try:
                 with open(template_path, 'r', encoding='utf-8') as f:
                     gen_template = f.read()
-                check_prompt = (gen_template.replace('{agent_name}', target_agent)
+                check_prompt = "【系統提示】\n" + (gen_template.replace('{agent_name}', target_agent)
                                      .replace('{agent_usecase}', usecase)
                                      .replace('{engine_doc_name}', engine_doc_name)
                                      .replace('{rules_path}', rules_path)
@@ -287,6 +287,22 @@ class CommandHandler:
             time.sleep(0.5)
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'Enter'], check=False)
             self.notifier.notify(msg.source, 'custom', {'content': f'🔄 已向 <b>[{target_agent}]</b> 發送完整規範重建指令'})
+            return True
+        elif cmd_content.startswith('/avatar_renew'):
+            if not check_cooldown(target_agent, 'avatar_renew'):
+                self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> 操作冷卻中，請稍後再試。'})
+                return True
+            parts = content.split(' ', 1)
+            requirement = parts[1].strip() if len(parts) > 1 else "無特定需求"
+            
+            prompt = f"【系統提示】\n依照 ./knowledge/AGENT_AVATAR_GUIDE.md 的指引及「{requirement}」的需求，將你的舊avatar組圖備份打包為zip後,生成你的新 avatar，完成後執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖，接著執行 python3 toolbox/matrix_notifier.py '{{向 {MATRIX_USERNAME} 問候}}'".replace("{mood}", "{mood}")
+            
+            subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '\x1b[200~'])
+            subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '-l', '--', prompt], check=False)
+            subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '\x1b[201~'])
+            time.sleep(0.5)
+            subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'Enter'], check=False)
+            self.notifier.notify(msg.source, 'custom', {'content': f'🎨 已指派 <b>[{target_agent}]</b> 進行 Avatar 更新任務...'})
             return True
         elif cmd_content.startswith('/inspect'):
             parts = content.split()
