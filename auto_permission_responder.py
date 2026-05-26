@@ -7,6 +7,8 @@ import subprocess
 import time
 import re
 import os
+from config import SYS_PREFIX
+
 import threading
 
 # 🎯 目標視窗 (例如 session:Gupa)
@@ -22,7 +24,7 @@ DEBUG = os.getenv('DEBUG', '0') == '1'
 log_file = f"/tmp/monitor_{TARGET.replace(':', '_')}.log"
 
 # 🚀 精確定位來自網關的指令標記
-GATEWAY_MARKER = "【系統提示】"
+GATEWAY_MARKER = f"{SYS_PREFIX}"
 
 def log(msg):
     if not DEBUG: return

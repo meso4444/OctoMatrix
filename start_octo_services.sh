@@ -143,7 +143,7 @@ def wait_for_prompt(session_name, window_name, engine, max_wait=30):
     return False
 
 try:
-    from config import AGENTS, COLLABORATION_GROUPS
+    from config import AGENTS, COLLABORATION_GROUPS, SYS_PREFIX
     
     rules_path = os.path.join(script_dir, 'agent_home_rules.md')
     template_path = os.path.join(script_dir, 'agent_rule_gen_template.txt')
@@ -352,7 +352,7 @@ try:
             protocol_path = os.path.join(home_path, 'AGENT_PROTOCOL.md')  # 參考通知規則
 
             # 生成初始化 Prompt
-            prompt = "【系統提示】\n" + (gen_template.replace('{agent_name}', name)
+            prompt = f"{SYS_PREFIX}\n" + (gen_template.replace('{agent_name}', name)
                                  .replace('{agent_usecase}', usecase)
                                  .replace('{engine_doc_name}', engine_doc_name)
                                  .replace('{rules_path}', rules_path)
@@ -486,7 +486,7 @@ try:
     session_name = os.environ['TMUX_SESSION_NAME']
     for agent in AGENTS:
         name = agent['name']
-        test_msg = f"【系統提示】執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖，接著執行 python3 toolbox/matrix_notifier.py '{{向 {MATRIX_USERNAME} 問候}}'"
+        test_msg = f"{SYS_PREFIX}執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖，接著執行 python3 toolbox/matrix_notifier.py '{{向 {MATRIX_USERNAME} 問候}}'"
         agent_dir = os.path.join(os.environ['SCRIPT_DIR'], 'agent_home', name)
         flag_file = os.path.join(agent_dir, 'octo_cyberbrain', '.rotation_flag')
         pending_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_inject.txt')

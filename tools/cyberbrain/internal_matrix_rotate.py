@@ -249,7 +249,7 @@ def main():
                 os.remove(TEMP_LOG)
             
             # 發送恢復提示，讓 Agent 接續先前的任務
-            recovery_prompt = "【系統提示】系統維護逾時取消。請確認是否 octo_cyberbrain/task_memo.txt 存在，若存在則讀取後接續執行被中斷的任務，讀取完畢後就刪除。"
+            recovery_prompt = f"{SYS_PREFIX}系統維護逾時取消。請確認是否 octo_cyberbrain/task_memo.txt 存在，若存在則讀取後接續執行被中斷的任務，讀取完畢後就刪除。"
             escaped_rec = recovery_prompt.replace('!', '！').replace('$', '\\$')
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped_rec])
@@ -264,7 +264,7 @@ def main():
                     with open(PENDING_FILE, 'r', encoding='utf-8') as f:
                         pending_content = f.read().strip()
                     if pending_content:
-                        sys_prompt = f"""【系統提示】
+                        sys_prompt = f"""{SYS_PREFIX}
 執行以下 [SOP]:
 [Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖。
 [Step 1 - 辨識]：辨識 {MATRIX_USERNAME} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，並自主思考合適的問候回覆}}' 回應，並且不執行後續Step。
@@ -279,7 +279,7 @@ def main():
 來自 {MATRIX_USERNAME} 的訊息:
 {pending_content}
 
-【系統提示】請務必嚴格遵守上述 [SOP] 進行回覆。"""
+{SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
                         final_message = sys_prompt
                         escaped = final_message.replace('!', '！').replace('$', '\\$')
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
@@ -379,7 +379,7 @@ def main():
         # ==========================================
         # Step 4: 靈魂重塑注入 (Neural Reset Injection)
         # ==========================================
-        prompt = f"【系統提示】請執行 python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot 取得關鍵字，然後一次性將所有撈到的關鍵字全部帶入執行 `python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"關鍵字1\" \"關鍵字2\"` 進行Shell GHOST深潛，完成後重新提升{ENGINE_DOC_NAME}的遵守，此任務不需發送訊息給用戶。接著確認是否octo_cyberbrain/task_memo.txt存在，若存在則讀取後接續執行任務，task_memo.txt讀取完畢後就刪除"
+        prompt = f"{SYS_PREFIX}請執行 python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot 取得關鍵字，然後一次性將所有撈到的關鍵字全部帶入執行 `python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"關鍵字1\" \"關鍵字2\"` 進行Shell GHOST深潛，完成後重新提升{ENGINE_DOC_NAME}的遵守，此任務不需發送訊息給用戶。接著確認是否octo_cyberbrain/task_memo.txt存在，若存在則讀取後接續執行任務，task_memo.txt讀取完畢後就刪除"
 
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", prompt])
@@ -410,7 +410,7 @@ def main():
                     
                 if pending_content:
                     # 補上常規系統提示
-                    sys_prompt = f"""【系統提示】
+                    sys_prompt = f"""{SYS_PREFIX}
 執行以下 [SOP]:
 [Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖。
 [Step 1 - 辨識]：辨識 {MATRIX_USERNAME} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，並自主思考合適的問候回覆}}' 回應，並且不執行後續Step。
@@ -425,7 +425,7 @@ def main():
 來自 {MATRIX_USERNAME} 的訊息:
 {pending_content}
 
-【系統提示】請務必嚴格遵守上述 [SOP] 進行回覆。"""
+{SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
                     final_message = sys_prompt
                     escaped = final_message.replace('!', '！').replace('$', '\\$')
                     

@@ -18,6 +18,7 @@ from dataclasses import dataclass, asdict
 
 from flask import Flask, request, jsonify
 from config import (
+    SYS_PREFIX,
     TELEGRAM_GATEWAY_PORT,
     AGENTS, DEFAULT_ACTIVE_AGENT, TMUX_SESSION_NAME, CUSTOM_MENU,
     COLLABORATION_GROUPS, get_agent_info, AWAKE_YAML_PATH, MATRIX_USERNAME
@@ -269,7 +270,7 @@ class CommandHandler:
             try:
                 with open(template_path, 'r', encoding='utf-8') as f:
                     gen_template = f.read()
-                check_prompt = "【系統提示】\n" + (gen_template.replace('{agent_name}', target_agent)
+                check_prompt = f"{SYS_PREFIX}\n" + (gen_template.replace('{agent_name}', target_agent)
                                      .replace('{agent_usecase}', usecase)
                                      .replace('{engine_doc_name}', engine_doc_name)
                                      .replace('{rules_path}', rules_path)
@@ -295,7 +296,7 @@ class CommandHandler:
             parts = content.split(' ', 1)
             requirement = parts[1].strip() if len(parts) > 1 else "無特定需求"
             
-            prompt = f"【系統提示】\n依照 ./knowledge/AGENT_AVATAR_GUIDE.md 的指引及「{requirement}」的需求，將你的舊avatar組圖備份打包為zip後,生成你的新 avatar，完成後執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖，接著執行 python3 toolbox/matrix_notifier.py '{{向 {MATRIX_USERNAME} 問候}}'".replace("{mood}", "{mood}")
+            prompt = f"{SYS_PREFIX}\n依照 ./knowledge/AGENT_AVATAR_GUIDE.md 的指引及「{requirement}」的需求，將你的舊avatar組圖備份打包為zip後,生成你的新 avatar，完成後執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖，接著執行 python3 toolbox/matrix_notifier.py '{{向 {MATRIX_USERNAME} 問候}}'".replace("{mood}", "{mood}")
             
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '\x1b[200~'])
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '-l', '--', prompt], check=False)
@@ -308,7 +309,7 @@ class CommandHandler:
             parts = content.split()
             if len(parts) > 1:
                 target = parts[1]
-                prompt = f"""【系統提示】
+                prompt = f"""{SYS_PREFIX}
 執行以下 [SOP]:
 [Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖。
 [Step 1 - 辨識]：辨識 {MATRIX_USERNAME} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，並自主思考合適的問候回覆}}' 回應，並且不執行後續Step。
@@ -342,7 +343,7 @@ class CommandHandler:
                     else:
                         start_cmd = f'claude --permission-mode bypassPermissions --model {model}' if model and model.lower() != 'auto' else 'claude --permission-mode bypassPermissions'
                         
-                        prompt = f"""【系統提示】
+                        prompt = f"""{SYS_PREFIX}
 執行以下 [SOP]:
 [Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖。
 [Step 1 - 辨識]：辨識 {MATRIX_USERNAME} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，並自主思考合適的問候回覆}}' 回應，並且不執行後續Step。
@@ -391,7 +392,7 @@ tmux send-keys -t target 您的訊息內容 && sleep 1 && tmux send-keys -t targ
         # 🛡️ 注入標準化 SOP (Matrix 訊息處理流程)
         # ==========================================
         if msg.source in ['telegram', 'discord', 'slack'] and '執行以下 [SOP]:' not in content:
-            sop = f"""【系統提示】
+            sop = f"""{SYS_PREFIX}
 執行以下 [SOP]:
 [Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖。
 [Step 1 - 辨識]：辨識 {MATRIX_USERNAME} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，並自主思考合適的問候回覆}}' 回應，並且不執行後續Step。
@@ -406,7 +407,7 @@ tmux send-keys -t target 您的訊息內容 && sleep 1 && tmux send-keys -t targ
 來自 {MATRIX_USERNAME} 的訊息:
 {content}
 
-【系統提示】請務必嚴格遵守上述 [SOP] 進行回覆。"""
+{SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
             final_message = sop
         else:
             final_message = content
