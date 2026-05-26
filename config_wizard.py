@@ -515,9 +515,13 @@ def manage_menu():
                 sys_items.append({"label": "📖 User Manual", "command": "/help"})
                 sys_items.append({"label": "📊 System Status", "command": "/status"})
                 append_to_menu(sys_items)
-                
-            print("✅ Built-in menu items have been auto-generated!")
-            
+
+            avatar_items = []
+            if prompt_bool("Add visual avatar reconstruction function (/avatar_renew)?", True):
+                avatar_items.append({"label": "🎭 Renew Avatar", "command": "/avatar_renew {input}", "prompt": "Please describe the desired visual avatar and persona traits:"})
+                append_to_menu(avatar_items)
+
+            print("✅ Built-in menu items have been auto-generated!")            
         elif choice == 'e':
             r_idx = input("Enter Row number: ").strip()
             i_idx = input("Enter Button number in that row: ").strip()
