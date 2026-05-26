@@ -143,7 +143,7 @@ def wait_for_prompt(session_name, window_name, engine, max_wait=30):
     return False
 
 try:
-    from config import AGENTS, COLLABORATION_GROUPS, SYS_PREFIX
+    from config import AGENTS, COLLABORATION_GROUPS, SYS_PREFIX, AGENT_PASSWORD
     
     rules_path = os.path.join(script_dir, 'agent_home_rules.md')
     template_path = os.path.join(script_dir, 'agent_rule_gen_template.txt')
@@ -310,7 +310,7 @@ try:
             time.sleep(2) # Wait for system password prompt
             
             # Inject password
-            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'octomatrix']), check=True)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', AGENT_PASSWORD]), check=True)
             time.sleep(0.5)
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
             time.sleep(2) # Wait for login complete and environment load
@@ -337,7 +337,7 @@ try:
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
             
             # Inject password
-            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'octomatrix']), check=True)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', AGENT_PASSWORD]), check=True)
             time.sleep(2)
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
             

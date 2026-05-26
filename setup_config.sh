@@ -301,9 +301,7 @@ while true; do
             write_env_file
             update_config_yaml
 
-            # v4: Create dedicated Linux account (Non-container environment)
-            if [ ! -f /.dockerenv ]; then
-                echo "🔒 Configuring dedicated Linux account isolation..."
+guring dedicated Linux account isolation..."
                 python3 -c "import yaml; [print(a.get('name', '').lower()) for a in yaml.safe_load(open('$CONFIG_YAML')).get('agents', [])]" 2>/dev/null | while read -r agent_name; do
                     if [ -n "$agent_name" ]; then
                         AGENT_USER="agent_${agent_name}"

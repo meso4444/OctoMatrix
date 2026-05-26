@@ -18,8 +18,44 @@ run_local_auth() {
     echo "📍 Environment: Local (~)"
     echo "🎯 Target: Isolated authentication via dedicated Linux account"
     echo ""
-    read -p "Please enter Agent name to authenticate (e.g. gupa, leave blank and Enter to return): " AGENT_NAME
-    if [ -z "$AGENT_NAME" ]; then break; fi
+    # 從 config.yaml 獲取 agent 清單
+    CONFIG_YAML="$SCRIPT_DIR/config.yaml"
+    if [ ! -f "$CONFIG_YAML" ]; then
+        echo "❌ Cannot find config.yaml. Please complete system setup first."
+        return
+    fi
+    
+    AGENT_LIST=$(python3 -c "import yaml; [print(a.get('name', '')) for a in yaml.safe_load(open('$CONFIG_YAML')).get('agents', [])]" 2>/dev/null)
+    if [ -z "$AGENT_LIST" ]; then
+        echo "❌ No Agents found. Please add Agents in system setup first."
+        return
+    fi
+    
+    echo "Please select an Agent to authenticate:"
+    AGENT_ARRAY=()
+    while IFS= read -r line; do
+        if [ -n "$line" ]; then
+            AGENT_ARRAY+=("$line")
+        fi
+    done <<< "$AGENT_LIST"
+    
+    for i in "${!AGENT_ARRAY[@]}"; do
+        echo "$((i+1))) ${AGENT_ARRAY[$i]}"
+    done
+    echo "R) Return / Exit"
+    echo ""
+    read -p "Please enter choice [1-${#AGENT_ARRAY[@]}, R]: " AGENT_CHOICE
+    
+    if [[ "$AGENT_CHOICE" =~ ^[Rr]$ ]]; then
+        break
+    fi
+    
+    if ! [[ "$AGENT_CHOICE" =~ ^[0-9]+$ ]] || [ "$AGENT_CHOICE" -lt 1 ] || [ "$AGENT_CHOICE" -gt "${#AGENT_ARRAY[@]}" ]; then
+        echo "❌ Invalid choice"
+        continue
+    fi
+    
+    AGENT_NAME="${AGENT_ARRAY[$((AGENT_CHOICE-1))]}"
     AGENT_USER="agent_${AGENT_NAME,,}"
     
     # Check if user exists
