@@ -291,7 +291,13 @@ try:
         is_docker = os.path.exists('/.dockerenv')
         agent_user = f"agent_{name.lower()}"
 
-        # 🔒 開放路徑權限，確保 agent_user 可以正常 cd 與讀寫
+        # 🔒 開放沿途父目錄的執行(x)權限，否則 agent_user 會卡在 /home/kenzan 這種無 o+x 權限的目錄外
+        parent = script_dir
+        while parent and parent != '/':
+            subprocess.run(['chmod', 'o+x', parent], check=False, stderr=subprocess.DEVNULL)
+            parent = os.path.dirname(parent)
+            
+        # 🔒 開放終端路徑權限，確保 agent_user 可以正常 cd 與讀寫
         subprocess.run(['chmod', 'o+rx', script_dir], check=False)
         subprocess.run(['chmod', 'o+rx', os.path.join(script_dir, 'agent_home')], check=False)
         subprocess.run(['chmod', '-R', 'o+rwX', home_path], check=False)
