@@ -351,7 +351,7 @@ try:
             rules_path = os.path.join(home_path, 'agent_home_rules.md')
             protocol_path = os.path.join(home_path, 'AGENT_PROTOCOL.md')  # Reference notification rules
 
-            # Generate initialization Prompt
+            # Generate Initialization Prompt
             prompt = (gen_template.replace('{agent_name}', name)
                                  .replace('{agent_usecase}', usecase)
                                  .replace('{engine_doc_name}', engine_doc_name)
@@ -359,6 +359,9 @@ try:
                                  .replace('{protocol_path}', protocol_path)
                                  .replace('{collaboration_context}', collab_context)
                                  .replace('{home_path}', home_path))
+
+            avatar_instruction = "\n\n=== Visual Identity Construction Task ===\nAfter completing the customized self-awareness writing, follow the guidance in ./knowledge/AGENT_AVATAR_GUIDE.md to generate your avatar."
+            prompt += avatar_instruction
 
             prompt_file = os.path.join(script_dir, f".prompt_temp_{name}")
             with open(prompt_file, 'w') as f:
