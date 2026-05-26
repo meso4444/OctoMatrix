@@ -359,6 +359,9 @@ try:
                                  .replace('{protocol_path}', protocol_path)
                                  .replace('{collaboration_context}', collab_context)
                                  .replace('{home_path}', home_path))
+            
+            avatar_instruction = "\n\n=== 視覺形象建構任務 ===\n自我認知的客製化撰寫完成後，依照 ./knowledge/AGENT_AVATAR_GUIDE.md 的指引，生成你的 avatar。"
+            prompt += avatar_instruction
 
             prompt_file = os.path.join(script_dir, f".prompt_temp_{name}")
             with open(prompt_file, 'w') as f:
