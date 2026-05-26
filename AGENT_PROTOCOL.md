@@ -1,5 +1,5 @@
 
-# 電子腦 GHOST 系統指引
+## 電子腦 GHOST 系統指引
 
 Agent 必須嚴格遵守以下 GHOST 操作規範，以確保長期 GHOST 的連貫性與系統穩定。
 
@@ -33,7 +33,7 @@ Agent 應在完成階段性任務後，遵循以下「先大綱、後關鍵字&�
 
 ---
 
-# 通知系統操作指引
+## 通知系統操作指引
 
 
 ### 訊息發送規範
@@ -48,19 +48,19 @@ Agent 應在完成階段性任務後，遵循以下「先大綱、後關鍵字&�
 2. **發送範例**：
 
 ```bash
-# 一般回應
+## 一般回應
 python3 toolbox/matrix_notifier.py '💬 您好！我是 {agent_name}\n已收到您的訊息並正在回應'
 
-# 發送文檔（帶說明）
+## 發送文檔（帶說明）
 python3 toolbox/matrix_notifier.py --file document /path/to/report.pdf '📄 任務完成報告'
 
-# 發送圖片
+## 發送圖片
 python3 toolbox/matrix_notifier.py --file photo /tmp/screenshot.png '截圖驗證'
 
-# 發送視頻
+## 發送視頻
 python3 toolbox/matrix_notifier.py --file video /tmp/demo.mp4 '演示影片\n時長: 5分鐘'
 
-# 發送音頻
+## 發送音頻
 python3 toolbox/matrix_notifier.py --file audio /tmp/notification.wav '語音確認'
 ```
 
@@ -71,7 +71,7 @@ python3 toolbox/matrix_notifier.py --file audio /tmp/notification.wav '語音確
 	#### 使用範例
 
 ```bash
-# 發送獨立的心情貼圖
+## 發送獨立的心情貼圖
 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png
 
 ```
@@ -90,7 +90,7 @@ python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png
 
 ---
 
-# 喚醒系統 (Awake System) 操作指引
+## 喚醒系統 (Awake System) 操作指引
 
 矩陣透過「喚醒系統」定時對 Agent 下達指令。詳細實現見 `knowledge/AWAKE_FUNCTIONALITY.md`。
 
