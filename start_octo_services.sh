@@ -352,7 +352,7 @@ try:
             protocol_path = os.path.join(home_path, 'AGENT_PROTOCOL.md')  # 參考通知規則
 
             # 生成初始化 Prompt
-            prompt = (gen_template.replace('{agent_name}', name)
+            prompt = "【系統提示】\n" + (gen_template.replace('{agent_name}', name)
                                  .replace('{agent_usecase}', usecase)
                                  .replace('{engine_doc_name}', engine_doc_name)
                                  .replace('{rules_path}', rules_path)
