@@ -241,19 +241,51 @@ class CommandHandler:
                 return True
             target_info = get_agent_info(target_agent)
             engine = target_info.get('engine', '').lower() if target_info else 'gemini'
+            usecase = target_info.get('usecase', '無描述') if target_info else '無描述'
             if engine == "claude":
                 engine_doc_name = "CLAUDE.md"
             elif engine == "codex":
                 engine_doc_name = "AGENTS.md"
             else:
                 engine_doc_name = "GEMINI.md"
-            check_prompt = f"【系統提示】此任務不發送通知給用戶。檢視 AGENT_PROTOCOL.md 與 agent_home_rules.md 內容,確認{engine_doc_name}的規範是否完備,並更新"
+
+            home_path = os.path.join(AGENT_HOME_BASE, target_agent)
+            rules_path = os.path.join(home_path, 'agent_home_rules.md')
+            protocol_path = os.path.join(home_path, 'AGENT_PROTOCOL.md')
+
+            collab_context_lines = []
+            for grp in COLLABORATION_GROUPS:
+                if target_agent in grp.get('members', []):
+                    collab_context_lines.append(f"- 所屬團隊: {grp.get('name')} ({grp.get('description', '')})")
+                    collab_context_lines.append("  團隊成員權責:")
+                    roles = grp.get('roles', {})
+                    for member, role in roles.items():
+                        marker = " (你)" if member == target_agent else ""
+                        collab_context_lines.append(f"  * {member}{marker}: {role}")
+                    collab_context_lines.append("")
+            collab_context = "\n".join(collab_context_lines) if collab_context_lines else "無特定協作團隊配置。"
+
+            template_path = os.path.join(script_dir, 'agent_rule_gen_template.txt')
+            try:
+                with open(template_path, 'r', encoding='utf-8') as f:
+                    gen_template = f.read()
+                check_prompt = (gen_template.replace('{agent_name}', target_agent)
+                                     .replace('{agent_usecase}', usecase)
+                                     .replace('{engine_doc_name}', engine_doc_name)
+                                     .replace('{rules_path}', rules_path)
+                                     .replace('{protocol_path}', protocol_path)
+                                     .replace('{collaboration_context}', collab_context)
+                                     .replace('{home_path}', home_path))
+            except Exception as e:
+                logger.error(f"❌ [Router] 無法讀取規範模板: {e}")
+                check_prompt = f"【系統提示】此任務不發送通知給用戶。檢視 AGENT_PROTOCOL.md 與 agent_home_rules.md 內容,確認{engine_doc_name}的規範是否完備,並更新"
+
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '\x1b[200~'])
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '-l', '--', check_prompt], check=False)
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '\x1b[201~'])
             time.sleep(0.5)
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'Enter'], check=False)
-            self.notifier.notify(msg.source, 'custom', {'content': f'🔄 已向 <b>[{target_agent}]</b> 發送規範更新指令'})
+            self.notifier.notify(msg.source, 'custom', {'content': f'🔄 已向 <b>[{target_agent}]</b> 發送完整規範重建指令'})
             return True
         elif cmd_content.startswith('/inspect'):
             parts = content.split()
