@@ -51,6 +51,26 @@ def save_config():
         with open(CONFIG_PATH, 'w', encoding='utf-8') as f:
             yaml.dump(ordered_config, f, allow_unicode=True, sort_keys=False)
         print("✅ Configuration saved successfully.")
+        
+        # v4: Create dedicated Linux account (Non-container environment)
+        if not os.path.exists('/.dockerenv'):
+            import subprocess
+            password = CONFIG.get("agent_password", "octomatrix")
+            print("🔒 Configuring dedicated Linux account isolation...")
+            for agent in CONFIG.get('agents', []):
+                agent_name = agent.get('name', '').lower()
+                if agent_name:
+                    agent_user = f"agent_{agent_name}"
+                    # Check if user exists
+                    if subprocess.run(['id', agent_user], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode != 0:
+                        try:
+                            subprocess.run(['sudo', 'useradd', '-m', '-s', '/bin/bash', agent_user], check=True)
+                            p = subprocess.Popen(['sudo', 'chpasswd'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                            p.communicate(input=f"{agent_user}:{password}".encode('utf-8'))
+                            print(f"  ✅ Created user: {agent_user}")
+                        except Exception as e:
+                            print(f"  ❌ Failed to create user {agent_user}: {e}")
+                            
     except Exception as e:
         print(f"❌ Save failed: {e}")
 
