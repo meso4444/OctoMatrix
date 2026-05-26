@@ -51,6 +51,26 @@ def save_config():
         with open(CONFIG_PATH, 'w', encoding='utf-8') as f:
             yaml.dump(ordered_config, f, allow_unicode=True, sort_keys=False)
         print("✅ 設定已成功儲存。")
+        
+        # v4: 建立專屬 Linux 帳號 (非容器環境)
+        if not os.path.exists('/.dockerenv'):
+            import subprocess
+            password = CONFIG.get("agent_password", "octomatrix")
+            print("🔒 正在配置專屬 Linux 帳號隔離...")
+            for agent in CONFIG.get('agents', []):
+                agent_name = agent.get('name', '').lower()
+                if agent_name:
+                    agent_user = f"agent_{agent_name}"
+                    # Check if user exists
+                    if subprocess.run(['id', agent_user], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode != 0:
+                        try:
+                            subprocess.run(['sudo', 'useradd', '-m', '-s', '/bin/bash', agent_user], check=True)
+                            p = subprocess.Popen(['sudo', 'chpasswd'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                            p.communicate(input=f"{agent_user}:{password}".encode('utf-8'))
+                            print(f"  ✅ 建立使用者: {agent_user}")
+                        except Exception as e:
+                            print(f"  ❌ 建立使用者 {agent_user} 失敗: {e}")
+                            
     except Exception as e:
         print(f"❌ 儲存失敗: {e}")
 

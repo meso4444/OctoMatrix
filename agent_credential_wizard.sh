@@ -18,8 +18,44 @@ run_local_auth() {
     echo "📍 環境: 本地 (~)"
     echo "🎯 目標: 透過專屬 Linux 帳號進行隔離認證"
     echo ""
-    read -p "請輸入要認證的 Agent 名稱 (例如 gupa, 若留空則按 Enter 返回): " AGENT_NAME
-    if [ -z "$AGENT_NAME" ]; then break; fi
+    # 從 config.yaml 獲取 agent 清單
+    CONFIG_YAML="$SCRIPT_DIR/config.yaml"
+    if [ ! -f "$CONFIG_YAML" ]; then
+        echo "❌ 找不到 config.yaml，請先完成系統設定。"
+        return
+    fi
+    
+    AGENT_LIST=$(python3 -c "import yaml; [print(a.get('name', '')) for a in yaml.safe_load(open('$CONFIG_YAML')).get('agents', [])]" 2>/dev/null)
+    if [ -z "$AGENT_LIST" ]; then
+        echo "❌ 目前沒有建立任何 Agent，請先至系統設定新增 Agent。"
+        return
+    fi
+    
+    echo "請選擇要認證的 Agent："
+    AGENT_ARRAY=()
+    while IFS= read -r line; do
+        if [ -n "$line" ]; then
+            AGENT_ARRAY+=("$line")
+        fi
+    done <<< "$AGENT_LIST"
+    
+    for i in "${!AGENT_ARRAY[@]}"; do
+        echo "$((i+1))) ${AGENT_ARRAY[$i]}"
+    done
+    echo "R) 返回 / 退出"
+    echo ""
+    read -p "請輸入選擇 [1-${#AGENT_ARRAY[@]}, R]: " AGENT_CHOICE
+    
+    if [[ "$AGENT_CHOICE" =~ ^[Rr]$ ]]; then
+        break
+    fi
+    
+    if ! [[ "$AGENT_CHOICE" =~ ^[0-9]+$ ]] || [ "$AGENT_CHOICE" -lt 1 ] || [ "$AGENT_CHOICE" -gt "${#AGENT_ARRAY[@]}" ]; then
+        echo "❌ 無效選擇"
+        continue
+    fi
+    
+    AGENT_NAME="${AGENT_ARRAY[$((AGENT_CHOICE-1))]}"
     AGENT_USER="agent_${AGENT_NAME,,}"
     
     # 確保帳號存在
