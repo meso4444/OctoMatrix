@@ -292,6 +292,12 @@ try:
         agent_user = f"agent_{name.lower()}"
 
         # 🔒 Open path permissions to ensure agent_user can cd and read/write
+        # Ensure parent directories have execute (x) permission so agent_user can traverse
+        parent = script_dir
+        while parent and parent != '/':
+            subprocess.run(['chmod', 'o+x', parent], check=False, stderr=subprocess.DEVNULL)
+            parent = os.path.dirname(parent)
+            
         subprocess.run(['chmod', 'o+rx', script_dir], check=False)
         subprocess.run(['chmod', 'o+rx', os.path.join(script_dir, 'agent_home')], check=False)
         subprocess.run(['chmod', '-R', 'o+rwX', home_path], check=False)
