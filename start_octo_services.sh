@@ -268,11 +268,6 @@ try:
         else:
             print(f"   ✓ Avatar directory confirmed: {avatar_emojis_path}")
 
-        # 🎯 Enter Agent working directory
-        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', f'cd {home_path}']), check=True)
-        time.sleep(1)
-        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
-
         # Get Agent's specified model
         model = agent.get('model', '').strip()
 
@@ -291,9 +286,41 @@ try:
             if model and model.lower() != 'auto':
                 cmd += f' --model {model}'
             engine_doc_name = 'CLAUDE.md'
-        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', cmd]), check=True)
-        time.sleep(1)
-        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
+
+        # 🎯 Dual-track Deployment Branching (v4 Architecture)
+        is_docker = os.path.exists('/.dockerenv')
+        agent_user = f"agent_{name.lower()}"
+
+        if is_docker:
+            # [Container Mode]: Enter working directory and override HOME
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', f'cd {home_path}']), check=True)
+            time.sleep(1)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
+            
+            cmd = f'HOME="{home_path}" {cmd}'
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', cmd]), check=True)
+            time.sleep(1)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
+        else:
+            # [Local Mode]: Dedicated Linux Account Switch
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', f'su - {agent_user}']), check=True)
+            time.sleep(2)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
+            
+            # Inject password
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'octomatrix']), check=True)
+            time.sleep(2)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
+            
+            # Enter working directory
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', f'cd {home_path}']), check=True)
+            time.sleep(1)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
+            
+            # Launch CLI
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', cmd]), check=True)
+            time.sleep(1)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
 
         # Wait for CLI to fully initialize (60 second timeout)
         print(f"     ⏳ Waiting for {name} CLI to start…")

@@ -170,8 +170,24 @@ def deploy_skills(agents):
             subprocess.run(['chmod', '-R', 'a-w,a+rX', skillbox_dir], check=False)
             print(f"   🔒 {agent_name}'s skillbox has been locked to read-only")
 
+def check_permissions():
+    """Write permission self-check"""
+    home_dir = os.path.expanduser('~')
+    test_file = os.path.join(home_dir, '.gemini', 'tmp', 'test_write.tmp')
+    try:
+        os.makedirs(os.path.dirname(test_file), exist_ok=True)
+        with open(test_file, 'w') as f:
+            f.write('test')
+        os.remove(test_file)
+    except PermissionError:
+        print(f"❌ Error: Insufficient permissions, cannot write to {home_dir}. Please check directory permissions.")
+        sys.exit(1)
+    except Exception as e:
+        pass # Ignore other errors, do not interrupt main flow
+
 def main():
     print("🧬  Initializing Agent ecosystem environment...")
+    check_permissions()
     config = load_config()
     agents = config.get('agents', [])
     groups = config.get('collaboration_groups', [])

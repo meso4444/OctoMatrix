@@ -16,27 +16,53 @@ run_local_auth() {
   while true; do
     echo ""
     echo "📍 Environment: Local (~)"
-    echo "🎯 Target: Authenticate credentials stored directly in local home directory"
+    echo "🎯 Target: Isolated authentication via dedicated Linux account"
     echo ""
+    read -p "Please enter Agent name to authenticate (e.g. gupa, leave blank and Enter to return): " AGENT_NAME
+    if [ -z "$AGENT_NAME" ]; then break; fi
+    AGENT_USER="agent_${AGENT_NAME,,}"
+    
+    # Check if user exists
+    if ! id "$AGENT_USER" &>/dev/null; then
+        echo "❌ Cannot find dedicated account $AGENT_USER. Please save settings in setup_config first to create the account."
+        continue
+    fi
+
     echo "Please select AI CLI tool:"
     echo "1) Gemini"
     echo "2) Claude"
     echo "3) Codex"
     echo "R) Return / Exit"
     echo ""
-    read -p "Please enter your choice [1-3, R]: " CLI_CHOICE
+    read -p "Please enter choice [1-3, R]: " CLI_CHOICE
 
     case "$CLI_CHOICE" in
       1)
         echo ""
-        echo "🚀 Starting Gemini CLI authentication..."
-        echo "📂 HOME: $HOME"
-        echo "💡 Tip: After authentication, credentials will be stored in ~/.gemini"
+        echo "🚀 Starting Gemini CLI authentication (Identity: $AGENT_USER)..."
+        echo "💡 Tip: After authentication, credentials will be stored in /home/$AGENT_USER/.gemini"
         echo ""
-        gemini --yolo || true
+        sudo su - "$AGENT_USER" -c "gemini --yolo" || true
         echo ""
-        echo "✅ Gemini authentication completed!"
-        echo "📦 Credential location: $(eval echo ~)/.gemini"
+        echo "✅ Gemini authentication complete!"
+        ;;
+      2)
+        echo ""
+        echo "🚀 Starting Claude CLI authentication (Identity: $AGENT_USER)..."
+        echo "💡 Tip: After authentication, credentials will be stored in /home/$AGENT_USER/.claude"
+        echo ""
+        sudo su - "$AGENT_USER" -c "claude --permission-mode bypassPermissions" || true
+        echo ""
+        echo "✅ Claude authentication complete!"
+        ;;
+      3)
+        echo ""
+        echo "🚀 Starting Codex CLI authentication (Identity: $AGENT_USER)..."
+        echo "💡 Tip: After authentication, credentials will be stored in /home/$AGENT_USER/.codex"
+        echo ""
+        sudo su - "$AGENT_USER" -c "codex --yolo" || true
+        echo ""
+        echo "✅ Codex authentication complete!"
         ;;
       2)
         echo ""
