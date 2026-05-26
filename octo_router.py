@@ -18,6 +18,7 @@ from dataclasses import dataclass, asdict
 
 from flask import Flask, request, jsonify
 from config import (
+    SYS_PREFIX,
     TELEGRAM_GATEWAY_PORT,
     AGENTS, DEFAULT_ACTIVE_AGENT, TMUX_SESSION_NAME, CUSTOM_MENU,
     COLLABORATION_GROUPS, get_agent_info, AWAKE_YAML_PATH, MATRIX_USERNAME
@@ -269,7 +270,7 @@ class CommandHandler:
             try:
                 with open(template_path, 'r', encoding='utf-8') as f:
                     gen_template = f.read()
-                check_prompt = "[System Prompt]\n" + (gen_template.replace('{agent_name}', target_agent)
+                check_prompt = f"{SYS_PREFIX}\n" + (gen_template.replace('{agent_name}', target_agent)
                                      .replace('{agent_usecase}', usecase)
                                      .replace('{engine_doc_name}', engine_doc_name)
                                      .replace('{rules_path}', rules_path)
@@ -295,7 +296,7 @@ class CommandHandler:
             parts = content.split(' ', 1)
             requirement = parts[1].strip() if len(parts) > 1 else "No specific requirement"
             
-            prompt = f"[System Prompt]\nBased on the guidance in ./knowledge/AGENT_AVATAR_GUIDE.md and the '{requirement}' request, backup your old avatar set to a zip file, generate your new avatar, and once complete, execute python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png to send a sticker matching your current mood, then execute python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME}}}'".replace("{mood}", "{mood}")
+            prompt = f"{SYS_PREFIX}\nBased on the guidance in ./knowledge/AGENT_AVATAR_GUIDE.md and the '{requirement}' request, backup your old avatar set to a zip file, generate your new avatar, and once complete, execute python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png to send a sticker matching your current mood, then execute python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME}}}'".replace("{mood}", "{mood}")
             
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '\x1b[200~'])
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '-l', '--', prompt], check=False)
@@ -308,7 +309,7 @@ class CommandHandler:
             parts = content.split()
             if len(parts) > 1:
                 target = parts[1]
-                prompt = f"""[System Prompt]
+                prompt = f"""{SYS_PREFIX}
 Execute the following [SOP]:
 [Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
 [Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If a task, proceed to Step2; if a greeting, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate greeting response}}'`, and do not execute subsequent Steps.
@@ -320,7 +321,7 @@ Execute the following [SOP]:
 [Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
 [Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST.
 
-[System Prompt] This command is from Matrix user {MATRIX_USERNAME}.
+{SYS_PREFIX} This command is from Matrix user {MATRIX_USERNAME}.
 
 User's message content:
 Please execute the following inspection task:
@@ -344,7 +345,7 @@ Enter the '{target}' window via tmux, view the first 50 lines of status and anal
                     else:
                         start_cmd = f'claude --permission-mode bypassPermissions --model {model}' if model and model.lower() != 'auto' else 'claude --permission-mode bypassPermissions'
 
-                        prompt = f"""[System Prompt]
+                        prompt = f"""{SYS_PREFIX}
 Execute the following [SOP]:
 [Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
 [Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If a task, proceed to Step2; if a greeting, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate greeting response}}'`, and do not execute subsequent Steps.
@@ -356,7 +357,7 @@ Execute the following [SOP]:
 [Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
 [Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST.
 
-[System Prompt] This command is from Matrix user {MATRIX_USERNAME}.
+{SYS_PREFIX} This command is from Matrix user {MATRIX_USERNAME}.
 
 User's message content:
 Please fix '{target_name}'.
@@ -396,7 +397,7 @@ Proactively write an md recording the fix process."""
         # 🛡️ Inject standard SOP (Matrix message processing flow)
         # ==========================================
         if msg.source in ['telegram', 'discord', 'slack'] and 'Execute the following [SOP]:' not in content:
-            sop = f"""[System Prompt]
+            sop = f"""{SYS_PREFIX}
 Execute the following [SOP]:
 [Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
 [Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If a task, proceed to Step2; if a greeting, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate greeting response}}'`, and do not execute subsequent Steps.
@@ -408,11 +409,11 @@ Execute the following [SOP]:
 [Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
 [Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST.
 
-[System Prompt] This command is from Matrix user {MATRIX_USERNAME}.
+{SYS_PREFIX} This command is from Matrix user {MATRIX_USERNAME}.
 
 User's message content:
 """
-            final_message = f"{sop}\n{content}\n\n[System Prompt]請務必嚴格遵守上述 [SOP] 進行回覆。"
+            final_message = f"{sop}\n{content}\n\n{SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"
 
         # 👻 GHOST physical file blocking and accumulation mechanism
         agent_dir = os.path.join(AGENT_HOME_BASE, target_agent)

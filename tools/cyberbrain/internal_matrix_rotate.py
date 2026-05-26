@@ -249,7 +249,7 @@ def main():
                 os.remove(TEMP_LOG)
             
             # Send recovery prompt to let Agent resume the previous task
-            recovery_prompt = "[System Prompt] Maintenance timeout cancelled. Please check if octo_cyberbrain/task_memo.txt exists. If it does, read it and resume the interrupted task, then delete it after reading."
+            recovery_prompt = f"{SYS_PREFIX} Maintenance timeout cancelled. Please check if octo_cyberbrain/task_memo.txt exists. If it does, read it and resume the interrupted task, then delete it after reading."
             escaped_rec = recovery_prompt.replace('!', '！').replace('$', '\\$')
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped_rec])
@@ -265,7 +265,7 @@ def main():
                         pending_content = f.read().strip()
                     if pending_content:
                         # Append normal system prompt
-                        sys_prompt = f"""[System Prompt]
+                        sys_prompt = f"""{SYS_PREFIX}
 Execute the following [SOP]:
 [Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
 [Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If a task, proceed to Step2; if a greeting, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate greeting response}}'`, and do not execute subsequent Steps.
@@ -280,7 +280,7 @@ Execute the following [SOP]:
 Message from {MATRIX_USERNAME}:
 {pending_content}
 
-[System Prompt]請務必嚴格遵守上述 [SOP] 進行回覆。"""
+{SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
                         final_message = sys_prompt
                         escaped = final_message.replace('!', '！').replace('$', '\\$')
                         
@@ -383,7 +383,7 @@ Message from {MATRIX_USERNAME}:
         # ==========================================
         # Step 4: Neural Reset Injection
         # ==========================================
-        prompt = f"[System Prompt] Please execute python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot to get keywords, then bring all retrieved keywords into a single execution of 'python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"Keyword1\" \"Keyword2\"' for Shell GHOST deep dive. Once complete, re-establish compliance with {ENGINE_DOC_NAME}. This task does not require sending messages to the user. Next, verify if octo_cyberbrain/task_memo.txt exists; if so, read it to resume the task and then delete task_memo.txt."
+        prompt = f"{SYS_PREFIX} Please execute python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot to get keywords, then bring all retrieved keywords into a single execution of 'python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"Keyword1\" \"Keyword2\"' for Shell GHOST deep dive. Once complete, re-establish compliance with {ENGINE_DOC_NAME}. This task does not require sending messages to the user. Next, verify if octo_cyberbrain/task_memo.txt exists; if so, read it to resume the task and then delete task_memo.txt."
 
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", prompt])
@@ -414,7 +414,7 @@ Message from {MATRIX_USERNAME}:
                     
                 if pending_content:
                     # Append normal system prompt
-                    sys_prompt = f"""[System Prompt]
+                    sys_prompt = f"""{SYS_PREFIX}
 Execute the following [SOP]:
 [Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
 [Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If a task, proceed to Step2; if a greeting, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate greeting response}}'`, and do not execute subsequent Steps.
@@ -429,7 +429,7 @@ Execute the following [SOP]:
 Message from {MATRIX_USERNAME}:
 {pending_content}
 
-[System Prompt]請務必嚴格遵守上述 [SOP] 進行回覆。"""
+{SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
                     final_message = sys_prompt
                     escaped = final_message.replace('!', '！').replace('$', '\\$')
                     

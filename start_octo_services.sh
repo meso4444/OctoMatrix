@@ -143,7 +143,7 @@ def wait_for_prompt(session_name, window_name, engine, max_wait=30):
     return False
 
 try:
-    from config import AGENTS, COLLABORATION_GROUPS
+    from config import AGENTS, COLLABORATION_GROUPS, SYS_PREFIX
     
     rules_path = os.path.join(script_dir, 'agent_home_rules.md')
     template_path = os.path.join(script_dir, 'agent_rule_gen_template.txt')
@@ -352,7 +352,7 @@ try:
             protocol_path = os.path.join(home_path, 'AGENT_PROTOCOL.md')  # Reference notification rules
 
             # Generate Initialization Prompt
-            prompt = "[System Prompt]\n" + (gen_template.replace('{agent_name}', name)
+            prompt = f"{SYS_PREFIX}\n" + (gen_template.replace('{agent_name}', name)
                                  .replace('{agent_usecase}', usecase)
                                  .replace('{engine_doc_name}', engine_doc_name)
                                  .replace('{rules_path}', rules_path)
@@ -486,7 +486,7 @@ try:
     session_name = os.environ['TMUX_SESSION_NAME']
     for agent in AGENTS:
         name = agent['name']
-        test_msg = f"[System Prompt] Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood, then execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME}}}'`"
+        test_msg = f"{SYS_PREFIX} Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood, then execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME}}}'`"
         agent_dir = os.path.join(os.environ['SCRIPT_DIR'], 'agent_home', name)
         flag_file = os.path.join(agent_dir, 'octo_cyberbrain', '.rotation_flag')
         pending_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_inject.txt')

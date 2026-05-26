@@ -6,6 +6,7 @@ import requests
 import logging
 from datetime import datetime
 from config import (
+    SYS_PREFIX,
     TELEGRAM_GATEWAY_PORT,
     TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID,
     AGENTS, CUSTOM_MENU
@@ -152,7 +153,7 @@ def telegram_webhook():
             local_path = image_manager.download_telegram_photo(file_id, current_agent)
             if local_path:
                 caption = msg_data.get('caption', '').strip()
-                img_prompt = f"[System Prompt] Please process this image, file path: {local_path}"
+                img_prompt = f"{SYS_PREFIX} Please process this image, file path: {local_path}"
 
                 if caption:
                     img_prompt += f"\n\nUser explanation/question:\n{caption}"
@@ -175,7 +176,7 @@ def telegram_webhook():
             local_path = image_manager.download_telegram_photo(file_id, current_agent)
             if local_path:
                 caption = msg_data.get('caption', '').strip()
-                doc_prompt = f"[System Prompt] Please process this file, file path: {local_path}"
+                doc_prompt = f"{SYS_PREFIX} Please process this file, file path: {local_path}"
 
                 if caption:
                     doc_prompt += f"\n\nUser explanation/question:\n{caption}"
@@ -186,7 +187,7 @@ def telegram_webhook():
         elif 'sticker' in msg_data:
             sticker = msg_data['sticker']
             emoji = sticker.get('emoji', 'sticker')
-            sticker_prompt = f"[System Prompt] User sent a sticker: {emoji}"
+            sticker_prompt = f"{SYS_PREFIX} User sent a sticker: {emoji}"
             forward_to_router(sticker_prompt, user_id, username, metadata={'file_type': 'sticker'})
         
         return jsonify({'status': 'ok'})

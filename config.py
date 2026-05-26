@@ -222,3 +222,6 @@ def get_agent_info(name):
 def get_active_agent():
     """Get current active Agent name"""
     return DEFAULT_ACTIVE_AGENT
+
+# 系統提示前綴
+SYS_PREFIX = "[System Prompt]"

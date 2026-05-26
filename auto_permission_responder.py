@@ -7,6 +7,8 @@ import subprocess
 import time
 import re
 import os
+from config import SYS_PREFIX
+
 import threading
 
 # 🎯 Target window (e.g., session:Gupa)
@@ -22,7 +24,7 @@ DEBUG = os.getenv('DEBUG', '0') == '1'
 log_file = f"/tmp/monitor_{TARGET.replace(':', '_')}.log"
 
 # 🚀 Accurately target command markers from the gateway
-GATEWAY_MARKER = "[System Prompt]"
+GATEWAY_MARKER = f"{SYS_PREFIX}"
 
 def log(msg):
     if not DEBUG: return

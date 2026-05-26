@@ -20,7 +20,7 @@ from apscheduler.triggers.date import DateTrigger
 # Import configuration
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
-    from config import TMUX_SESSION_NAME, AWAKE_YAML_PATH, AGENTS
+    from config import TMUX_SESSION_NAME, AWAKE_YAML_PATH, AGENTS, SYS_PREFIX
 except ImportError:
     TMUX_SESSION_NAME = "ai_octomatrix"
     AWAKE_YAML_PATH = "awake.yaml"
@@ -101,7 +101,7 @@ class AwakeManager:
             self._execute_agent_command(task)
 
     def _execute_agent_command(self, task):
-        from config import ROUTER_PORT
+        from config import ROUTER_PORT, SYS_PREFIX
         target_agent = task.get('target_agent') or task.get('agent')
         prompt = task.get('prompt') or task.get('command')
         if not target_agent or not prompt: return
@@ -111,7 +111,7 @@ class AwakeManager:
         payload = {
             "source": "awake",
             "user_id": "system",
-            "content": f"[System Prompt] (Awake System Command){prompt}",
+            "content": f"{SYS_PREFIX} (Awake System Command){prompt}",
             "metadata": {"target_agent": target_agent}
         }
         try:
