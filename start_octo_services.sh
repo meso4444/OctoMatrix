@@ -291,6 +291,11 @@ try:
         is_docker = os.path.exists('/.dockerenv')
         agent_user = f"agent_{name.lower()}"
 
+        # 🔒 Open path permissions to ensure agent_user can cd and read/write
+        subprocess.run(['chmod', 'o+rx', script_dir], check=False)
+        subprocess.run(['chmod', 'o+rx', os.path.join(script_dir, 'agent_home')], check=False)
+        subprocess.run(['chmod', '-R', 'o+rwX', home_path], check=False)
+
         if is_docker:
             # [Container Mode]: Enter working directory and override HOME
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', f'cd {home_path}']), check=True)
