@@ -294,7 +294,36 @@ try:
         if is_docker:
             # [Container Mode]: Enter working directory and override HOME
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', f'cd {home_path}']), check=True)
+            time.sleep(0.5)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
             time.sleep(1)
+            
+            cmd = f'HOME="{home_path}" {cmd}'
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', cmd]), check=True)
+            time.sleep(0.5)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
+        else:
+            # [Local Mode]: Dedicated Linux Account Switch
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', f'su - {agent_user}']), check=True)
+            time.sleep(0.5)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
+            time.sleep(2) # Wait for system password prompt
+            
+            # Inject password
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'octomatrix']), check=True)
+            time.sleep(0.5)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
+            time.sleep(2) # Wait for login complete and environment load
+            
+            # Enter working directory
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', f'cd {home_path}']), check=True)
+            time.sleep(0.5)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
+            time.sleep(1) # Wait for cd
+            
+            # Launch CLI
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', cmd]), check=True)
+            time.sleep(0.5)
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
             
             cmd = f'HOME="{home_path}" {cmd}'
