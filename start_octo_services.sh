@@ -294,32 +294,36 @@ try:
         if is_docker:
             # [容器模式]: 進入工作目錄並覆寫 HOME
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', f'cd {home_path}']), check=True)
-            time.sleep(1)
+            time.sleep(0.5)
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
+            time.sleep(1)
             
             cmd = f'HOME="{home_path}" {cmd}'
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', cmd]), check=True)
-            time.sleep(1)
+            time.sleep(0.5)
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
         else:
             # [本地模式]: 專屬 Linux 帳號切換
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', f'su - {agent_user}']), check=True)
-            time.sleep(2)
+            time.sleep(0.5)
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
+            time.sleep(2) # 等待系統提示輸入密碼
             
             # 注入密碼
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'octomatrix']), check=True)
-            time.sleep(2)
+            time.sleep(0.5)
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
+            time.sleep(2) # 等待登入成功與環境載入
             
             # 進入工作目錄
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', f'cd {home_path}']), check=True)
-            time.sleep(1)
+            time.sleep(0.5)
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
+            time.sleep(1) # 等待 cd 執行完畢
             
             # 啟動 CLI
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', cmd]), check=True)
-            time.sleep(1)
+            time.sleep(0.5)
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
 
         # 等待 CLI 完全初始化（60 秒 timeout）
