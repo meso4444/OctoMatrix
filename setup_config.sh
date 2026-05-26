@@ -301,11 +301,6 @@ while true; do
             write_env_file
             update_config_yaml
             
-
-                    fi
-                done
-            fi
-            
             echo "🎉 設定完成！您可以執行 ./start_octo_services.sh 啟動服務了。"
             break
             ;;
