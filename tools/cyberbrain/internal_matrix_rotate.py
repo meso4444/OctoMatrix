@@ -265,7 +265,7 @@ def main():
                         pending_content = f.read().strip()
                     if pending_content:
                         # Append normal system prompt
-                        sys_prompt = f"""【系統提示】
+                        sys_prompt = f"""[System Prompt]
 Execute the following [SOP]:
 [Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
 [Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If a task, proceed to Step2; if a greeting, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate greeting response}}'`, and do not execute subsequent Steps.
@@ -280,7 +280,7 @@ Execute the following [SOP]:
 Message from {MATRIX_USERNAME}:
 {pending_content}
 
-【系統提示】請務必嚴格遵守上述 [SOP] 進行回覆。"""
+[System Prompt]請務必嚴格遵守上述 [SOP] 進行回覆。"""
                         final_message = sys_prompt
                         escaped = final_message.replace('!', '！').replace('$', '\\$')
                         
@@ -414,7 +414,7 @@ Message from {MATRIX_USERNAME}:
                     
                 if pending_content:
                     # Append normal system prompt
-                    sys_prompt = f"""【系統提示】
+                    sys_prompt = f"""[System Prompt]
 Execute the following [SOP]:
 [Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
 [Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If a task, proceed to Step2; if a greeting, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate greeting response}}'`, and do not execute subsequent Steps.
@@ -429,7 +429,7 @@ Execute the following [SOP]:
 Message from {MATRIX_USERNAME}:
 {pending_content}
 
-【系統提示】請務必嚴格遵守上述 [SOP] 進行回覆。"""
+[System Prompt]請務必嚴格遵守上述 [SOP] 進行回覆。"""
                     final_message = sys_prompt
                     escaped = final_message.replace('!', '！').replace('$', '\\$')
                     

@@ -352,7 +352,7 @@ try:
             protocol_path = os.path.join(home_path, 'AGENT_PROTOCOL.md')  # Reference notification rules
 
             # Generate Initialization Prompt
-            prompt = "【系統提示】\n" + (gen_template.replace('{agent_name}', name)
+            prompt = "[System Prompt]\n" + (gen_template.replace('{agent_name}', name)
                                  .replace('{agent_usecase}', usecase)
                                  .replace('{engine_doc_name}', engine_doc_name)
                                  .replace('{rules_path}', rules_path)

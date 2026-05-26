@@ -295,7 +295,7 @@ class CommandHandler:
             parts = content.split(' ', 1)
             requirement = parts[1].strip() if len(parts) > 1 else "No specific requirement"
             
-            prompt = f"[System Prompt]\n依照 ./knowledge/AGENT_AVATAR_GUIDE.md 的指引及「{requirement}」的需求，將你的舊avatar組圖備份打包為zip後,生成你的新 avatar，完成後執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖，接著執行 python3 toolbox/matrix_notifier.py '{{向 {MATRIX_USERNAME} 問候}}'".replace("{mood}", "{mood}")
+            prompt = f"[System Prompt]\nBased on the guidance in ./knowledge/AGENT_AVATAR_GUIDE.md and the '{requirement}' request, backup your old avatar set to a zip file, generate your new avatar, and once complete, execute python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png to send a sticker matching your current mood, then execute python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME}}}'".replace("{mood}", "{mood}")
             
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '\x1b[200~'])
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '-l', '--', prompt], check=False)
@@ -308,7 +308,7 @@ class CommandHandler:
             parts = content.split()
             if len(parts) > 1:
                 target = parts[1]
-                prompt = f"""【系統提示】
+                prompt = f"""[System Prompt]
 Execute the following [SOP]:
 [Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
 [Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If a task, proceed to Step2; if a greeting, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate greeting response}}'`, and do not execute subsequent Steps.
@@ -344,7 +344,7 @@ Enter the '{target}' window via tmux, view the first 50 lines of status and anal
                     else:
                         start_cmd = f'claude --permission-mode bypassPermissions --model {model}' if model and model.lower() != 'auto' else 'claude --permission-mode bypassPermissions'
 
-                        prompt = f"""【系統提示】
+                        prompt = f"""[System Prompt]
 Execute the following [SOP]:
 [Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
 [Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If a task, proceed to Step2; if a greeting, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate greeting response}}'`, and do not execute subsequent Steps.
@@ -396,7 +396,7 @@ Proactively write an md recording the fix process."""
         # 🛡️ Inject standard SOP (Matrix message processing flow)
         # ==========================================
         if msg.source in ['telegram', 'discord', 'slack'] and 'Execute the following [SOP]:' not in content:
-            sop = f"""【系統提示】
+            sop = f"""[System Prompt]
 Execute the following [SOP]:
 [Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
 [Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If a task, proceed to Step2; if a greeting, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate greeting response}}'`, and do not execute subsequent Steps.
@@ -412,7 +412,7 @@ Execute the following [SOP]:
 
 User's message content:
 """
-            final_message = f"{sop}\n{content}\n\n【系統提示】請務必嚴格遵守上述 [SOP] 進行回覆。"
+            final_message = f"{sop}\n{content}\n\n[System Prompt]請務必嚴格遵守上述 [SOP] 進行回覆。"
 
         # 👻 GHOST physical file blocking and accumulation mechanism
         agent_dir = os.path.join(AGENT_HOME_BASE, target_agent)

@@ -186,7 +186,7 @@ def telegram_webhook():
         elif 'sticker' in msg_data:
             sticker = msg_data['sticker']
             emoji = sticker.get('emoji', 'sticker')
-            sticker_prompt = f"[System Hint] User sent a sticker: {emoji}"
+            sticker_prompt = f"[System Prompt] User sent a sticker: {emoji}"
             forward_to_router(sticker_prompt, user_id, username, metadata={'file_type': 'sticker'})
         
         return jsonify({'status': 'ok'})
