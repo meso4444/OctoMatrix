@@ -278,7 +278,8 @@ class CommandHandler:
                                      .replace('{home_path}', home_path))
             except Exception as e:
                 logger.error(f"❌ [Router] 無法讀取規範模板: {e}")
-                check_prompt = f"【系統提示】此任務不發送通知給用戶。檢視 AGENT_PROTOCOL.md 與 agent_home_rules.md 內容,確認{engine_doc_name}的規範是否完備,並更新"
+                self.notifier.notify(msg.source, 'custom', {'content': f'❌ <b>[{target_agent}]</b> 規範重建失敗：無法讀取模板 ({e})'})
+                return True
 
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '\x1b[200~'])
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '-l', '--', check_prompt], check=False)
