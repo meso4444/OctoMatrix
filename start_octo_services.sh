@@ -291,6 +291,11 @@ try:
         is_docker = os.path.exists('/.dockerenv')
         agent_user = f"agent_{name.lower()}"
 
+        # 🔒 開放路徑權限，確保 agent_user 可以正常 cd 與讀寫
+        subprocess.run(['chmod', 'o+rx', script_dir], check=False)
+        subprocess.run(['chmod', 'o+rx', os.path.join(script_dir, 'agent_home')], check=False)
+        subprocess.run(['chmod', '-R', 'o+rwX', home_path], check=False)
+
         if is_docker:
             # [容器模式]: 進入工作目錄並覆寫 HOME
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', f'cd {home_path}']), check=True)
