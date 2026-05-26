@@ -278,7 +278,8 @@ class CommandHandler:
                                      .replace('{home_path}', home_path))
             except Exception as e:
                 logger.error(f"❌ [Router] Cannot read specification template: {e}")
-                check_prompt = f"[System Prompt]This task does not send notification to user. Check AGENT_PROTOCOL.md and agent_home_rules.md content, confirm whether {engine_doc_name} specification is complete, and update"
+                self.notifier.notify(msg.source, 'custom', {'content': f'❌ <b>[{target_agent}]</b> Specification rebuild failed: Cannot read template ({e})'})
+                return True
 
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '\x1b[200~'])
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '-l', '--', check_prompt], check=False)
