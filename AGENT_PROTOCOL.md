@@ -1,5 +1,5 @@
 
-# Cyberbrain GHOST System Guidelines
+## Cyberbrain GHOST System Guidelines
 
 Agents must strictly comply with the following GHOST operation specifications to ensure long-term GHOST continuity and system stability.
 
@@ -33,7 +33,7 @@ Agents should follow the "outline first, then keywords & paths" process below to
 
 ---
 
-# Notification System Operation Guidelines
+## Notification System Operation Guidelines
 
 ### Message Sending Specifications
 
@@ -47,19 +47,19 @@ Agents should follow the "outline first, then keywords & paths" process below to
 2. **Sending Examples**:
 
 ```bash
-# General response
+## General response
 python3 toolbox/matrix_notifier.py '💬 Hello! I am {agent_name}\nI have received your message and am responding'
 
-# Send document (with description)
+## Send document (with description)
 python3 toolbox/matrix_notifier.py --file document /path/to/report.pdf '📄 Task Completion Report'
 
-# Send photo
+## Send photo
 python3 toolbox/matrix_notifier.py --file photo /tmp/screenshot.png 'Screenshot verification'
 
-# Send video
+## Send video
 python3 toolbox/matrix_notifier.py --file video /tmp/demo.mp4 'Demo video\nDuration: 5 minutes'
 
-# Send audio
+## Send audio
 python3 toolbox/matrix_notifier.py --file audio /tmp/notification.wav 'Voice confirmation'
 ```
 
@@ -70,7 +70,7 @@ python3 toolbox/matrix_notifier.py --file audio /tmp/notification.wav 'Voice con
 	#### Usage Examples
 
 ```bash
-# Send independent emotion sticker
+## Send independent emotion sticker
 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png
 
 ```
@@ -89,7 +89,7 @@ python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png
 
 ---
 
-# Awake System Operation Guidelines
+## Awake System Operation Guidelines
 
 The matrix issues commands to Agents on schedule through the "Awake System". For detailed implementation, see `knowledge/AWAKE_FUNCTIONALITY.md`.
 
