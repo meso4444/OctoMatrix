@@ -97,107 +97,103 @@ run_local_auth() {
 
 # Container environment authentication function
 run_container_auth() {
-  while true; do
+  local INSTANCE_NAME="$1"
+
+  if [ -z "$INSTANCE_NAME" ]; then
     echo ""
     echo "📍 Environment: Container"
     echo "🎯 Target: Authenticate credentials stored in container instance directory"
     echo ""
-    
-    CONFIG_YAML="$SCRIPT_DIR/config.yaml"
-    if [ ! -f "$CONFIG_YAML" ]; then
-        echo "❌ Cannot find config.yaml. Please complete system setup first."
-        return
+    echo "💡 Naming suggestion examples:"
+    echo "   • Technical environments: dev, staging, production, test, sandbox"
+    echo "   • Application scenarios: travel_planner, investment_advisor, meditation_coach"
+    echo "   • Project codes: gupta, chod, omega, alpha, nexus"
+    echo "   • Personal use: work, hobby, research, learning, experiment"
+    echo ""
+    read -p "Please enter instance name: " INSTANCE_NAME
+
+    if [ -z "$INSTANCE_NAME" ]; then
+      echo "❌ Instance name cannot be empty"
+      return
     fi
-    
-    AGENT_LIST=$(python3 -c "import yaml; [print(a.get('name', '')) for a in yaml.safe_load(open('$CONFIG_YAML')).get('agents', [])]" 2>/dev/null)
-    if [ -z "$AGENT_LIST" ]; then
-        echo "❌ No Agents found. Please add Agents in system setup first."
-        return
-    fi
-    
-    echo "Please select an Agent to authenticate:"
-    AGENT_ARRAY=()
-    while IFS= read -r line; do
-        if [ -n "$line" ]; then
-            AGENT_ARRAY+=("$line")
-        fi
-    done <<< "$AGENT_LIST"
-    
-    for i in "${!AGENT_ARRAY[@]}"; do
-        echo "$((i+1))) ${AGENT_ARRAY[$i]}"
-    done
+  fi
+
+  # Create instance directory
+  DOCKER_DEPLOY_DIR="$SCRIPT_DIR/docker-deploy"
+  CONTAINER_HOME="$DOCKER_DEPLOY_DIR/container_home/$INSTANCE_NAME"
+
+  echo "📁 Ensuring instance directory exists: $CONTAINER_HOME"
+  mkdir -p "$CONTAINER_HOME"
+  # Ensure container_home directory permissions are correct (matching standard home directory 750)
+  chmod 750 "$CONTAINER_HOME" 2>/dev/null || sudo chmod 750 "$CONTAINER_HOME" 2>/dev/null || true
+
+  while true; do
+    echo ""
+    echo "📍 Container target: $INSTANCE_NAME ($CONTAINER_HOME)"
+    echo "Please select AI CLI tool:"
+    echo "1) Gemini"
+    echo "2) Claude"
+    echo "3) Codex"
     echo "R) Return / Exit"
     echo ""
-    read -p "Please enter choice [1-${#AGENT_ARRAY[@]}, R]: " AGENT_CHOICE
-    
-    if [[ "$AGENT_CHOICE" =~ ^[Rr]$ ]]; then
-        break
-    fi
-    
-    if ! [[ "$AGENT_CHOICE" =~ ^[0-9]+$ ]] || [ "$AGENT_CHOICE" -lt 1 ] || [ "$AGENT_CHOICE" -gt "${#AGENT_ARRAY[@]}" ]; then
-        echo "❌ Invalid choice"
-        continue
-    fi
-    
-    INSTANCE_NAME="${AGENT_ARRAY[$((AGENT_CHOICE-1))]}"
+    read -p "Please enter your choice [1-3, R]: " CLI_CHOICE
 
-    # Create instance directory
-    DOCKER_DEPLOY_DIR="$SCRIPT_DIR/docker-deploy"
-    CONTAINER_HOME="$DOCKER_DEPLOY_DIR/container_home/$INSTANCE_NAME"
-
-    echo "📁 Ensuring instance directory exists: $CONTAINER_HOME"
-    mkdir -p "$CONTAINER_HOME"
-    chmod 750 "$CONTAINER_HOME" 2>/dev/null || sudo chmod 750 "$CONTAINER_HOME" 2>/dev/null || true
-
-    # Auto-detect engine
-    AGENT_ENGINE=$(python3 -c "import yaml; print(next((a.get('engine', 'gemini') for a in yaml.safe_load(open('$CONFIG_YAML')).get('agents', []) if a.get('name', '') == '$INSTANCE_NAME'), 'gemini'))" 2>/dev/null)
-    
-    echo ""
-    echo "⚙️  Auto-detected engine: $AGENT_ENGINE"
-    
-    if [[ "${AGENT_ENGINE,,}" == *"claude"* ]]; then
-        echo "🚀 Starting Claude CLI authentication..."
-        echo "📂 Authentication path: $CONTAINER_HOME"
-        echo "💡 Tip: Credentials will be stored in $CONTAINER_HOME/.claude"
+    case "$CLI_CHOICE" in
+      1)
         echo ""
-        if HOME="$CONTAINER_HOME" claude --permission-mode bypassPermissions; then
-          echo ""
-          echo "✅ Claude authentication complete!"
-          echo "📦 Credentials stored at: $CONTAINER_HOME/.claude"
-        else
-          echo ""
-          echo "⚠️  Error during authentication, please check directory permissions"
-          echo "   Try running: sudo chmod 777 $CONTAINER_HOME"
-        fi
-    elif [[ "${AGENT_ENGINE,,}" == *"codex"* ]]; then
-        echo "🚀 Starting Codex CLI authentication..."
-        echo "📂 Authentication path: $CONTAINER_HOME"
-        echo "💡 Tip: Credentials will be stored in $CONTAINER_HOME/.codex"
-        echo ""
-        if HOME="$CONTAINER_HOME" codex --yolo; then
-          echo ""
-          echo "✅ Codex authentication complete!"
-          echo "📦 Credentials stored at: $CONTAINER_HOME/.codex"
-        else
-          echo ""
-          echo "⚠️  Error during authentication, please check directory permissions"
-          echo "   Try running: sudo chmod 777 $CONTAINER_HOME"
-        fi
-    else
         echo "🚀 Starting Gemini CLI authentication..."
         echo "📂 Authentication path: $CONTAINER_HOME"
-        echo "💡 Tip: Credentials will be stored in $CONTAINER_HOME/.gemini"
+        echo "💡 Tip: Authentication will be stored in $CONTAINER_HOME/.gemini"
         echo ""
         if HOME="$CONTAINER_HOME" gemini --yolo; then
           echo ""
-          echo "✅ Gemini authentication complete!"
+          echo "✅ Gemini authentication completed!"
           echo "📦 Credentials stored at: $CONTAINER_HOME/.gemini"
         else
           echo ""
-          echo "⚠️  Error during authentication, please check directory permissions"
+          echo "⚠️  Error occurred during authentication, please check directory permissions"
           echo "   Try running: sudo chmod 777 $CONTAINER_HOME"
         fi
-    fi
+        ;;
+      2)
+        echo ""
+        echo "🚀 Starting Claude CLI authentication..."
+        echo "📂 Authentication path: $CONTAINER_HOME"
+        echo "💡 Tip: Authentication will be stored in $CONTAINER_HOME/.claude"
+        echo ""
+        if HOME="$CONTAINER_HOME" claude --permission-mode bypassPermissions; then
+          echo ""
+          echo "✅ Claude authentication completed!"
+          echo "📦 Credentials stored at: $CONTAINER_HOME/.claude"
+        else
+          echo ""
+          echo "⚠️  Error occurred during authentication, please check directory permissions"
+          echo "   Try running: sudo chmod 777 $CONTAINER_HOME"
+        fi
+        ;;
+      3)
+        echo ""
+        echo "🚀 Starting Codex CLI authentication..."
+        echo "📂 Authentication path: $CONTAINER_HOME"
+        echo "💡 Tip: Authentication will be stored in $CONTAINER_HOME/.codex"
+        echo ""
+        if HOME="$CONTAINER_HOME" codex --yolo; then
+          echo ""
+          echo "✅ Codex authentication completed!"
+          echo "📦 Credentials stored at: $CONTAINER_HOME/.codex"
+        else
+          echo ""
+          echo "⚠️  Error occurred during authentication, please check directory permissions"
+          echo "   Try running: sudo chmod 777 $CONTAINER_HOME"
+        fi
+        ;;
+      [Rr])
+        break
+        ;;
+      *)
+        echo "❌ Invalid choice"
+        ;;
+    esac
   done
 }
 
@@ -205,7 +201,11 @@ run_container_auth() {
 if [ "$1" == "--local" ]; then
   run_local_auth
 elif [ "$1" == "--container" ]; then
-  run_container_auth
+  if [ -n "$2" ]; then
+    run_container_auth "$2"
+  else
+    run_container_auth ""
+  fi
 else
   # Interactive mode
   while true; do
@@ -222,7 +222,7 @@ else
         run_local_auth
         ;;
       2)
-        run_container_auth
+        run_container_auth ""
         ;;
       [Qq])
         break
