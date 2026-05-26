@@ -268,11 +268,6 @@ try:
         else:
             print(f"   ✓ Avatar 目錄已確認：{avatar_emojis_path}")
 
-        # 🎯 進入 Agent 工作目錄
-        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', f'cd {home_path}']), check=True)
-        time.sleep(1)
-        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
-
         # 取得 Agent 的指定模型
         model = agent.get('model', '').strip()
 
@@ -291,9 +286,41 @@ try:
             if model and model.lower() != 'auto':
                 cmd += f' --model {model}'
             engine_doc_name = 'CLAUDE.md'
-        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', cmd]), check=True)
-        time.sleep(1)
-        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
+
+        # 🎯 雙軌部署分流 (v4 架構)
+        is_docker = os.path.exists('/.dockerenv')
+        agent_user = f"agent_{name.lower()}"
+
+        if is_docker:
+            # [容器模式]: 進入工作目錄並覆寫 HOME
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', f'cd {home_path}']), check=True)
+            time.sleep(1)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
+            
+            cmd = f'HOME="{home_path}" {cmd}'
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', cmd]), check=True)
+            time.sleep(1)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
+        else:
+            # [本地模式]: 專屬 Linux 帳號切換
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', f'su - {agent_user}']), check=True)
+            time.sleep(2)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
+            
+            # 注入密碼
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'octomatrix']), check=True)
+            time.sleep(2)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
+            
+            # 進入工作目錄
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', f'cd {home_path}']), check=True)
+            time.sleep(1)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
+            
+            # 啟動 CLI
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', cmd]), check=True)
+            time.sleep(1)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
 
         # 等待 CLI 完全初始化（60 秒 timeout）
         print(f"     ⏳ 等待 {name} CLI 啟動…")

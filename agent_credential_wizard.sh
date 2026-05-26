@@ -16,8 +16,18 @@ run_local_auth() {
   while true; do
     echo ""
     echo "📍 環境: 本地 (~)"
-    echo "🎯 目標: 直接認證存放在本地 home 目錄"
+    echo "🎯 目標: 透過專屬 Linux 帳號進行隔離認證"
     echo ""
+    read -p "請輸入要認證的 Agent 名稱 (例如 gupa, 若留空則按 Enter 返回): " AGENT_NAME
+    if [ -z "$AGENT_NAME" ]; then break; fi
+    AGENT_USER="agent_${AGENT_NAME,,}"
+    
+    # 確保帳號存在
+    if ! id "$AGENT_USER" &>/dev/null; then
+        echo "❌ 找不到專屬帳號 $AGENT_USER。請先透過 setup_config 儲存設定以建立帳號。"
+        continue
+    fi
+
     echo "請選擇 AI CLI 工具："
     echo "1) Gemini"
     echo "2) Claude"
@@ -29,36 +39,30 @@ run_local_auth() {
     case "$CLI_CHOICE" in
       1)
         echo ""
-        echo "🚀 啟動 Gemini CLI 認證..."
-        echo "📂 HOME: $HOME"
-        echo "💡 提示: 完成認證後，憑證將存放在 ~/.gemini"
+        echo "🚀 啟動 Gemini CLI 認證 (身分: $AGENT_USER)..."
+        echo "💡 提示: 完成認證後，憑證將存放在 /home/$AGENT_USER/.gemini"
         echo ""
-        gemini --yolo || true
+        sudo su - "$AGENT_USER" -c "gemini --yolo" || true
         echo ""
         echo "✅ Gemini 認證完成！"
-        echo "📦 憑證位置: $(eval echo ~)/.gemini"
         ;;
       2)
         echo ""
-        echo "🚀 啟動 Claude CLI 認證..."
-        echo "📂 HOME: $HOME"
-        echo "💡 提示: 完成認證後，憑證將存放在 ~/.claude"
+        echo "🚀 啟動 Claude CLI 認證 (身分: $AGENT_USER)..."
+        echo "💡 提示: 完成認證後，憑證將存放在 /home/$AGENT_USER/.claude"
         echo ""
-        claude --permission-mode bypassPermissions || true
+        sudo su - "$AGENT_USER" -c "claude --permission-mode bypassPermissions" || true
         echo ""
         echo "✅ Claude 認證完成！"
-        echo "📦 憑證位置: $(eval echo ~)/.claude"
         ;;
       3)
         echo ""
-        echo "🚀 啟動 Codex CLI 認證..."
-        echo "📂 HOME: $HOME"
-        echo "💡 提示: 完成認證後，憑證將存放在 ~/.codex"
+        echo "🚀 啟動 Codex CLI 認證 (身分: $AGENT_USER)..."
+        echo "💡 提示: 完成認證後，憑證將存放在 /home/$AGENT_USER/.codex"
         echo ""
-        codex --yolo || true
+        sudo su - "$AGENT_USER" -c "codex --yolo" || true
         echo ""
         echo "✅ Codex 認證完成！"
-        echo "📦 憑證位置: $(eval echo ~)/.codex"
         ;;
       [Rr])
         break

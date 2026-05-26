@@ -301,6 +301,21 @@ while true; do
             write_env_file
             update_config_yaml
             
+            # v4: 建立專屬 Linux 帳號 (非容器環境)
+            if [ ! -f /.dockerenv ]; then
+                echo "🔒 正在配置專屬 Linux 帳號隔離..."
+                python3 -c "import yaml; [print(a.get('name', '').lower()) for a in yaml.safe_load(open('$CONFIG_YAML')).get('agents', [])]" 2>/dev/null | while read -r agent_name; do
+                    if [ -n "$agent_name" ]; then
+                        AGENT_USER="agent_${agent_name}"
+                        if ! id "$AGENT_USER" &>/dev/null; then
+                            sudo useradd -m -s /bin/bash "$AGENT_USER"
+                            echo "$AGENT_USER:octomatrix" | sudo chpasswd
+                            echo "  ✅ 建立使用者: $AGENT_USER"
+                        fi
+                    fi
+                done
+            fi
+            
             echo "🎉 設定完成！您可以執行 ./start_octo_services.sh 啟動服務了。"
             break
             ;;

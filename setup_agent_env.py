@@ -170,8 +170,24 @@ def deploy_skills(agents):
             subprocess.run(['chmod', '-R', 'a-w,a+rX', skillbox_dir], check=False)
             print(f"   🔒 {agent_name} 的 skillbox 已鎖定唯讀權限")
 
+def check_permissions():
+    """寫入權限自檢"""
+    home_dir = os.path.expanduser('~')
+    test_file = os.path.join(home_dir, '.gemini', 'tmp', 'test_write.tmp')
+    try:
+        os.makedirs(os.path.dirname(test_file), exist_ok=True)
+        with open(test_file, 'w') as f:
+            f.write('test')
+        os.remove(test_file)
+    except PermissionError:
+        print(f"❌ 錯誤: 權限不足，無法寫入 {home_dir}。請確認目錄權限。")
+        sys.exit(1)
+    except Exception as e:
+        pass # 其他錯誤略過，不中斷主流程
+
 def main():
     print("🧬  正在初始化 Agent 生態環境...")
+    check_permissions()
     config = load_config()
     agents = config.get('agents', [])
     groups = config.get('collaboration_groups', [])

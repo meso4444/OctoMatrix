@@ -205,10 +205,13 @@ install_nodejs() {
         # macOS: 使用 brew
         brew install node
     else
-        # Linux/WSL: 使用 deb.nodesource.com
+        # Linux/WSL: 使用 deb.nodesource.com 或 rpm.nodesource.com
         if command -v apt-get &> /dev/null; then
             curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
             sudo apt-get install -y nodejs
+        elif command -v yum &> /dev/null; then
+            curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo -E bash -
+            sudo yum install -y nodejs
         else
             echo "⚠️  無法自動安裝 Node.js，請手動安裝後重試"
         fi
