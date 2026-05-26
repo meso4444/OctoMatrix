@@ -482,7 +482,7 @@ import subprocess
 import time
 sys.path.append(os.environ['SCRIPT_DIR'])
 try:
-    from config import AGENTS, MATRIX_USERNAME
+    from config import AGENTS, MATRIX_USERNAME, SYS_PREFIX
     session_name = os.environ['TMUX_SESSION_NAME']
     for agent in AGENTS:
         name = agent['name']
