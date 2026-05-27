@@ -110,11 +110,8 @@ def main():
 
     if os.path.exists(FLAG_FILE) and os.path.getsize(FLAG_FILE) == 0:
         print("⚡ New rotation request detected, preparing to hand over to Reaper for background reset...")
-        try:
-            os.remove(FLAG_FILE)
-        except Exception:
-            pass
-        open(os.path.join(AGENT_HOME, "octo_cyberbrain/.rotation_ready"), 'w').close()
+        with open(FLAG_FILE, 'w') as f:
+            f.write("READY_FOR_REAPER")
 
 if __name__ == "__main__":
     main()

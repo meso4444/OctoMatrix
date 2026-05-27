@@ -126,10 +126,16 @@ def main():
         print(f"⚠️ Rotation Flag not found ({FLAG_FILE}), aborting.")
         sys.exit(0)
         
-    if os.path.getsize(FLAG_FILE) > 0:
-        print("⚠️ Detected an existing reset process (Flag is locked), skipping.")
+    try:
+        with open(FLAG_FILE, 'r') as f:
+            flag_content = f.read().strip()
+    except Exception:
+        flag_content = ""
+        
+    if flag_content != "" and flag_content != "READY_FOR_REAPER":
+        print("⚠️ Detected an existing reset process (Flag is locked), or invalid trigger. Skipping.")
         sys.exit(0)
-    
+        
     try:
         # Write semantic lock marker to prevent duplicate startup
         with open(FLAG_FILE, 'w') as f:
