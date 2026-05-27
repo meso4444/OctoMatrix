@@ -175,19 +175,19 @@ install_python_packages() {
     # Merge all packages
     ALL_PACKAGES="$PACKAGES $MC_PACKAGES"
 
-    echo "📦 Installing Python packages: $ALL_PACKAGES"
-    if pip3 install $ALL_PACKAGES; then
-        echo "✅ Python packages installed successfully"
-    else
-        echo "⚠️  Detected protected Python environment (PEP 668), attempting --break-system-packages..."
-        if pip3 install $ALL_PACKAGES --break-system-packages; then
-            echo "✅ Python packages installed successfully (forced mode)"
-        else
-            echo "⚠️  Attempting to install with --user..."
-            pip3 install --user $ALL_PACKAGES || echo "❌ Python package installation failed, please try manual installation in a virtual environment (venv)"
-        fi
+    local pip_cmd="sudo pip3 install --upgrade"
+    if [[ "$ENVIRONMENT" == "macOS" ]]; then
+        pip_cmd="pip3 install --upgrade"
     fi
-}
+
+    echo "📦 Installing Python packages globally: $ALL_PACKAGES"
+    if $pip_cmd $ALL_PACKAGES --break-system-packages 2>/dev/null || $pip_cmd $ALL_PACKAGES; then
+        echo "✅ Python packages installed globally successfully"
+    else
+        echo "❌ Global Python package installation failed!"
+        echo "💡 Tip: Try running manually: $pip_cmd $ALL_PACKAGES --break-system-packages"
+    fi
+    }
 
 # ===== Node.js installation =====
 install_nodejs() {
