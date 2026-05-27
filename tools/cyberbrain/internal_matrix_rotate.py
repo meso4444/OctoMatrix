@@ -129,7 +129,7 @@ def main():
         flag_content = ""
         
     if flag_content != "" and flag_content != "READY_FOR_REAPER":
-        print("⚠️ Detected an existing reset process (Flag is locked), or invalid trigger. Skipping.")
+        print(f"⚠️ Detected an existing reset process (Flag: {flag_content}), or invalid trigger. Skipping.")
         sys.exit(0)
         
     try:

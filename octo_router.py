@@ -392,8 +392,6 @@ Proactively write an md recording the fix process."""
                 with open(source_file, 'w') as f: json.dump(source_data, f)
             except: pass
 
-        final_message = content
-
         # 🛡️ Inject standard SOP (Matrix message processing flow)
         # ==========================================
         if msg.source in ['telegram', 'discord', 'slack'] and 'Execute the following [SOP]:' not in content:
@@ -412,8 +410,12 @@ Execute the following [SOP]:
 {SYS_PREFIX} This command is from Matrix user {MATRIX_USERNAME}.
 
 User's message content:
-"""
-            final_message = f"{sop}\n{content}\n\n{SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"
+{content}
+
+{SYS_PREFIX} Please strictly follow the [SOP] above to reply."""
+            final_message = sop
+        else:
+            final_message = content
 
         # 👻 GHOST physical file blocking and accumulation mechanism
         agent_dir = os.path.join(AGENT_HOME_BASE, target_agent)
