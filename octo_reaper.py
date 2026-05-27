@@ -2,6 +2,7 @@
 import os
 from config import SYS_PREFIX
 
+import subprocess
 import sys
 import time
 import requests
@@ -18,7 +19,6 @@ def get_reaper_config():
     return polling_interval, threshold_kb
 
 def notify_agent(agent_name):
-    import subprocess
     # Call matrix_notifier or the internal router API
     router_host = getattr(config, 'ROUTER_HOST', '127.0.0.1')
     router_port = getattr(config, 'ROUTER_PORT', 12210)
@@ -104,6 +104,7 @@ def main():
                             # Touch flag
                             os.makedirs(os.path.dirname(flag_file), exist_ok=True)
                             open(flag_file, 'w').close()
+                            os.chmod(flag_file, 0o666)
                             success = notify_agent(agent_name)
                             if not success:
                                 if os.path.exists(flag_file):
