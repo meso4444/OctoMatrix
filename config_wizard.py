@@ -191,8 +191,10 @@ def manage_agents():
             model = prompt_model_choice(engine)
             usecase = input("職責 (usecase) [用於 Agent 系統提示認知]: ").strip()
             desc = input("描述 (description) [用於選單與使用者辨認]: ").strip()
+            skills = prompt_skills_choice()
             new_agent = {"name": name, "engine": engine, "usecase": usecase, "description": desc}
             if model: new_agent["model"] = model
+            if skills: new_agent["skills"] = skills
             CONFIG["agents"].append(new_agent)
             print(f"✅ Agent {name} 已新增！")
             if len(CONFIG["agents"]) == 1:
@@ -656,7 +658,8 @@ def main():
             print(f"載入設定檔失敗: {e}")
             sys.exit(1)
 
-        # Scrub deprecated cleanup_policy keys if they exist        if "default_cleanup_policy" in CONFIG:
+        # Scrub deprecated cleanup_policy keys if they exist
+        if "default_cleanup_policy" in CONFIG:
             del CONFIG["default_cleanup_policy"]
         if "agents" in CONFIG and isinstance(CONFIG["agents"], list):
             for agent in CONFIG["agents"]:
