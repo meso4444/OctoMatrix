@@ -109,9 +109,12 @@ def main():
     print("✅ Ghost update completed!")
 
     if os.path.exists(FLAG_FILE) and os.path.getsize(FLAG_FILE) == 0:
-        print("⚡ New rotation request detected, launching background neural reset and hierarchy consolidation program...")
-        # 🚀 Unified cleanup of flag and lock by internal_matrix_rotate.py to prevent Reaper from re-triggering
-        subprocess.Popen(["python3", ROTATE_SCRIPT], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+        print("⚡ New rotation request detected, preparing to hand over to Reaper for background reset...")
+        try:
+            os.remove(FLAG_FILE)
+        except Exception:
+            pass
+        open(os.path.join(AGENT_HOME, "octo_cyberbrain/.rotation_ready"), 'w').close()
 
 if __name__ == "__main__":
     main()
