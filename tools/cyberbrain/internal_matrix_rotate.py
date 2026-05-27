@@ -109,6 +109,10 @@ def union_dedup(source_set_kws, source_set_paths, target_kw_path, target_path_pa
 def cleanup():
     # 🚀 統一清理 Flag 與 Lock，防止死鎖
     print("🧹 執行最後的清理程序...")
+    try:
+        subprocess.run(['chmod', '-R', 'a+rwX', os.path.join(AGENT_HOME, 'octo_cyberbrain')], check=False)
+    except Exception:
+        pass
     for f in [FLAG_FILE]:
         if os.path.exists(f):
             try:

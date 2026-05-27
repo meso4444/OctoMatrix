@@ -175,17 +175,17 @@ install_python_packages() {
     # 合併所有套件
     ALL_PACKAGES="$PACKAGES $MC_PACKAGES"
 
-    echo "📦 安裝 Python 套件: $ALL_PACKAGES"
-    if pip3 install $ALL_PACKAGES; then
-        echo "✅ Python 套件安裝成功"
+    local pip_cmd="sudo pip3 install --upgrade"
+    if [[ "$ENVIRONMENT" == "macOS" ]]; then
+        pip_cmd="pip3 install --upgrade"
+    fi
+
+    echo "📦 正在全域安裝 Python 套件: $ALL_PACKAGES"
+    if $pip_cmd $ALL_PACKAGES --break-system-packages 2>/dev/null || $pip_cmd $ALL_PACKAGES; then
+        echo "✅ Python 套件全域安裝成功"
     else
-        echo "⚠️  偵測到受保護的 Python 環境 (PEP 668)，嘗試使用 --break-system-packages 強制安裝..."
-        if pip3 install $ALL_PACKAGES --break-system-packages; then
-            echo "✅ Python 套件安裝成功 (強制模式)"
-        else
-            echo "⚠️  嘗試使用 --user 安裝..."
-            pip3 install --user $ALL_PACKAGES || echo "❌ Python 套件安裝失敗，請嘗試手動建立虛擬環境 (venv) 安裝"
-        fi
+        echo "❌ Python 套件全域安裝失敗！"
+        echo "💡 提示: 請嘗試手動執行: $pip_cmd $ALL_PACKAGES --break-system-packages"
     fi
 }
 

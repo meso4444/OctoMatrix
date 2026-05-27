@@ -75,7 +75,20 @@ def main():
             agent_dir = os.path.join(base_dir, 'agent_home', agent_name)
             shell_log = os.path.join(agent_dir, 'octo_cyberbrain', 'shell', 'octo_shell.log')
             flag_file = os.path.join(agent_dir, 'octo_cyberbrain', '.rotation_flag')
+            ready_file = os.path.join(agent_dir, 'octo_cyberbrain', '.rotation_ready')
             
+            if os.path.exists(ready_file):
+                try:
+                    os.remove(ready_file)
+                    open(flag_file, 'w').close()
+                    import subprocess
+                    rotate_script = os.path.join(agent_dir, 'octo_cyberbrain', 'internal_matrix_rotate.py')
+                    subprocess.Popen(["python3", rotate_script], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+                    print(f"[Reaper] 啟動 Rotation 程序 ({agent_name})")
+                except Exception as e:
+                    print(f"[Reaper] 啟動 Rotation 失敗 ({agent_name}): {e}")
+                continue
+
             if os.path.exists(shell_log):
                 size = os.path.getsize(shell_log)
                 if size >= threshold_bytes:
