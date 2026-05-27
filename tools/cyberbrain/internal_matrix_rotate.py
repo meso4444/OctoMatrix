@@ -125,11 +125,17 @@ def main():
     if not os.path.exists(FLAG_FILE):
         print(f"⚠️ 找不到 Rotation Flag ({FLAG_FILE})，中止程序。")
         sys.exit(0)
-        
-    if os.path.getsize(FLAG_FILE) > 0:
-        print("⚠️ 偵測到已有重置進程正在執行 (Flag 已鎖定)，跳過本次啟動。")
+
+    try:
+        with open(FLAG_FILE, 'r') as f:
+            flag_content = f.read().strip()
+    except Exception:
+        flag_content = ""
+
+    if flag_content != "" and flag_content != "READY_FOR_REAPER":
+        print(f"⚠️ 偵測到已有重置進程正在執行 (Flag: {flag_content})，跳過本次啟動。")
         sys.exit(0)
-    
+
     try:
         # 寫入語義化鎖定標記，防止重複啟動
         with open(FLAG_FILE, 'w') as f:
