@@ -60,6 +60,7 @@ if grep -qi "Microsoft" /proc/version; then
     WSL_CONF="/etc/wsl.conf"
     
     if [ ! -f "$WSL_CONF" ]; then
+        echo "   Creating new $WSL_CONF..."
         touch "$WSL_CONF"
     fi
 
@@ -72,6 +73,7 @@ if grep -qi "Microsoft" /proc/version; then
         echo "✅ Updated $WSL_CONF"
         echo "⚠️  Important: You must completely restart WSL for this to take effect!"
         echo "   Run in Windows PowerShell: wsl --shutdown"
+        echo "   Then re-enter Ubuntu."
     else
         echo "✅ WSL Systemd config already exists ($WSL_CONF)"
     fi

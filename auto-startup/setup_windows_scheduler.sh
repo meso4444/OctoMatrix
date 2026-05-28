@@ -27,11 +27,13 @@ echo Starting PowerShell Setup Script...
 echo Script: "$PS1_PATH"
 echo.
 
+:: Call PowerShell to execute .ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$PS1_PATH"
 
 echo.
 if %errorlevel% neq 0 (
     echo [ERROR] Script execution failed.
+    echo Please check the error message above.
 ) else (
     echo [SUCCESS] Script finished.
 )
@@ -48,4 +50,6 @@ echo "📍 Launcher path: $BAT_PATH"
 $PS_CMD -NoProfile -ExecutionPolicy Bypass -Command \
     "Start-Process cmd -Verb RunAs -ArgumentList '/c \"$BAT_PATH\"'"
 
-echo "✅ Request sent! Please check the UAC prompt and the new CMD window."
+echo ""
+echo "✅ Request sent!"
+echo "👉 Please check the new CMD window, it will automatically call PowerShell."

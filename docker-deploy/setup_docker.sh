@@ -101,6 +101,7 @@ write_env_file() {
 # =========================================
 # OctoMatrix - $INSTANCE_NAME Environment Variables
 # =========================================
+MATRIX_USERNAME=$MATRIX_USERNAME
 TZ=$TZ
 
 # =========================================
