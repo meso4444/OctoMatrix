@@ -55,7 +55,7 @@ def notify_agent(agent_name):
     }
 
     try:
-        requests.post(inject_url, json=payload, timeout=5)
+        requests.post(inject_url, json=payload, timeout=15)
         print(f"[Reaper] 已通知 Agent: {agent_name} 進行隱性 GHOST 狀態更新")
         return True
     except Exception as e:
