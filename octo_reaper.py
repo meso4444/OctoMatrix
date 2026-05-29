@@ -55,7 +55,7 @@ def notify_agent(agent_name):
     }
 
     try:
-        requests.post(inject_url, json=payload, timeout=5)
+        requests.post(inject_url, json=payload, timeout=15)
         print(f"[Reaper] Notified Agent: {agent_name} for implicit GHOST status update")
         return True
     except Exception as e:
