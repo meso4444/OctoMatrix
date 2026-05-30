@@ -321,11 +321,11 @@ Execute the following [SOP]:
 [Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
 [Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST.
 
-{SYS_PREFIX} This command is from Matrix user {MATRIX_USERNAME}.
-
-User's message content:
+Message from {MATRIX_USERNAME}:
 Please execute the following inspection task:
-Enter the '{target}' window via tmux, view the first 50 lines of status and analyze. Proactively write an md recording the task process and results."""
+Enter the '{target}' window via tmux, view the first 50 lines of status and analyze. Proactively write an md recording the task process and results.
+
+{SYS_PREFIX} Please strictly follow the [SOP] above to reply."""
                 self.injector.inject(prompt, target_agent)
                 self.notifier.notify(msg.source, 'custom', {'content': f'🔍 Assigned {target_agent} to check {target}...'})
             return True
@@ -357,9 +357,7 @@ Execute the following [SOP]:
 [Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
 [Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST.
 
-{SYS_PREFIX} This command is from Matrix user {MATRIX_USERNAME}.
-
-User's message content:
+Message from {MATRIX_USERNAME}:
 Please fix '{target_name}'.
 Find session "{TMUX_SESSION_NAME}" via tmux, enter the window of "{target_name}",
 enter /quit or /exit and press Enter, wait 3 seconds then execute pwd command to confirm returning to Linux Shell, then execute startup command: `{start_cmd}`.
@@ -369,7 +367,9 @@ After waiting 5 seconds for startup to complete, please enter `/resume`, press E
 Must use the "text -> delay -> Enter" trilogy:
 tmux send-keys -t target Your message content && sleep 1 && tmux send-keys -t target Enter
 
-Proactively write an md recording the fix process."""
+Proactively write an md recording the fix process.
+
+{SYS_PREFIX} Please strictly follow the [SOP] above to reply."""
                     self.injector.inject(prompt, target_agent)
                     self.notifier.notify(msg.source, 'custom', {'content': f'🚑 Assigned <b>[{target_agent}]</b> to fix <b>[{target_name}]</b> (engine: {engine})...'})
                 else:
@@ -407,9 +407,7 @@ Execute the following [SOP]:
 [Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
 [Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST.
 
-{SYS_PREFIX} This command is from Matrix user {MATRIX_USERNAME}.
-
-User's message content:
+Message from {MATRIX_USERNAME}:
 {content}
 
 {SYS_PREFIX} Please strictly follow the [SOP] above to reply."""
