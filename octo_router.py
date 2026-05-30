@@ -321,9 +321,7 @@ class CommandHandler:
 [Step 7 - 收攝]：執行 python3 octo_cyberbrain/octo_ghost_reader.py --level current 收攝你的 GHOST 與記憶。
 [Step 8 - 刻印]：執行 python3 octo_cyberbrain/octo_ghost_updater.py --outline "語義大綱" --keywords "關鍵字1,關鍵字2" --paths "/檔案路徑1,/檔案路徑2" 將本次任務狀態刻印到GHOST。
 
-{SYS_PREFIX} 此指令來自 Matrix 使用者 {MATRIX_USERNAME}。
-
-使用者訊息內容:
+來自 {MATRIX_USERNAME} 的訊息:
 請執行以下檢查任務：
 透過 tmux 進入 '{target}' 的視窗，查看其前 50 行狀態並分析。主動撰寫任務過程與成果紀錄的md。"""
                 self.injector.inject(prompt, target_agent)
@@ -357,9 +355,7 @@ class CommandHandler:
 [Step 7 - 收攝]：執行 python3 octo_cyberbrain/octo_ghost_reader.py --level current 收攝你的 GHOST 與記憶。
 [Step 8 - 刻印]：執行 python3 octo_cyberbrain/octo_ghost_updater.py --outline "語義大綱" --keywords "關鍵字1,關鍵字2" --paths "/檔案路徑1,/檔案路徑2" 將本次任務狀態刻印到GHOST。
 
-{SYS_PREFIX} 此指令來自 Matrix 使用者 {MATRIX_USERNAME}。
-
-使用者訊息內容:
+來自 {MATRIX_USERNAME} 的訊息:
 請幫我修復 '{target_name}'。
 透過 tmux 查找 session "{TMUX_SESSION_NAME}"，進入 "{target_name}" 的視窗，
 輸入 /quit 或 /exit 並執行 Enter，等待3秒後執行 pwd 指令確認回到 Linux Shell 後，再執行啟動指令：`{start_cmd}`。
@@ -369,7 +365,9 @@ class CommandHandler:
 必須採用 「文字 -> 延遲 -> Enter」 的三部曲寫法：
 tmux send-keys -t target 您的訊息內容 && sleep 1 && tmux send-keys -t target Enter
 
-主動撰寫修復過程紀錄的md。"""
+主動撰寫修復過程紀錄的md。
+
+{SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
                     self.injector.inject(prompt, target_agent)
                     self.notifier.notify(msg.source, 'custom', {'content': f'🚑 已指派 <b>[{target_agent}]</b> 去修復 <b>[{target_name}]</b> (引擎: {engine})...'})
                 else:
@@ -408,9 +406,7 @@ tmux send-keys -t target 您的訊息內容 && sleep 1 && tmux send-keys -t targ
 [Step 7 - 收攝]：執行 python3 octo_cyberbrain/octo_ghost_reader.py --level current 收攝你的 GHOST 與記憶。
 [Step 8 - 刻印]：執行 python3 octo_cyberbrain/octo_ghost_updater.py --outline \"語義大綱\" --keywords \"關鍵字1,關鍵字2\" --paths \"/檔案路徑1,/檔案路徑2\" 將本次任務狀態刻印到GHOST。
 
-{SYS_PREFIX} 此指令來自 Matrix 使用者 {MATRIX_USERNAME}。
-
-使用者訊息內容:
+來自 {MATRIX_USERNAME} 的訊息:
 {content}
 
 {SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
