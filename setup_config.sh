@@ -193,13 +193,14 @@ while true; do
     echo " [5] 🌍 Configure Network and Ports"
     echo " [6] 🤖 Configure AI Agent Squad and Advanced Parameters"
     echo " [7] 🔐 AI Agent CLI Authentication Settings"
+    echo " [8] ⬆️ AI CLI Version Management (Upgrade/Rollback)"
     echo "----------------------------------------"
     echo " [S] 💾 Save Configuration and Start (Save)"
     echo " [C] 🧹 Clear Configuration and Credentials (Clear)"
     echo " [Q] ❌ Abandon Changes and Exit (Quit)"
     echo "=========================================="
 
-    read -p "Please select operation [1-7, S, C, Q]: " choice
+    read -p "Please select an operation [1-8, S, C, Q]: " choice
 
     case $choice in
         1)
@@ -286,6 +287,79 @@ while true; do
         7)
             echo ""
             bash "$SCRIPT_DIR/agent_credential_wizard.sh" --local
+            ;;
+        8)
+            while true; do
+                clear
+                echo "=========================================="
+                echo "⬆️  AI CLI Version Management (Manual Upgrade/Rollback)"
+                echo "=========================================="
+                echo " [1] 🆙 Upgrade Gemini CLI"
+                echo " [2] 🆙 Upgrade Claude Code"
+                echo " [3] 🆙 Upgrade Codex CLI"
+                echo " [4] 🚀 Upgrade all CLI tools at once"
+                echo "----------------------------------------"
+                echo " [5] ⏪ Rollback Gemini CLI (Restore from backup)"
+                echo " [6] ⏪ Rollback Claude Code (Restore from backup)"
+                echo " [7] ⏪ Rollback Codex CLI (Restore from backup)"
+                echo " [8] 🛡️ Rollback all CLI tools at once"
+                echo "----------------------------------------"
+                echo " [R] 🔙 Return to Main Menu"
+                echo "=========================================="
+                read -p "Please select an operation [1-8, R]: " cli_choice
+
+                do_update() {
+                    local pkg="$1"
+                    local name="$2"
+                    echo "🔄 Backing up current version of $name..."
+                    local current_ver=$(npm list -g --depth=0 "$pkg" | grep "$pkg" | awk -F@ '{print $NF}')
+                    if [ -n "$current_ver" ]; then
+                        echo "$current_ver" > "$SCRIPT_DIR/agent_home/${pkg//\//_}_version.bak"
+                        echo "✅ Successfully backed up $name version: $current_ver"
+                    fi
+                    echo "🚀 Performing global upgrade for $name (requires sudo permission)..."
+                    sudo npm update -g "$pkg"
+                    echo "✅ $name upgrade complete!"
+                    read -p "Press Enter to continue..." dummy_key
+                }
+
+                do_rollback() {
+                    local pkg="$1"
+                    local name="$2"
+                    local bak_file="$SCRIPT_DIR/agent_home/${pkg//\//_}_version.bak"
+                    if [ -f "$bak_file" ]; then
+                        local old_ver=$(cat "$bak_file")
+                        echo "⏪ Preparing to rollback $name to version: $old_ver (requires sudo permission)..."
+                        sudo npm install -g "${pkg}@${old_ver}"
+                        echo "✅ $name rollback complete!"
+                        rm -f "$bak_file"
+                    else
+                        echo "⚠️ Backup file for $name not found, automatic rollback is not possible!"
+                    fi
+                    read -p "Press Enter to continue..." dummy_key
+                }
+
+                case $cli_choice in
+                    1) do_update "@google/gemini-cli" "Gemini CLI" ;;
+                    2) do_update "@anthropic-ai/claude-code" "Claude Code" ;;
+                    3) do_update "@openai/codex" "Codex CLI" ;;
+                    4)
+                        do_update "@google/gemini-cli" "Gemini CLI"
+                        do_update "@anthropic-ai/claude-code" "Claude Code"
+                        do_update "@openai/codex" "Codex CLI"
+                        ;;
+                    5) do_rollback "@google/gemini-cli" "Gemini CLI" ;;
+                    6) do_rollback "@anthropic-ai/claude-code" "Claude Code" ;;
+                    7) do_rollback "@openai/codex" "Codex CLI" ;;
+                    8)
+                        do_rollback "@google/gemini-cli" "Gemini CLI"
+                        do_rollback "@anthropic-ai/claude-code" "Claude Code"
+                        do_rollback "@openai/codex" "Codex CLI"
+                        ;;
+                    [Rr]) break ;;
+                    *) echo "⚠️ Invalid selection"; sleep 1 ;;
+                esac
+            done
             ;;
         [Ss])
             echo ""
