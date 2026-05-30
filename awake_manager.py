@@ -96,8 +96,8 @@ class AwakeManager:
             print(f"❌ Failed to add task {task_id}: {e}")
 
     def execute_task(self, task):
-        task_type = task.get('type', 'agent_command')
-        if task_type == 'agent_command':
+        # Compatible with legacy config where 'type' was used for trigger like 'cron', execute if target_agent exists
+        if task.get('target_agent') or task.get('agent'):
             self._execute_agent_command(task)
 
     def _execute_agent_command(self, task):
