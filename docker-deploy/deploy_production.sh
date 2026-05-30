@@ -55,13 +55,13 @@ phase1_build_production_image() {
     # 構建鏡像
     docker build \
         --build-arg BUILD_USER=kenzan \
-        -t chat-agent-mc:production \
+        -t octo-mc:production \
         -f "$SCRIPT_DIR/Dockerfile" \
         "$PROJECT_DIR" 2>&1 | tee "$SCRIPT_DIR/logs/build.log"
 
     if [ $? -eq 0 ]; then
-        log_success "生產鏡像構建完成: chat-agent-mc:production"
-        docker image ls | grep "chat-agent-mc"
+        log_success "生產鏡像構建完成: octo-mc:production"
+        docker image ls | grep "octo-mc"
         return 0
     else
         log_error "鏡像構建失敗"
@@ -100,7 +100,7 @@ phase2_setup_green_container() {
 
     docker compose \
         -f "$SCRIPT_DIR/docker-compose.${INSTANCE_NAME}.yml" \
-        -p "chat-agent-${INSTANCE_NAME}" \
+        -p "octo_${INSTANCE_NAME}" \
         up -d bot 2>&1 | tee -a "$SCRIPT_DIR/logs/green_startup.log"
 
     if [ $? -ne 0 ]; then
@@ -116,7 +116,7 @@ phase2_setup_green_container() {
 
     # 4. 驗証容器健康狀態
     log_info "驗証容器健康狀態..."
-    if docker ps | grep -q "chat-agent-${INSTANCE_NAME}"; then
+    if docker ps | grep -q "octo_${INSTANCE_NAME}"; then
         log_success "Green 容器運行正常"
     else
         log_error "Green 容器未運行"
@@ -152,7 +152,7 @@ phase3_verify_green_container() {
 
     # Check 2: 容器日誌
     log_info "[2/11] 檢查容器日誌..."
-    if docker logs chat-agent-production_green_bot 2>&1 | grep -q "OctoMatrix"; then
+    if docker logs octo_production_green-bot 2>&1 | grep -q "OctoMatrix"; then
         log_success "✅ 容器日誌正常"
         ((CHECKS_PASSED++))
     else
@@ -161,7 +161,7 @@ phase3_verify_green_container() {
 
     # Check 3: 進程檢查
     log_info "[3/11] 檢查核心進程..."
-    if docker exec chat-agent-production_green_bot ps aux | grep -E "mc_router|gateway" | grep -v grep | wc -l | grep -qE "[3-9]"; then
+    if docker exec octo_production_green-bot ps aux | grep -E "mc_router|gateway" | grep -v grep | wc -l | grep -qE "[3-9]"; then
         log_success "✅ 核心進程正常 (3+個)"
         ((CHECKS_PASSED++))
     else
@@ -170,7 +170,7 @@ phase3_verify_green_container() {
 
     # Check 4: 端口監聽
     log_info "[4/11] 檢查端口監聽..."
-    if docker exec chat-agent-production_green_bot netstat -tlnp 2>/dev/null | grep -q "12210"; then
+    if docker exec octo_production_green-bot netstat -tlnp 2>/dev/null | grep -q "12210"; then
         log_success "✅ Port 12210 監聽正常"
         ((CHECKS_PASSED++))
     else
@@ -221,9 +221,9 @@ phase4_blue_green_switch() {
 
     # 1. 停止 Blue 容器（舊版本）
     log_info "停止 Blue 容器（舊版本）..."
-    if docker ps | grep -q "chat-agent-production_blue"; then
-        docker stop chat-agent-production_blue_bot || true
-        docker rm chat-agent-production_blue_bot || true
+    if docker ps | grep -q "octo_production_blue"; then
+        docker stop octo_production_blue-bot || true
+        docker rm octo_production_blue-bot || true
         log_success "Blue 容器已停止"
     else
         log_warn "未找到 Blue 容器，跳過停止步驟"
@@ -231,7 +231,7 @@ phase4_blue_green_switch() {
 
     # 2. 備份舊版本（可選保活 24+ 小時）
     log_info "備份 Blue 容器備份（用於回滾）..."
-    docker rename chat-agent-production_green_bot chat-agent-production_blue_backup || true
+    docker rename octo_production_green-bot octo_production_blue-backup || true
 
     # 3. 啟動新 Green 容器到 Port 5000
     log_info "啟動新 Green 容器到 Port 5000..."
@@ -242,16 +242,16 @@ phase4_blue_green_switch() {
 
     docker compose \
         -f "$SCRIPT_DIR/docker-compose.production_green.yml" \
-        -p "chat-agent-production" \
+        -p "octo_production" \
         up -d bot 2>&1 | tee -a "$SCRIPT_DIR/logs/production_switch.log"
 
     sleep 10
 
-    if docker ps | grep -q "chat-agent-production"; then
+    if docker ps | grep -q "octo_production"; then
         log_success "新 Green 容器已在 Port 5000 啟動"
     else
         log_error "新容器啟動失敗，執行回滾"
-        docker rename chat-agent-production_blue_backup chat-agent-production_green_bot || true
+        docker rename octo_production_blue-backup octo_production_green-bot || true
         return 1
     fi
 
@@ -263,7 +263,7 @@ phase4_blue_green_switch() {
         return 0
     else
         log_error "Port 5000 Health Check 失敗，執行回滾"
-        docker stop chat-agent-production || true
+        docker stop octo_production || true
         return 1
     fi
 }
@@ -297,7 +297,7 @@ phase5_monitoring() {
             echo "❌ $(date): Port 5000 Health Check 失敗" | tee -a "$MONITOR_LOG"
         fi
 
-        docker stats --no-stream chat-agent-production >> "$MONITOR_LOG" 2>&1
+        docker stats --no-stream octo_production >> "$MONITOR_LOG" 2>&1
 
         [ $i -lt 5 ] && sleep 5
     done
