@@ -134,6 +134,27 @@ class AwakeManager:
             
         if not task_data.get('id') and not task_data.get('name'):
             return {"status": "error", "message": "缺少必需欄位: id"}
+        if not task_data.get('target_agent') and not task_data.get('agent'):
+            return {"status": "error", "message": "缺少必需欄位: target_agent"}
+        if not task_data.get('prompt') and not task_data.get('command'):
+            return {"status": "error", "message": "缺少必需欄位: prompt"}
+            
+        # Trigger-bound required fields validation
+        trigger_reqs = {
+            'daily': ['hour', 'minute'],
+            'weekly': ['day_of_week', 'hour', 'minute'],
+            'monthly': ['day', 'hour', 'minute'],
+            'date': ['run_time'],
+            'cron': ['hour', 'minute']
+        }
+        
+        if trigger_val in trigger_reqs:
+            missing = [f for f in trigger_reqs[trigger_val] if f not in task_data]
+            if missing:
+                return {"status": "error", "message": f"Trigger '{trigger_val}' 缺少關聯必需欄位: {', '.join(missing)}"}
+        elif trigger_val == 'interval':
+            if not any(k in task_data for k in ['hours', 'minutes', 'seconds']):
+                return {"status": "error", "message": f"Trigger 'interval' 至少需要 hours, minutes, seconds 其中一個欄位"}
             
         jobs = []
         if os.path.exists(self.awake_file):
