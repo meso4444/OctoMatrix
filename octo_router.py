@@ -340,10 +340,13 @@ Enter the '{target}' window via tmux, view the first 50 lines of status and anal
 
                     if 'gemini' in engine:
                         start_cmd = f'gemini --yolo --model {model}' if model and model.lower() != 'auto' else 'gemini --yolo'
+                        resume_hint = "After waiting 5 seconds for startup to complete, please enter `/resume`, press Enter, wait 3 seconds then press Down arrow, wait 0.5 seconds then press enter once more to restore the last conversation record."
                     elif 'codex' in engine:
                         start_cmd = f'codex --yolo --model {model}' if model and model.lower() != 'auto' else 'codex --yolo'
+                        resume_hint = "After waiting 5 seconds for startup to complete, please enter `/resume`, press Enter, wait 3 seconds then press enter once more to restore the last conversation record."
                     else:
                         start_cmd = f'claude --permission-mode bypassPermissions --model {model}' if model and model.lower() != 'auto' else 'claude --permission-mode bypassPermissions'
+                        resume_hint = "After waiting 5 seconds for startup to complete, please enter `/resume`, press Enter, wait 3 seconds then press enter once more to restore the last conversation record."
 
                         prompt = f"""{SYS_PREFIX}
 Execute the following [SOP]:
@@ -361,7 +364,7 @@ Message from {MATRIX_USERNAME}:
 Please fix '{target_name}'.
 Find session "{TMUX_SESSION_NAME}" via tmux, enter the window of "{target_name}",
 enter /quit or /exit and press Enter, wait 3 seconds then execute pwd command to confirm returning to Linux Shell, then execute startup command: `{start_cmd}`.
-After waiting 5 seconds for startup to complete, please enter `/resume`, press Enter, wait 3 seconds then press enter once more to restore the last conversation record.
+{resume_hint}
 
 【⚠️ Technical Limitation: Tmux Send-Keys and Enter key handling (strictly execute)】
 Must use the "text -> delay -> Enter" trilogy:
