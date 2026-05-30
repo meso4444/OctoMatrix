@@ -192,7 +192,7 @@ class CommandHandler:
                 found = next((a for a in AGENTS if a['name'].lower() == target), None)
                 if found:
                     CURRENT_AGENT = found['name']
-                    self.notifier.notify(msg.source, 'custom', {'content': f'⚡ <b>Conversation switched successfully</b>\n Current active Agent: <code>{CURRENT_AGENT}</code>'})
+                    self.notifier.notify(msg.source, 'custom', {'content': f'🫧 <code>{CURRENT_AGENT}</code> is waiting for your call'})
             return True
         elif cmd_content == '/status':
             self._send_status(msg); return True
