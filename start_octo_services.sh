@@ -309,7 +309,8 @@ try:
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
             time.sleep(1)
             
-            cmd = f'HOME="{home_path}" {cmd}'
+            # 移除 HOME 覆寫，讓容器內的 CLI 可以正常讀取從 container_home 掛載進系統預設 HOME 的憑證
+            # cmd = f'HOME="{home_path}" {cmd}'
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', cmd]), check=True)
             time.sleep(0.5)
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
