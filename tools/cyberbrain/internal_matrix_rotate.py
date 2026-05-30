@@ -257,7 +257,7 @@ def main():
                 os.remove(TEMP_LOG)
             
             # 發送恢復提示，讓 Agent 接續先前的任務
-            recovery_prompt = f"{SYS_PREFIX}系統維護逾時取消。請確認是否 octo_cyberbrain/task_memo.txt 存在，若存在則讀取後接續執行被中斷的任務，讀取完畢後就刪除。"
+            recovery_prompt = f"{SYS_PREFIX}系統維護逾時取消。請確認是否 octo_cyberbrain/task_memo.txt 存在，若存在則讀取後接續執行被中斷的任務，讀取完畢後執行rm -f octo_cyberbrain/task_memo.txt。"
             escaped_rec = recovery_prompt.replace('!', '！').replace('$', '\\$')
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped_rec])
@@ -413,7 +413,7 @@ def main():
                     os.remove(TASK_MEMO)
                     with open(TASK_MEMO, 'w', encoding='utf-8') as f:
                         f.write(memo_prompt)
-                    task_memo_prompt = "接著確認是否octo_cyberbrain/task_memo.txt存在，若存在則讀取後接續執行任務，task_memo.txt讀取完畢後就刪除"
+                    task_memo_prompt = "接著確認是否octo_cyberbrain/task_memo.txt存在，若存在則讀取後接續執行任務，task_memo.txt讀取完畢後執行rm -f octo_cyberbrain/task_memo.txt"
             except Exception as e:
                 print(f"處理 task_memo.txt 時發生錯誤: {e}")
 
