@@ -257,7 +257,7 @@ def main():
                 os.remove(TEMP_LOG)
             
             # Send recovery prompt to let Agent resume the previous task
-            recovery_prompt = f"{SYS_PREFIX} Maintenance timeout cancelled. Please check if octo_cyberbrain/task_memo.txt exists. If it does, read it and resume the interrupted task, then delete it after reading."
+            recovery_prompt = f"{SYS_PREFIX} Maintenance timeout cancelled. Please check if octo_cyberbrain/task_memo.txt exists. If it does, read it and resume the interrupted task, then execute rm -f octo_cyberbrain/task_memo.txt."
             escaped_rec = recovery_prompt.replace('!', '！').replace('$', '\\$')
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped_rec])
@@ -417,7 +417,7 @@ Task Resumption Message:
                     os.remove(TASK_MEMO)
                     with open(TASK_MEMO, 'w', encoding='utf-8') as f:
                         f.write(memo_prompt)
-                    task_memo_prompt = " Next, verify if octo_cyberbrain/task_memo.txt exists; if so, read it to resume the task and then delete task_memo.txt."
+                    task_memo_prompt = " Next, verify if octo_cyberbrain/task_memo.txt exists; if so, read it to resume the task and then execute rm -f octo_cyberbrain/task_memo.txt."
             except Exception as e:
                 print(f"Error processing task_memo.txt: {e}")
 
