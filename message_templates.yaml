@@ -292,10 +292,10 @@ templates:
   # 【矩陣連線確認】
   matrix_connected:
     telegram: |
-      🐙 <b>[{timestamp}]</b> > Matrix Connected :: <b>[{agent_name}]</b>
+      🐙 <b>[{timestamp}]</b> > <b>[{agent_name}]</b> 已收到訊息
 
     discord: |
-      🐙 **[{timestamp}]** > Matrix Connected :: **[{agent_name}]**
+      🐙 **[{timestamp}]** > **[{agent_name}]** 已收到訊息
 
     slack: |
-      🐙 [{timestamp}] > Matrix Connected :: [{agent_name}]
+      🐙 [{timestamp}] > [{agent_name}] 已收到訊息
