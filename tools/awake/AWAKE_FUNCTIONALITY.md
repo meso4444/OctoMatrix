@@ -325,6 +325,25 @@ DELETE http://127.0.0.1:${ROUTER_PORT}/awake/jobs/{job_id}
 
 ---
 
+### date (Specific Date and Time)
+**When to use**: Need to execute once at a specific point in time in the future
+
+```json
+{
+  "trigger": "date",
+  "run_time": "2026-12-31 23:59:59"  // Format: YYYY-MM-DD HH:MM:SS
+}
+```
+
+**Example**: Send Happy New Year at the end of 2026
+```json
+{
+  "run_time": "2026-12-31 23:59:59"
+}
+```
+
+---
+
 ### cron (Complex expression)
 **When to use**: Need complex time logic
 
