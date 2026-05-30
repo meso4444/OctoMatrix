@@ -365,6 +365,10 @@ try:
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
             time.sleep(1)
 
+            if engine == 'gemini':
+                subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Down']), check=True)
+                time.sleep(0.5)
+
             # Step 3: 選擇前次對話
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
             time.sleep(1)

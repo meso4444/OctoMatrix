@@ -338,10 +338,13 @@ class CommandHandler:
                     
                     if 'gemini' in engine:
                         start_cmd = f'gemini --yolo --model {model}' if model and model.lower() != 'auto' else 'gemini --yolo'
+                        resume_hint = "等待5秒啟動完成後，請輸入 `/resume` ,執行 Enter, 等待3秒後再輸入向下方向鍵 (Down), 等待0.5秒後再執行1次enter, 以恢復最近一次的對話紀錄。"
                     elif 'codex' in engine:
                         start_cmd = f'codex --yolo --model {model}' if model and model.lower() != 'auto' else 'codex --yolo'
+                        resume_hint = "等待5秒啟動完成後，請輸入 `/resume` ,執行 Enter, 等待3秒後再執行1次enter, 以恢復最近一次的對話紀錄。"
                     else:
                         start_cmd = f'claude --permission-mode bypassPermissions --model {model}' if model and model.lower() != 'auto' else 'claude --permission-mode bypassPermissions'
+                        resume_hint = "等待5秒啟動完成後，請輸入 `/resume` ,執行 Enter, 等待3秒後再執行1次enter, 以恢復最近一次的對話紀錄。"
                         
                         prompt = f"""{SYS_PREFIX}
 執行以下 [SOP]:
@@ -359,7 +362,7 @@ class CommandHandler:
 請幫我修復 '{target_name}'。
 透過 tmux 查找 session "{TMUX_SESSION_NAME}"，進入 "{target_name}" 的視窗，
 輸入 /quit 或 /exit 並執行 Enter，等待3秒後執行 pwd 指令確認回到 Linux Shell 後，再執行啟動指令：`{start_cmd}`。
-等待5秒啟動完成後，請輸入 `/resume` ,執行 Enter, 等待3秒後再執行1次enter, 以恢復最近一次的對話紀錄。
+{resume_hint}
 
 【⚠️ 技術限制：Tmux Send-Keys 與 Enter 鍵處理 (嚴格執行)】
 必須採用 「文字 -> 延遲 -> Enter」 的三部曲寫法：
