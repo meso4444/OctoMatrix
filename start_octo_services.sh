@@ -363,11 +363,11 @@ try:
 
             # Step 2: 執行 /resume (進入菜單)
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
-            time.sleep(1)
+            time.sleep(3)
 
             if engine == 'gemini':
                 subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Down']), check=True)
-                time.sleep(0.5)
+                time.sleep(1)
 
             # Step 3: 選擇前次對話
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)

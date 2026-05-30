@@ -338,7 +338,7 @@ class CommandHandler:
                     
                     if 'gemini' in engine:
                         start_cmd = f'gemini --yolo --model {model}' if model and model.lower() != 'auto' else 'gemini --yolo'
-                        resume_hint = "等待5秒啟動完成後，請輸入 `/resume` ,執行 Enter, 等待3秒後再輸入向下方向鍵 (Down), 等待0.5秒後再執行1次enter, 以恢復最近一次的對話紀錄。"
+                        resume_hint = "等待5秒啟動完成後，請輸入 `/resume` ,執行 Enter, 等待3秒後再輸入向下方向鍵 (Down), 等待1秒後再執行1次enter, 以恢復最近一次的對話紀錄。"
                     elif 'codex' in engine:
                         start_cmd = f'codex --yolo --model {model}' if model and model.lower() != 'auto' else 'codex --yolo'
                         resume_hint = "等待5秒啟動完成後，請輸入 `/resume` ,執行 Enter, 等待3秒後再執行1次enter, 以恢復最近一次的對話紀錄。"
