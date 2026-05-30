@@ -193,13 +193,14 @@ while true; do
     echo " [5] 🌍 設定網路與連接埠 (Ports)"
     echo " [6] 🤖 設定 AI Agent 軍團與進階參數"
     echo " [7] 🔐 AI Agent CLI 認證設定"
+    echo " [8] ⬆️ AI CLI 版本管理 (升級/退版)"
     echo "----------------------------------------"
     echo " [S] 💾 儲存設定並啟動 (Save)"
     echo " [C] 🧹 清除設定與憑證 (Clear)"
     echo " [Q] ❌ 放棄變更退出 (Quit)"
     echo "=========================================="
 
-    read -p "請選擇操作 [1-7, S, C, Q]: " choice
+    read -p "請選擇操作 [1-8, S, C, Q]: " choice
 
     case $choice in
         1)
@@ -286,6 +287,79 @@ while true; do
         7)
             echo ""
             bash "$SCRIPT_DIR/agent_credential_wizard.sh" --local
+            ;;
+        8)
+            while true; do
+                clear
+                echo "=========================================="
+                echo "⬆️  AI CLI 版本管理 (手動升級/退版)"
+                echo "=========================================="
+                echo " [1] 🆙 升級 Gemini CLI"
+                echo " [2] 🆙 升級 Claude Code"
+                echo " [3] 🆙 升級 Codex CLI"
+                echo " [4] 🚀 一併升級所有 CLI 工具"
+                echo "----------------------------------------"
+                echo " [5] ⏪ 退版 Gemini CLI (還原至備份版本)"
+                echo " [6] ⏪ 退版 Claude Code (還原至備份版本)"
+                echo " [7] ⏪ 退版 Codex CLI (還原至備份版本)"
+                echo " [8] 🛡️ 一併退版所有 CLI 工具"
+                echo "----------------------------------------"
+                echo " [R] 🔙 返回主選單"
+                echo "=========================================="
+                read -p "請選擇操作 [1-8, R]: " cli_choice
+
+                do_update() {
+                    local pkg="$1"
+                    local name="$2"
+                    echo "🔄 正在備份 $name 當前版本..."
+                    local current_ver=$(npm list -g --depth=0 "$pkg" | grep "$pkg" | awk -F@ '{print $NF}')
+                    if [ -n "$current_ver" ]; then
+                        echo "$current_ver" > "$SCRIPT_DIR/agent_home/${pkg//\//_}_version.bak"
+                        echo "✅ 已備份 $name 版本: $current_ver"
+                    fi
+                    echo "🚀 正在全域升級 $name (需要 sudo 權限)..."
+                    sudo npm update -g "$pkg"
+                    echo "✅ $name 升級完成！"
+                    read -p "請按 Enter 鍵繼續..." dummy_key
+                }
+
+                do_rollback() {
+                    local pkg="$1"
+                    local name="$2"
+                    local bak_file="$SCRIPT_DIR/agent_home/${pkg//\//_}_version.bak"
+                    if [ -f "$bak_file" ]; then
+                        local old_ver=$(cat "$bak_file")
+                        echo "⏪ 準備將 $name 退回版本: $old_ver (需要 sudo 權限)..."
+                        sudo npm install -g "${pkg}@${old_ver}"
+                        echo "✅ $name 退版完成！"
+                        rm -f "$bak_file"
+                    else
+                        echo "⚠️ 找不到 $name 的版本備份檔，無法自動退版！"
+                    fi
+                    read -p "請按 Enter 鍵繼續..." dummy_key
+                }
+
+                case $cli_choice in
+                    1) do_update "@google/gemini-cli" "Gemini CLI" ;;
+                    2) do_update "@anthropic-ai/claude-code" "Claude Code" ;;
+                    3) do_update "@openai/codex" "Codex CLI" ;;
+                    4)
+                        do_update "@google/gemini-cli" "Gemini CLI"
+                        do_update "@anthropic-ai/claude-code" "Claude Code"
+                        do_update "@openai/codex" "Codex CLI"
+                        ;;
+                    5) do_rollback "@google/gemini-cli" "Gemini CLI" ;;
+                    6) do_rollback "@anthropic-ai/claude-code" "Claude Code" ;;
+                    7) do_rollback "@openai/codex" "Codex CLI" ;;
+                    8)
+                        do_rollback "@google/gemini-cli" "Gemini CLI"
+                        do_rollback "@anthropic-ai/claude-code" "Claude Code"
+                        do_rollback "@openai/codex" "Codex CLI"
+                        ;;
+                    [Rr]) break ;;
+                    *) echo "⚠️ 無效的選擇"; sleep 1 ;;
+                esac
+            done
             ;;
         [Ss])
             echo ""
