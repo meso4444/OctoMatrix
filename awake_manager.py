@@ -134,6 +134,27 @@ class AwakeManager:
             
         if not task_data.get('id') and not task_data.get('name'):
             return {"status": "error", "message": "Missing required field: id"}
+        if not task_data.get('target_agent') and not task_data.get('agent'):
+            return {"status": "error", "message": "Missing required field: target_agent"}
+        if not task_data.get('prompt') and not task_data.get('command'):
+            return {"status": "error", "message": "Missing required field: prompt"}
+            
+        # Trigger-bound required fields validation
+        trigger_reqs = {
+            'daily': ['hour', 'minute'],
+            'weekly': ['day_of_week', 'hour', 'minute'],
+            'monthly': ['day', 'hour', 'minute'],
+            'date': ['run_time'],
+            'cron': ['hour', 'minute']
+        }
+        
+        if trigger_val in trigger_reqs:
+            missing = [f for f in trigger_reqs[trigger_val] if f not in task_data]
+            if missing:
+                return {"status": "error", "message": f"Trigger '{trigger_val}' is missing bound required fields: {', '.join(missing)}"}
+        elif trigger_val == 'interval':
+            if not any(k in task_data for k in ['hours', 'minutes', 'seconds']):
+                return {"status": "error", "message": f"Trigger 'interval' requires at least one of hours, minutes, or seconds"}
             
         jobs = []
         if os.path.exists(self.awake_file):
