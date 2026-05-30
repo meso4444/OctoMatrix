@@ -55,13 +55,13 @@ phase1_build_production_image() {
     # 構建鏡像
     docker build \
         --build-arg BUILD_USER=kenzan \
-        -t octo-mc:production \
+        -t octo:production \
         -f "$SCRIPT_DIR/Dockerfile" \
         "$PROJECT_DIR" 2>&1 | tee "$SCRIPT_DIR/logs/build.log"
 
     if [ $? -eq 0 ]; then
-        log_success "生產鏡像構建完成: octo-mc:production"
-        docker image ls | grep "octo-mc"
+        log_success "生產鏡像構建完成: octo:production"
+        docker image ls | grep "octo"
         return 0
     else
         log_error "鏡像構建失敗"
