@@ -296,8 +296,8 @@ while true; do
             echo "✅ Instance setup complete!"
             echo "=========================================="
             echo "🚀 Next steps, you can use the following commands to operate your AI Army:"
-            echo "1. Build and start containers (background):"
-            echo "   docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} up -d --build"
+            echo "1. Clean build and start containers (background):"
+            echo "   docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} build --no-cache && docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} up -d"
             echo ""
             echo "2. Check container status and logs:"
             echo "   docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} ps"
@@ -308,7 +308,7 @@ while true; do
             echo ""
             echo "4. Stop and remove containers:"
             echo "   docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} down"
-            echo "   docker image rm octo_${INSTANCE_NAME}-bot  # Force remove base image to ensure rebuild"
+            echo "   docker image rm octo_${INSTANCE_NAME}-bot"
             break
             ;;
         [Cc])
