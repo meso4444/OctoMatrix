@@ -409,6 +409,8 @@ def main():
 {memo_content}
 
 {SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
+                    # 先刪除舊檔以避開跨用戶擁有者覆寫的 PermissionError
+                    os.remove(TASK_MEMO)
                     with open(TASK_MEMO, 'w', encoding='utf-8') as f:
                         f.write(memo_prompt)
                     task_memo_prompt = "接著確認是否octo_cyberbrain/task_memo.txt存在，若存在則讀取後接續執行任務，task_memo.txt讀取完畢後就刪除"
