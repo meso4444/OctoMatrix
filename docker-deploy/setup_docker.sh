@@ -308,7 +308,7 @@ while true; do
             echo ""
             echo "4. 停止並移除容器："
             echo "   docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} down"
-            echo "   docker image rm octomatrix-dev-${INSTANCE_NAME}  # 強制移除底層映像檔以確保重包"
+            echo "   docker image rm octo_${INSTANCE_NAME}-bot  # 強制移除底層映像檔以確保重包"
             break
             ;;
         [Cc])
