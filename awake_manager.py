@@ -193,4 +193,3 @@ class AwakeManager:
                 "prompt": original_task.get('prompt') or original_task.get('command') or "No command"
             })
         return {"status": "ok", "total": len(jobs_info), "jobs": jobs_info}
-s_info}
