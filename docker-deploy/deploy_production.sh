@@ -55,13 +55,13 @@ phase1_build_production_image() {
     # Build image
     docker build \
         --build-arg BUILD_USER=kenzan \
-        -t octo-mc:production \
+        -t octo:production \
         -f "$SCRIPT_DIR/Dockerfile" \
         "$PROJECT_DIR" 2>&1 | tee "$SCRIPT_DIR/logs/build.log"
 
     if [ $? -eq 0 ]; then
-        log_success "Production image build complete: octo-mc:production"
-        docker image ls | grep "octo-mc"
+        log_success "Production image build complete: octo:production"
+        docker image ls | grep "octo"
         return 0
     else
         log_error "Image build failed"
