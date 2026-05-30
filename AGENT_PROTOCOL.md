@@ -100,7 +100,7 @@ Agents **must communicate with the routing hub through REST API** to manage auto
     ```bash
     curl -X POST http://127.0.0.1:${ROUTER_PORT}/awake/jobs/register \
       -H "Content-Type: application/json" \
-      -d '{"id": "task_id", "type": "cron", "hour": 9, "minute": 30, "target_agent": "{agent_name}", "prompt": "Execute task content"}'
+      -d '{"id": "task_id", "type": "agent_command", "trigger": "cron", "hour": 9, "minute": 30, "target_agent": "{agent_name}", "prompt": "Execute task content"}'
     ```
 - **View and Revoke**:
     - `curl http://127.0.0.1:${ROUTER_PORT}/awake/jobs`
