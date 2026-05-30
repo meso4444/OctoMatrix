@@ -80,7 +80,7 @@ def prompt_model_choice(engine, current_model=None):
     if 'gemini' in engine:
         options = [("auto", "auto (預設)"), ("gemini-3.1-pro-preview", "gemini-3.1-pro-preview"), ("gemini-3-flash-preview", "gemini-3-flash-preview")]
     elif 'claude' in engine:
-        options = [("haiku", "haiku (預設)"), ("sonnet", "sonnet"), ("opus", "opus")]
+        options = [("sonnet", "sonnet (預設)"), ("haiku", "haiku"), ("opus", "opus")]
     elif 'codex' in engine:
         options = [("gpt-5.4-mini", "gpt-5.4-mini (預設)"), ("gpt-5.4", "gpt-5.4")]
     else:
