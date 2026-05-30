@@ -65,8 +65,8 @@ class AwakeManager:
         """Add single task to apscheduler (with advanced Trigger translation)"""
         if not isinstance(task, dict): return
         task_id = task.get('id') or task.get('name')
-        trigger_type = task.get('trigger', 'cron')
-        if not task_id: return
+        trigger_type = task.get('trigger')
+        if not task_id or not trigger_type: return
 
         try:
             if trigger_type == 'daily':
