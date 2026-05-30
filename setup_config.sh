@@ -312,9 +312,10 @@ while true; do
                     local pkg="$1"
                     local name="$2"
                     echo "🔄 正在備份 $name 當前版本..."
-                    local current_ver=$(npm list -g --depth=0 "$pkg" | grep "$pkg" | awk -F@ '{print $NF}')
+                    local current_ver=$(npm list -g --depth=0 --no-color "$pkg" | grep "$pkg" | awk -F@ '{print $NF}' | sed -r "s/\x1B\[[0-9;]*[mK]//g" | tr -d '\r\n')
                     if [ -n "$current_ver" ]; then
-                        echo "$current_ver" > "$SCRIPT_DIR/agent_home/${pkg//\//_}_version.bak"
+                        mkdir -p "$SCRIPT_DIR/.cli_versions_bak"
+                        echo "$current_ver" > "$SCRIPT_DIR/.cli_versions_bak/${pkg//\//_}_version.bak"
                         echo "✅ 已備份 $name 版本: $current_ver"
                     fi
                     echo "🚀 正在全域升級 $name (需要 sudo 權限)..."
@@ -326,7 +327,7 @@ while true; do
                 do_rollback() {
                     local pkg="$1"
                     local name="$2"
-                    local bak_file="$SCRIPT_DIR/agent_home/${pkg//\//_}_version.bak"
+                    local bak_file="$SCRIPT_DIR/.cli_versions_bak/${pkg//\//_}_version.bak"
                     if [ -f "$bak_file" ]; then
                         local old_ver=$(cat "$bak_file")
                         echo "⏪ 準備將 $name 退回版本: $old_ver (需要 sudo 權限)..."
