@@ -94,6 +94,15 @@ def main():
                 elif "internal_matrix_rotate.py" in flag_content:
                     # Rotation script is running
                     continue
+                elif not flag_content:
+                    try:
+                        if time.time() - os.path.getmtime(flag_file) > 300:
+                            print(f"[Reaper] 發現逾時 5 分鐘的空 Flag，強制接管寫入 READY_FOR_REAPER ({agent_name})")
+                            with open(flag_file, 'w') as f:
+                                f.write("READY_FOR_REAPER")
+                            continue
+                    except Exception as e:
+                        print(f"[Reaper] 檢查逾時 Flag 失敗 ({agent_name}): {e}")
 
             if os.path.exists(shell_log):
                 size = os.path.getsize(shell_log)
