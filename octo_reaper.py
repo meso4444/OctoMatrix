@@ -91,6 +91,16 @@ def main():
                 except Exception:
                     pass
                     
+                if not flag_content:
+                    try:
+                        if time.time() - os.path.getmtime(flag_file) > polling_interval + 240:
+                            print(f"[Reaper] 發現逾時 ({polling_interval + 240} 秒) 的空 Flag，強制接管寫入 READY_FOR_REAPER ({agent_name})")
+                            with open(flag_file, 'w') as f:
+                                f.write("READY_FOR_REAPER")
+                            flag_content = "READY_FOR_REAPER"
+                    except Exception as e:
+                        print(f"[Reaper] 檢查逾時 Flag 失敗 ({agent_name}): {e}")
+
                 if flag_content == "READY_FOR_REAPER":
                     try:
                         rotate_script = os.path.join(agent_dir, 'octo_cyberbrain', 'internal_matrix_rotate.py')
@@ -102,15 +112,6 @@ def main():
                 elif "internal_matrix_rotate.py" in flag_content:
                     # Rotation script is running
                     continue
-                elif not flag_content:
-                    try:
-                        if time.time() - os.path.getmtime(flag_file) > polling_interval + 240:
-                            print(f"[Reaper] 發現逾時 ({polling_interval + 240} 秒) 的空 Flag，強制接管寫入 READY_FOR_REAPER ({agent_name})")
-                            with open(flag_file, 'w') as f:
-                                f.write("READY_FOR_REAPER")
-                            continue
-                    except Exception as e:
-                        print(f"[Reaper] 檢查逾時 Flag 失敗 ({agent_name}): {e}")
 
             if os.path.exists(shell_log):
                 size = os.path.getsize(shell_log)
