@@ -55,13 +55,13 @@ phase1_build_production_image() {
     # Build image
     docker build \
         --build-arg BUILD_USER=kenzan \
-        -t chat-agent-mc:production \
+        -t octo-mc:production \
         -f "$SCRIPT_DIR/Dockerfile" \
         "$PROJECT_DIR" 2>&1 | tee "$SCRIPT_DIR/logs/build.log"
 
     if [ $? -eq 0 ]; then
-        log_success "Production image build complete: chat-agent-mc:production"
-        docker image ls | grep "chat-agent-mc"
+        log_success "Production image build complete: octo-mc:production"
+        docker image ls | grep "octo-mc"
         return 0
     else
         log_error "Image build failed"
@@ -100,7 +100,7 @@ phase2_setup_green_container() {
 
     docker compose \
         -f "$SCRIPT_DIR/docker-compose.${INSTANCE_NAME}.yml" \
-        -p "chat-agent-${INSTANCE_NAME}" \
+        -p "octo_${INSTANCE_NAME}" \
         up -d bot 2>&1 | tee -a "$SCRIPT_DIR/logs/green_startup.log"
 
     if [ $? -ne 0 ]; then
@@ -116,7 +116,7 @@ phase2_setup_green_container() {
 
     # 4. Verify container health status
     log_info "Verifying container health status..."
-    if docker ps | grep -q "chat-agent-${INSTANCE_NAME}"; then
+    if docker ps | grep -q "octo_${INSTANCE_NAME}"; then
         log_success "Green container is running normally"
     else
         log_error "Green container is not running"
@@ -152,7 +152,7 @@ phase3_verify_green_container() {
 
     # Check 2: Container Logs
     log_info "[2/11] Checking container logs..."
-    if docker logs chat-agent-production_green_bot 2>&1 | grep -q "OctoMatrix"; then
+    if docker logs octo_production_green-bot 2>&1 | grep -q "OctoMatrix"; then
         log_success "✅ Container logs OK"
         ((CHECKS_PASSED++))
     else
@@ -161,7 +161,7 @@ phase3_verify_green_container() {
 
     # Check 3: Process Check
     log_info "[3/11] Checking core processes..."
-    if docker exec chat-agent-production_green_bot ps aux | grep -E "mc_router|gateway" | grep -v grep | wc -l | grep -qE "[3-9]"; then
+    if docker exec octo_production_green-bot ps aux | grep -E "mc_router|gateway" | grep -v grep | wc -l | grep -qE "[3-9]"; then
         log_success "✅ Core processes OK (3+ count)"
         ((CHECKS_PASSED++))
     else
@@ -170,7 +170,7 @@ phase3_verify_green_container() {
 
     # Check 4: Port Listening
     log_info "[4/11] Checking port listening..."
-    if docker exec chat-agent-production_green_bot netstat -tlnp 2>/dev/null | grep -q "12210"; then
+    if docker exec octo_production_green-bot netstat -tlnp 2>/dev/null | grep -q "12210"; then
         log_success "✅ Port 12210 listening OK"
         ((CHECKS_PASSED++))
     else
@@ -221,9 +221,9 @@ phase4_blue_green_switch() {
 
     # 1. Stop Blue Container (Old Version)
     log_info "Stopping Blue container (Old Version)..."
-    if docker ps | grep -q "chat-agent-production_blue"; then
-        docker stop chat-agent-production_blue_bot || true
-        docker rm chat-agent-production_blue_bot || true
+    if docker ps | grep -q "octo_production_blue"; then
+        docker stop octo_production_blue-bot || true
+        docker rm octo_production_blue-bot || true
         log_success "Blue container stopped"
     else
         log_warn "Blue container not found, skipping stop step"
@@ -231,7 +231,7 @@ phase4_blue_green_switch() {
 
     # 2. Backup Old Version (Optional persistence for 24+ hours)
     log_info "Backing up Blue container (for rollback purposes)..."
-    docker rename chat-agent-production_green_bot chat-agent-production_blue_backup || true
+    docker rename octo_production_green-bot octo_production_blue-backup || true
 
     # 3. Start New Green Container on Port 5000
     log_info "Starting new Green container on Port 5000..."
@@ -242,16 +242,16 @@ phase4_blue_green_switch() {
 
     docker compose \
         -f "$SCRIPT_DIR/docker-compose.production_green.yml" \
-        -p "chat-agent-production" \
+        -p "octo_production" \
         up -d bot 2>&1 | tee -a "$SCRIPT_DIR/logs/production_switch.log"
 
     sleep 10
 
-    if docker ps | grep -q "chat-agent-production"; then
+    if docker ps | grep -q "octo_production"; then
         log_success "New Green container started on Port 5000"
     else
         log_error "New container failed to start, performing rollback"
-        docker rename chat-agent-production_blue_backup chat-agent-production_green_bot || true
+        docker rename octo_production_blue-backup octo_production_green-bot || true
         return 1
     fi
 
@@ -263,7 +263,7 @@ phase4_blue_green_switch() {
         return 0
     else
         log_error "Port 5000 Health Check FAILED, performing rollback"
-        docker stop chat-agent-production || true
+        docker stop octo_production || true
         return 1
     fi
 }
@@ -297,7 +297,7 @@ phase5_monitoring() {
             echo "❌ $(date): Port 5000 Health Check FAILED" | tee -a "$MONITOR_LOG"
         fi
 
-        docker stats --no-stream chat-agent-production >> "$MONITOR_LOG" 2>&1
+        docker stats --no-stream octo_production >> "$MONITOR_LOG" 2>&1
 
         [ $i -lt 5 ] && sleep 5
     done

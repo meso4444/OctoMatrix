@@ -304,7 +304,7 @@ while true; do
             echo "   docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} logs -f"
             echo ""
             echo "3. Attach to tmux session inside the container:"
-            echo "   docker exec -it -u $CURRENT_USER chat-agent-${INSTANCE_NAME} tmux attach -t $TMUX_SESSION"
+            echo "   docker exec -it -u $CURRENT_USER octo_${INSTANCE_NAME}-bot tmux attach -t $TMUX_SESSION"
             echo ""
             echo "4. Stop and remove containers:"
             echo "   docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} down"

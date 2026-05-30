@@ -21,7 +21,7 @@ def generate_docker_compose(instance, user, script_dir, router_port=12210):
                         "INSTANCE_NAME": instance
                     }
                 },
-                "container_name": f"chat-agent-{instance}",
+                "container_name": f"octo_{instance}-bot",
                 "restart": "unless-stopped",
                 "environment": [
                     f"INSTANCE_NAME={instance}",
