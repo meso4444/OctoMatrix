@@ -292,10 +292,10 @@ templates:
   # 【Matrix Connection Confirmation】
   matrix_connected:
     telegram: |
-      🐙 <b>[{timestamp}]</b> > Matrix Connected :: <b>[{agent_name}]</b>
+      🐙 <b>[{timestamp}]</b> > <b>[{agent_name}]</b> Message received
 
     discord: |
-      🐙 **[{timestamp}]** > Matrix Connected :: **[{agent_name}]**
+      🐙 **[{timestamp}]** > **[{agent_name}]** Message received
 
     slack: |
-      🐙 [{timestamp}] > Matrix Connected :: [{agent_name}]
+      🐙 [{timestamp}] > [{agent_name}] Message received
