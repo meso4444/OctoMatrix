@@ -391,7 +391,38 @@ Message from {MATRIX_USERNAME}:
         # ==========================================
         # Step 4: Neural Reset Injection
         # ==========================================
-        prompt = f"{SYS_PREFIX} Please execute python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot to get keywords, then bring all retrieved keywords into a single execution of 'python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"Keyword1\" \"Keyword2\"' for Shell GHOST deep dive. Once complete, re-establish compliance with {ENGINE_DOC_NAME}. This task does not require sending messages to the user. Next, verify if octo_cyberbrain/task_memo.txt exists; if so, read it to resume the task and then delete task_memo.txt."
+        task_memo_prompt = ""
+        if os.path.exists(TASK_MEMO):
+            try:
+                with open(TASK_MEMO, 'r', encoding='utf-8') as f:
+                    memo_content = f.read().strip()
+                if memo_content:
+                    memo_prompt = f"""{SYS_PREFIX}
+Execute the following [SOP]:
+[Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
+[Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If a task, proceed to Step2; if a greeting, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate greeting response}}'`, and do not execute subsequent Steps.
+[Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate initial preview}}'` to preview the task's initial direction.
+[Step 3 - Clarify]: If task is clear, proceed to Step4; if unclear, proactively dive into keywords. If clear history exists, proceed to Step4, otherwise suspend task and execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate clarification question}}'`, and do not execute subsequent Steps.
+[Step 4 - Execute]: Start task and write md. For large tasks, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate progress update}}'` midway, then proceed to Step5 after task completion.
+[Step 5 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
+[Step 6 - Report]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate task completion report}}'`. Only use --file to send related report documents to {MATRIX_USERNAME} if the report content exceeds 1000 words, otherwise report directly with a complete message.
+[Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
+[Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST.
+
+Message from {MATRIX_USERNAME} to resume task:
+{memo_content}
+
+{SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
+                    with open(TASK_MEMO, 'w', encoding='utf-8') as f:
+                        f.write(memo_prompt)
+                    task_memo_prompt = " Next, verify if octo_cyberbrain/task_memo.txt exists; if so, read it to resume the task and then delete task_memo.txt."
+            except Exception as e:
+                print(f"Error processing task_memo.txt: {e}")
+
+        if task_memo_prompt:
+            prompt = f"{SYS_PREFIX} Please execute python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot to get keywords, then bring all retrieved keywords into a single execution of 'python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"Keyword1\" \"Keyword2\"' for Shell GHOST deep dive. Once complete, re-establish compliance with {ENGINE_DOC_NAME}. This task does not require sending messages to the user.{task_memo_prompt}"
+        else:
+            prompt = f"{SYS_PREFIX} Please execute python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot to get keywords, then bring all retrieved keywords into a single execution of 'python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"Keyword1\" \"Keyword2\"' for Shell GHOST deep dive. Once complete, re-establish compliance with {ENGINE_DOC_NAME}. This task does not require sending messages to the user."
 
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", prompt])
