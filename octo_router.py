@@ -438,6 +438,22 @@ Message from {MATRIX_USERNAME}:
         success = self.injector.inject(final_message, target_agent, interrupt_first=(msg.source not in ['awake', 'system_flush']))
         if success and msg.source != 'awake':
             self.notifier.notify(msg.source, 'matrix_connected', {'timestamp': timestamp, 'agent_name': target_agent})
+            
+            # Automatically send Agent Avatar sticker
+            avatar_dir = os.path.join(agent_dir, 'avatar')
+            base_png = os.path.join(avatar_dir, 'base.png')
+            sticker_path = None
+            if os.path.exists(base_png):
+                sticker_path = base_png
+            else:
+                import glob
+                png_files = glob.glob(os.path.join(avatar_dir, '*.png'))
+                if png_files:
+                    sticker_path = png_files[0]
+            
+            if sticker_path:
+                self.notifier.notify_file(msg.source, sticker_path, file_type='sticker')
+
         return success
 
     def _send_status(self, msg: MCMessage):
