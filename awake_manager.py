@@ -96,8 +96,8 @@ class AwakeManager:
             print(f"❌ 新增任務 {task_id} 失敗: {e}")
 
     def execute_task(self, task):
-        # 兼容舊版設定檔把 type 拿去當 cron 的問題，只要有 target_agent 就執行
-        if task.get('target_agent') or task.get('agent'):
+        task_type = task.get('type', 'agent_command')
+        if task_type == 'agent_command':
             self._execute_agent_command(task)
 
     def _execute_agent_command(self, task):

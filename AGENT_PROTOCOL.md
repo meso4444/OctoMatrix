@@ -101,7 +101,7 @@ Agent **必須透過 REST API** 與路由中樞通訊來管理自動化行為，
     ```bash
     curl -X POST http://127.0.0.1:${ROUTER_PORT}/awake/jobs/register \
       -H "Content-Type: application/json" \
-      -d '{"id": "task_id", "type": "cron", "hour": 9, "minute": 30, "target_agent": "{agent_name}", "prompt": "執行任務內容"}'
+      -d '{"id": "task_id", "type": "agent_command", "trigger": "cron", "hour": 9, "minute": 30, "target_agent": "{agent_name}", "prompt": "執行任務內容"}'
     ```
 - **檢視與撤銷**：
     - `curl http://127.0.0.1:${ROUTER_PORT}/awake/jobs`
