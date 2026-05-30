@@ -394,7 +394,7 @@ Proactively write an md recording the fix process.
 
         # 🛡️ Inject standard SOP (Matrix message processing flow)
         # ==========================================
-        if msg.source in ['telegram', 'discord', 'slack'] and 'Execute the following [SOP]:' not in content:
+        if msg.source in ['telegram', 'discord', 'slack', 'awake'] and 'Execute the following [SOP]:' not in content:
             sop = f"""{SYS_PREFIX}
 Execute the following [SOP]:
 [Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
