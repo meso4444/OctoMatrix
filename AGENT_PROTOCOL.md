@@ -97,7 +97,7 @@ python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png
 Agent **必須透過 REST API** 與路由中樞通訊來管理自動化行為，且禁止直接編輯 `awake.yaml`。
 
 - **API 定址**：請從 `octo_cyberbrain/.cyberbrain_env` 讀取 `ROUTER_PORT` 組裝 URL。
-- **新增週期性喚醒 (Recurring)**：
+- **新增喚醒任務 (支援 trigger: daily, weekly, monthly, interval, date, cron)**：
     ```bash
     curl -X POST http://127.0.0.1:${ROUTER_PORT}/awake/jobs/register \
       -H "Content-Type: application/json" \
