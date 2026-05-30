@@ -308,7 +308,7 @@ while true; do
             echo ""
             echo "4. Stop and remove containers:"
             echo "   docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} down"
-            echo "   docker image rm octomatrix-dev-${INSTANCE_NAME}  # Force remove base image to ensure rebuild"
+            echo "   docker image rm octo_${INSTANCE_NAME}-bot  # Force remove base image to ensure rebuild"
             break
             ;;
         [Cc])
