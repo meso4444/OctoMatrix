@@ -91,6 +91,16 @@ def main():
                 except Exception:
                     pass
                     
+                if not flag_content:
+                    try:
+                        if time.time() - os.path.getmtime(flag_file) > polling_interval + 240:
+                            print(f"[Reaper] Found empty Flag timed out for {polling_interval + 240}s, forcefully writing READY_FOR_REAPER ({agent_name})")
+                            with open(flag_file, 'w') as f:
+                                f.write("READY_FOR_REAPER")
+                            flag_content = "READY_FOR_REAPER"
+                    except Exception as e:
+                        print(f"[Reaper] Failed to check timed out Flag ({agent_name}): {e}")
+
                 if flag_content == "READY_FOR_REAPER":
                     try:
                         # Only responsible for triggering, internal script handles locking
@@ -103,15 +113,6 @@ def main():
                 elif "internal_matrix_rotate.py" in flag_content:
                     # Rotation script is running, let it manage flags and logs
                     continue
-                elif not flag_content:
-                    try:
-                        if time.time() - os.path.getmtime(flag_file) > polling_interval + 240:
-                            print(f"[Reaper] Found empty Flag timed out for {polling_interval + 240}s, forcefully writing READY_FOR_REAPER ({agent_name})")
-                            with open(flag_file, 'w') as f:
-                                f.write("READY_FOR_REAPER")
-                            continue
-                    except Exception as e:
-                        print(f"[Reaper] Failed to check timed out Flag ({agent_name}): {e}")
 
             if os.path.exists(shell_log):
                 size = os.path.getsize(shell_log)
