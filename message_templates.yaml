@@ -292,10 +292,10 @@ templates:
   # 【Matrix Connection Confirmation】
   matrix_connected:
     telegram: |
-      🐙 <b>{agent_name}</b> 聽見了你的呼喚 🐾
+      🐙 <b>{agent_name}</b> heard your call 🐾
 
     discord: |
-      🐙 **{agent_name}** 聽見了你的呼喚 🐾
+      🐙 **{agent_name}** heard your call 🐾
 
     slack: |
-      🐙 {agent_name} 聽見了你的呼喚 🐾
+      🐙 {agent_name} heard your call 🐾
