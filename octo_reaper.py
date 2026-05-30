@@ -82,6 +82,14 @@ def main():
                         flag_content = f.read().strip()
                 except Exception:
                     flag_content = ""
+
+                try:
+                    if time.time() - os.path.getmtime(flag_file) > polling_interval + 840:
+                        os.remove(flag_file)
+                        print(f"[Reaper] 發現存在過久 (超過 {polling_interval + 840} 秒) 的異常 Flag，強制清除 ({agent_name})")
+                        continue
+                except Exception:
+                    pass
                     
                 if flag_content == "READY_FOR_REAPER":
                     try:
@@ -96,8 +104,8 @@ def main():
                     continue
                 elif not flag_content:
                     try:
-                        if time.time() - os.path.getmtime(flag_file) > 300:
-                            print(f"[Reaper] 發現逾時 5 分鐘的空 Flag，強制接管寫入 READY_FOR_REAPER ({agent_name})")
+                        if time.time() - os.path.getmtime(flag_file) > polling_interval + 240:
+                            print(f"[Reaper] 發現逾時 ({polling_interval + 240} 秒) 的空 Flag，強制接管寫入 READY_FOR_REAPER ({agent_name})")
                             with open(flag_file, 'w') as f:
                                 f.write("READY_FOR_REAPER")
                             continue
