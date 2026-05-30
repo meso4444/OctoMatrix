@@ -96,7 +96,7 @@ The matrix issues commands to Agents on schedule through the "Awake System". For
 Agents **must communicate with the routing hub through REST API** to manage automated behavior and are prohibited from directly editing `awake.yaml`.
 
 - **API Addressing**: Read `ROUTER_PORT` from `octo_cyberbrain/.cyberbrain_env` to assemble the URL.
-- **Add Recurring Awake Tasks**:
+- **Add Awake Tasks (Supports trigger: daily, weekly, monthly, interval, date, cron)**:
     ```bash
     curl -X POST http://127.0.0.1:${ROUTER_PORT}/awake/jobs/register \
       -H "Content-Type: application/json" \
