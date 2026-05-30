@@ -312,9 +312,10 @@ while true; do
                     local pkg="$1"
                     local name="$2"
                     echo "🔄 Backing up current version of $name..."
-                    local current_ver=$(npm list -g --depth=0 "$pkg" | grep "$pkg" | awk -F@ '{print $NF}')
+                    local current_ver=$(npm list -g --depth=0 --no-color "$pkg" | grep "$pkg" | awk -F@ '{print $NF}' | sed -r "s/\x1B\[[0-9;]*[mK]//g" | tr -d '\r\n')
                     if [ -n "$current_ver" ]; then
-                        echo "$current_ver" > "$SCRIPT_DIR/agent_home/${pkg//\//_}_version.bak"
+                        mkdir -p "$SCRIPT_DIR/.cli_versions_bak"
+                        echo "$current_ver" > "$SCRIPT_DIR/.cli_versions_bak/${pkg//\//_}_version.bak"
                         echo "✅ Successfully backed up $name version: $current_ver"
                     fi
                     echo "🚀 Performing global upgrade for $name (requires sudo permission)..."
@@ -326,7 +327,7 @@ while true; do
                 do_rollback() {
                     local pkg="$1"
                     local name="$2"
-                    local bak_file="$SCRIPT_DIR/agent_home/${pkg//\//_}_version.bak"
+                    local bak_file="$SCRIPT_DIR/.cli_versions_bak/${pkg//\//_}_version.bak"
                     if [ -f "$bak_file" ]; then
                         local old_ver=$(cat "$bak_file")
                         echo "⏪ Preparing to rollback $name to version: $old_ver (requires sudo permission)..."
