@@ -393,7 +393,7 @@ tmux send-keys -t target 您的訊息內容 && sleep 1 && tmux send-keys -t targ
         # ==========================================
         # 🛡️ 注入標準化 SOP (Matrix 訊息處理流程)
         # ==========================================
-        if msg.source in ['telegram', 'discord', 'slack'] and '執行以下 [SOP]:' not in content:
+        if msg.source in ['telegram', 'discord', 'slack', 'awake'] and '執行以下 [SOP]:' not in content:
             sop = f"""{SYS_PREFIX}
 執行以下 [SOP]:
 [Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖。
