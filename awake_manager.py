@@ -121,6 +121,20 @@ class AwakeManager:
             print(f"⏰ [Awake] Failed to awaken Agent (Internal API error): {e}")
 
     def register_job(self, task_data):
+        allowed_fields = {'id', 'name', 'trigger', 'type', 'target_agent', 'agent', 'prompt', 'command', 'hour', 'minute', 'second', 'day_of_week', 'day', 'hours', 'minutes', 'seconds', 'run_time'}
+        allowed_triggers = {'daily', 'weekly', 'monthly', 'interval', 'date', 'cron'}
+        
+        invalid_fields = [k for k in task_data.keys() if k not in allowed_fields]
+        if invalid_fields:
+            return {"status": "error", "message": f"Invalid fields detected: {', '.join(invalid_fields)}"}
+            
+        trigger_val = task_data.get('trigger')
+        if not trigger_val or trigger_val not in allowed_triggers:
+            return {"status": "error", "message": f"Missing or invalid required field trigger: {trigger_val}"}
+            
+        if not task_data.get('id') and not task_data.get('name'):
+            return {"status": "error", "message": "Missing required field: id"}
+            
         jobs = []
         if os.path.exists(self.awake_file):
             with open(self.awake_file, 'r', encoding='utf-8') as f:
@@ -158,3 +172,4 @@ class AwakeManager:
                 "prompt": original_task.get('prompt') or original_task.get('command') or "No command"
             })
         return {"status": "ok", "total": len(jobs_info), "jobs": jobs_info}
+s_info}
