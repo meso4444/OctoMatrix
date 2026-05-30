@@ -82,6 +82,14 @@ def main():
                         flag_content = f.read().strip()
                 except Exception:
                     flag_content = ""
+
+                try:
+                    if time.time() - os.path.getmtime(flag_file) > polling_interval + 840:
+                        os.remove(flag_file)
+                        print(f"[Reaper] Found abnormal Flag existing too long (> {polling_interval + 840}s), forcefully removed ({agent_name})")
+                        continue
+                except Exception:
+                    pass
                     
                 if flag_content == "READY_FOR_REAPER":
                     try:
@@ -97,8 +105,8 @@ def main():
                     continue
                 elif not flag_content:
                     try:
-                        if time.time() - os.path.getmtime(flag_file) > 300:
-                            print(f"[Reaper] Found empty Flag timed out for 5 mins, forcefully writing READY_FOR_REAPER ({agent_name})")
+                        if time.time() - os.path.getmtime(flag_file) > polling_interval + 240:
+                            print(f"[Reaper] Found empty Flag timed out for {polling_interval + 240}s, forcefully writing READY_FOR_REAPER ({agent_name})")
                             with open(flag_file, 'w') as f:
                                 f.write("READY_FOR_REAPER")
                             continue
