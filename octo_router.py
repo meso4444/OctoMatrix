@@ -340,7 +340,7 @@ Enter the '{target}' window via tmux, view the first 50 lines of status and anal
 
                     if 'gemini' in engine:
                         start_cmd = f'gemini --yolo --model {model}' if model and model.lower() != 'auto' else 'gemini --yolo'
-                        resume_hint = "After waiting 5 seconds for startup to complete, please enter `/resume`, press Enter, wait 3 seconds then press Down arrow, wait 0.5 seconds then press enter once more to restore the last conversation record."
+                        resume_hint = "After waiting 5 seconds for startup to complete, please enter `/resume`, press Enter, wait 3 seconds then press Down arrow, wait 1 second then press enter once more to restore the last conversation record."
                     elif 'codex' in engine:
                         start_cmd = f'codex --yolo --model {model}' if model and model.lower() != 'auto' else 'codex --yolo'
                         resume_hint = "After waiting 5 seconds for startup to complete, please enter `/resume`, press Enter, wait 3 seconds then press enter once more to restore the last conversation record."
