@@ -65,8 +65,8 @@ class AwakeManager:
         """將單個任務加入 apscheduler (含高階 Trigger 轉譯)"""
         if not isinstance(task, dict): return
         task_id = task.get('id') or task.get('name')
-        trigger_type = task.get('trigger', 'cron')
-        if not task_id: return
+        trigger_type = task.get('trigger')
+        if not task_id or not trigger_type: return
 
         try:
             if trigger_type == 'daily':
