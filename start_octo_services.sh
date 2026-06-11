@@ -216,6 +216,12 @@ try:
         matrix_notifier_dst = os.path.join(toolbox_path, 'matrix_notifier.py')
         if os.path.exists(matrix_notifier_src):
             safe_copy(matrix_notifier_src, matrix_notifier_dst)
+            
+        # 複製 agent_intercom.py 到 agent_home toolbox
+        agent_intercom_src = os.path.join(script_dir, 'tools', 'notification', 'agent_intercom.py')
+        agent_intercom_dst = os.path.join(toolbox_path, 'agent_intercom.py')
+        if os.path.exists(agent_intercom_src):
+            safe_copy(agent_intercom_src, agent_intercom_dst)
 
         # 建立共享空間、知識庫與 GHOST 目錄
         shared_space_path = os.path.join(home_path, 'my_shared_space')
