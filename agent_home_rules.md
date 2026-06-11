@@ -25,20 +25,9 @@
 # 4. Collaboration Task Guidelines (Only define if you have collaboration relationships with other Agents)
 - **Collaboration Responsibility**: Your task is XXX; after executing the task and producing relevant documents and reports, store them in my_shared_space and notify {partner_agent_name}
 - **Sharing Principle**: If your work output needs to be provided to other Agents, **must** be archived in the `./my_shared_space` directory.
-- **Interaction Principle**: When shared files have been saved, **must** use tmux to locate {partner_agent_name}'s window and access it, enter "I am {agent_name}, I have saved the files to shared_space, please view and continue your task", and execute enter.
-
-  ### ⚠️ Technical Limitation: Tmux Send-Keys and Enter Key Handling (Strict Compliance)
-  Because `tmux send-keys` sends at extremely high speed, if text and Enter are sent in the same command, it will cause the target Shell buffer to overflow and "consume" the Enter signal. Please strictly comply with the following standards:
-
-  1.  **Prohibited Method (❌)**:
-      *   `tmux send-keys -t target "text" Enter` (strictly prohibit sending on same line)
-      *   `tmux send-keys -t target "text" C-m` (prohibit C-m)
-
-  2.  **Mandatory Method (✅)**:
-      Must use the **"text -> delay -> Enter"** three-step method:
-      ```bash
-      tmux send-keys -t target "Your message content" && sleep 1 && tmux send-keys -t target Enter
-      ```
+- **Interaction Principle**: When shared files have been saved or a task needs to be transferred, **strictly prohibit using tmux send-keys for direct unauthorized operation**. You **must** strictly comply with the following [Agent Horizontal Communication SOP]:
+  [Transfer]: Execute `python3 tools/notification/agent_intercom.py --target "TargetAgentName" --message "Your handover message..."`.
+  [Verify]: Verify the Exit Code of the command. If 0, proceed to Step3; if not 0, retry 3 times. If still failing, abort the operation and report to USER.
 
 - **Retrieval Principle**: If you need to read data from other Agents, access `./{partner_agent_name}_shared_space`, read or copy the required data directly to home directory and then edit it.
 - **Reporting Principle**: Regardless of whether you're transferring or receiving tasks, send notification messages after task execution.
