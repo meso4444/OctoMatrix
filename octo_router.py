@@ -579,6 +579,30 @@ def get_status():
         "active_agents": [a['name'] for a in AGENTS]
     }), 200
 
+@app.route('/inter-agent/message', methods=['POST'])
+def inter_agent_message():
+    """
+    接收 Agent 之間的橫向通訊請求，並透過 Injector 物理注入至目標 Tmux。
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({"status": "failed", "error": "Invalid JSON"}), 400
+        
+    source = data.get('source')
+    target_agent = data.get('target_agent')
+    message = data.get('message')
+    
+    if not source or not target_agent or not message:
+        return jsonify({"status": "failed", "error": "Missing required fields: 'source', 'target_agent', 'message'"}), 400
+        
+    logger.info(f"🔄 [Inter-Agent] 收到橫向通訊請求 | 來源: {source} -> 目標: {target_agent}")
+    
+    # 調用 AtomicInjector 進行物理按鍵注入
+    # 強制 interrupt_first=False，保留 User 的絕對中斷特權，Agent 訊息僅能排隊
+    success = handler.injector.inject(message, target_agent, interrupt_first=False)
+    
+    return jsonify({"status": "success" if success else "failed"}), 200
+
 @app.route('/inject', methods=['POST'])
 def inject():
     data = request.get_json()
