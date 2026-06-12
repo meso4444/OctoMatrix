@@ -580,6 +580,30 @@ def get_status():
         "active_agents": [a['name'] for a in AGENTS]
     }), 200
 
+@app.route('/inter-agent/message', methods=['POST'])
+def inter_agent_message():
+    """
+    Receive horizontal communication requests between Agents, and physically inject into target Tmux via Injector.
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({"status": "failed", "error": "Invalid JSON"}), 400
+        
+    source = data.get('source')
+    target_agent = data.get('target_agent')
+    message = data.get('message')
+    
+    if not source or not target_agent or not message:
+        return jsonify({"status": "failed", "error": "Missing required fields: 'source', 'target_agent', 'message'"}), 400
+        
+    logger.info(f"🔄 [Inter-Agent] Received horizontal communication request | Source: {source} -> Target: {target_agent}")
+    
+    # Call AtomicInjector for physical keystroke injection
+    # Force interrupt_first=False, retaining User's absolute interrupt privilege, Agent messages can only queue
+    success = handler.injector.inject(message, target_agent, interrupt_first=False)
+    
+    return jsonify({"status": "success" if success else "failed"}), 200
+
 @app.route('/inject', methods=['POST'])
 def inject():
     data = request.get_json()
