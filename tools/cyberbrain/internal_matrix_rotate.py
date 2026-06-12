@@ -19,7 +19,8 @@ ENV_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/.cyberbrain_env")
 FLAG_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/.rotation_flag")
 SHELL_LOG = os.path.join(AGENT_HOME, "octo_cyberbrain/shell/octo_shell.log")
 TEMP_LOG = os.path.join(AGENT_HOME, "octo_cyberbrain/shell/temp.log")
-PENDING_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/pending_inject.txt")
+PENDING_USER_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/pending_user.txt")
+PENDING_AGENT_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/pending_agent.txt")
 TASK_MEMO = os.path.join(AGENT_HOME, "octo_cyberbrain/task_memo.txt")
 
 def load_env():
@@ -266,10 +267,10 @@ def main():
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
             time.sleep(0.5)
 
-            # Ensure accumulated user commands are not discarded
-            if os.path.exists(PENDING_FILE):
+            # Ensure accumulated user commands and agent commands are not discarded
+            if os.path.exists(PENDING_USER_FILE):
                 try:
-                    with open(PENDING_FILE, 'r', encoding='utf-8') as f:
+                    with open(PENDING_USER_FILE, 'r', encoding='utf-8') as f:
                         pending_content = f.read().strip()
                     if pending_content:
                         # Append normal system prompt
@@ -302,9 +303,28 @@ Message from {MATRIX_USERNAME}:
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
                         print("📩 Pending user commands injected successfully!")
                     
-                    os.remove(PENDING_FILE)
+                    os.remove(PENDING_USER_FILE)
                 except Exception as e:
-                    print(f"❌ Error processing pending commands: {e}")
+                    print(f"❌ Error processing pending user commands: {e}")
+
+            if os.path.exists(PENDING_AGENT_FILE):
+                try:
+                    with open(PENDING_AGENT_FILE, 'r', encoding='utf-8') as f:
+                        pending_content = f.read().strip()
+                    if pending_content:
+                        sys_prompt = f"來自其他 Agent 的交互訊息:\n{pending_content}"
+                        escaped = sys_prompt.replace('!', '！').replace('$', '\\$')
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped], check=True)
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
+                        time.sleep(1.0)
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
+                        time.sleep(0.3)
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
+                        print("📩 Pending agent commands injected successfully!")
+                    os.remove(PENDING_AGENT_FILE)
+                except Exception as e:
+                    print(f"❌ Error processing pending agent commands: {e}")
             
             # No need to manually clean up here, let finally handle it
             sys.exit(1)
@@ -448,9 +468,9 @@ Task Resumption Message:
         # ==========================================
         # Step 5: Pending Injection
         # ==========================================
-        if os.path.exists(PENDING_FILE):
+        if os.path.exists(PENDING_USER_FILE):
             try:
-                with open(PENDING_FILE, 'r', encoding='utf-8') as f:
+                with open(PENDING_USER_FILE, 'r', encoding='utf-8') as f:
                     pending_content = f.read().strip()
                     
                 if pending_content:
@@ -484,9 +504,28 @@ Message from {MATRIX_USERNAME}:
                     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
                     print("📩 Pending user commands injected successfully!")
                 
-                os.remove(PENDING_FILE)
+                os.remove(PENDING_USER_FILE)
             except Exception as e:
-                print(f"❌ Error processing pending commands: {e}")
+                print(f"❌ Error processing pending user commands: {e}")
+
+        if os.path.exists(PENDING_AGENT_FILE):
+            try:
+                with open(PENDING_AGENT_FILE, 'r', encoding='utf-8') as f:
+                    pending_content = f.read().strip()
+                if pending_content:
+                    sys_prompt = f"來自其他 Agent 的交互訊息:\n{pending_content}"
+                    escaped = sys_prompt.replace('!', '！').replace('$', '\\$')
+                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
+                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped], check=True)
+                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
+                    time.sleep(1.0)
+                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
+                    time.sleep(0.3)
+                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
+                    print("📩 Pending agent commands injected successfully!")
+                os.remove(PENDING_AGENT_FILE)
+            except Exception as e:
+                print(f"❌ Error processing pending agent commands: {e}")
 
     except BaseException as e:
         # Catch all exceptions including SystemExit to ensure cleanup
