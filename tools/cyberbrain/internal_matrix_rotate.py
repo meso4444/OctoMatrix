@@ -19,8 +19,7 @@ ENV_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/.cyberbrain_env")
 FLAG_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/.rotation_flag")
 SHELL_LOG = os.path.join(AGENT_HOME, "octo_cyberbrain/shell/octo_shell.log")
 TEMP_LOG = os.path.join(AGENT_HOME, "octo_cyberbrain/shell/temp.log")
-PENDING_USER_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/pending_user.txt")
-PENDING_AGENT_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/pending_agent.txt")
+PENDING_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/pending_inject.txt")
 TASK_MEMO = os.path.join(AGENT_HOME, "octo_cyberbrain/task_memo.txt")
 
 def load_env():
