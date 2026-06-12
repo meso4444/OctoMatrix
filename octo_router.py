@@ -420,12 +420,12 @@ tmux send-keys -t target 您的訊息內容 && sleep 1 && tmux send-keys -t targ
         # 👻 GHOST 實體檔案阻塞與積累機制
         agent_dir = os.path.join(AGENT_HOME_BASE, target_agent)
         flag_file = os.path.join(agent_dir, 'octo_cyberbrain', '.rotation_flag')
-        pending_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_inject.txt')
+        pending_user_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_user.txt')
 
         if msg.source not in ['reaper', 'system_flush'] and os.path.exists(flag_file):
             try:
-                with open(pending_file, 'a', encoding='utf-8') as f:
-                    if os.path.exists(pending_file) and os.path.getsize(pending_file) > 0:
+                with open(pending_user_file, 'a', encoding='utf-8') as f:
+                    if os.path.exists(pending_user_file) and os.path.getsize(pending_user_file) > 0:
                         f.write("\n\n")
                     f.write(content) # 只存純淨的用戶訊息
                 if msg.source != 'awake':
@@ -597,6 +597,21 @@ def inter_agent_message():
         
     logger.info(f"🔄 [Inter-Agent] 收到橫向通訊請求 | 來源: {source} -> 目標: {target_agent}")
     
+    agent_dir = os.path.join(AGENT_HOME_BASE, target_agent)
+    flag_file = os.path.join(agent_dir, 'octo_cyberbrain', '.rotation_flag')
+    pending_agent_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_agent.txt')
+
+    if os.path.exists(flag_file):
+        try:
+            with open(pending_agent_file, 'a', encoding='utf-8') as f:
+                if os.path.exists(pending_agent_file) and os.path.getsize(pending_agent_file) > 0:
+                    f.write("\n\n")
+                f.write(message)
+            logger.info(f"👻 [Inter-Agent] {target_agent} 正在重整，訊息已暫存至 pending_agent.txt")
+            return jsonify({"status": "success", "message": "queued in pending_agent.txt"}), 200
+        except Exception as e:
+            logger.error(f"❌ [Router] 寫入 pending_agent 暫存檔失敗: {e}")
+
     # 調用 AtomicInjector 進行物理按鍵注入
     # 強制 interrupt_first=False，保留 User 的絕對中斷特權，Agent 訊息僅能排隊
     success = handler.injector.inject(message, target_agent, interrupt_first=False)

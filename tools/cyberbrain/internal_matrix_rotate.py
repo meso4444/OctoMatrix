@@ -19,7 +19,8 @@ ENV_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/.cyberbrain_env")
 FLAG_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/.rotation_flag")
 SHELL_LOG = os.path.join(AGENT_HOME, "octo_cyberbrain/shell/octo_shell.log")
 TEMP_LOG = os.path.join(AGENT_HOME, "octo_cyberbrain/shell/temp.log")
-PENDING_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/pending_inject.txt")
+PENDING_USER_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/pending_user.txt")
+PENDING_AGENT_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/pending_agent.txt")
 TASK_MEMO = os.path.join(AGENT_HOME, "octo_cyberbrain/task_memo.txt")
 
 def load_env():
@@ -266,10 +267,10 @@ def main():
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
             time.sleep(0.5)
 
-            # 確保積累的用戶指令不會被拋棄
-            if os.path.exists(PENDING_FILE):
+            # 確保積累的用戶指令與 Agent 交互指令不會被拋棄
+            if os.path.exists(PENDING_USER_FILE):
                 try:
-                    with open(PENDING_FILE, 'r', encoding='utf-8') as f:
+                    with open(PENDING_USER_FILE, 'r', encoding='utf-8') as f:
                         pending_content = f.read().strip()
                     if pending_content:
                         sys_prompt = f"""{SYS_PREFIX}
@@ -289,18 +290,37 @@ def main():
 
 {SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
                         final_message = sys_prompt
-                        escaped = final_message.replace('!', '！').replace('$', '\\$')
-                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
+                        escaped = final_message.replace('!', '！').replace('$', '\$')
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "[200~"])
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped], check=True)
-                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "[201~"])
                         time.sleep(1.0)
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
                         time.sleep(0.3)
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
                         print("📩 已將積累的用戶指令注入完成！")
-                    os.remove(PENDING_FILE)
+                    os.remove(PENDING_USER_FILE)
                 except Exception as e:
-                    print(f"❌ 處理積累指令時發生錯誤: {e}")
+                    print(f"❌ 處理積累的 User 指令時發生錯誤: {e}")
+
+            if os.path.exists(PENDING_AGENT_FILE):
+                try:
+                    with open(PENDING_AGENT_FILE, 'r', encoding='utf-8') as f:
+                        pending_content = f.read().strip()
+                    if pending_content:
+                        sys_prompt = f"來自其他 Agent 的交互訊息:\n{pending_content}"
+                        escaped = sys_prompt.replace('!', '！').replace('$', '\$')
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "[200~"])
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped], check=True)
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "[201~"])
+                        time.sleep(1.0)
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
+                        time.sleep(0.3)
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
+                        print("📩 已將積累的 Agent 交互指令注入完成！")
+                    os.remove(PENDING_AGENT_FILE)
+                except Exception as e:
+                    print(f"❌ 處理積累的 Agent 指令時發生錯誤: {e}")
             
             # 這裡不需手動清理，交由 finally 處理
             sys.exit(1)
@@ -442,16 +462,15 @@ def main():
                 pass
 
         # ==========================================
+        # ==========================================
         # Step 5: 積累指令注入 (Pending injection)
         # ==========================================
-        if os.path.exists(PENDING_FILE):
-            try:
-                with open(PENDING_FILE, 'r', encoding='utf-8') as f:
-                    pending_content = f.read().strip()
-                    
-                if pending_content:
-                    # 補上常規系統提示
-                    sys_prompt = f"""{SYS_PREFIX}
+            if os.path.exists(PENDING_USER_FILE):
+                try:
+                    with open(PENDING_USER_FILE, 'r', encoding='utf-8') as f:
+                        pending_content = f.read().strip()
+                    if pending_content:
+                        sys_prompt = f"""{SYS_PREFIX}
 執行以下 [SOP]:
 [Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖。
 [Step 1 - 辨識]：辨識 {MATRIX_USERNAME} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，並自主思考合適的問候回覆}}' 回應，並且不執行後續Step。
@@ -467,22 +486,38 @@ def main():
 {pending_content}
 
 {SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
-                    final_message = sys_prompt
-                    escaped = final_message.replace('!', '！').replace('$', '\\$')
-                    
-                    # 以不觸發 Ctrl+C 的方式一次性注入
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped], check=True)
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
-                    time.sleep(1.0)
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
-                    time.sleep(0.3)
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
-                    print("📩 已將積累的用戶指令注入完成！")
-                
-                os.remove(PENDING_FILE)
-            except Exception as e:
-                print(f"❌ 處理積累指令時發生錯誤: {e}")
+                        final_message = sys_prompt
+                        escaped = final_message.replace('!', '！').replace('$', '\$')
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "[200~"])
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped], check=True)
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "[201~"])
+                        time.sleep(1.0)
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
+                        time.sleep(0.3)
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
+                        print("📩 已將積累的用戶指令注入完成！")
+                    os.remove(PENDING_USER_FILE)
+                except Exception as e:
+                    print(f"❌ 處理積累的 User 指令時發生錯誤: {e}")
+
+            if os.path.exists(PENDING_AGENT_FILE):
+                try:
+                    with open(PENDING_AGENT_FILE, 'r', encoding='utf-8') as f:
+                        pending_content = f.read().strip()
+                    if pending_content:
+                        sys_prompt = f"來自其他 Agent 的交互訊息:\n{pending_content}"
+                        escaped = sys_prompt.replace('!', '！').replace('$', '\$')
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "[200~"])
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped], check=True)
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "[201~"])
+                        time.sleep(1.0)
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
+                        time.sleep(0.3)
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
+                        print("📩 已將積累的 Agent 交互指令注入完成！")
+                    os.remove(PENDING_AGENT_FILE)
+                except Exception as e:
+                    print(f"❌ 處理積累的 Agent 指令時發生錯誤: {e}")
 
     except BaseException as e:
         # 捕捉包含 SystemExit 在內的所有異常，確保清理執行
