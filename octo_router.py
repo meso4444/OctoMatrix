@@ -421,12 +421,12 @@ Message from {MATRIX_USERNAME}:
         # 👻 GHOST physical file blocking and accumulation mechanism
         agent_dir = os.path.join(AGENT_HOME_BASE, target_agent)
         flag_file = os.path.join(agent_dir, 'octo_cyberbrain', '.rotation_flag')
-        pending_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_inject.txt')
+        pending_user_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_user.txt')
 
         if msg.source not in ['reaper', 'system_flush'] and os.path.exists(flag_file):
             try:
-                with open(pending_file, 'a', encoding='utf-8') as f:
-                    if os.path.exists(pending_file) and os.path.getsize(pending_file) > 0:
+                with open(pending_user_file, 'a', encoding='utf-8') as f:
+                    if os.path.exists(pending_user_file) and os.path.getsize(pending_user_file) > 0:
                         f.write("\n\n")
                     f.write(content) # Only store pure user messages
                 if msg.source != 'awake':
