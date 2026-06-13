@@ -19,7 +19,7 @@
 
 這不僅是一個對話機器人，而是一個完整的 **AI 團隊生態系統**。作為「矩陣操作員 (Matrix Operator)」，可隨時隨地透過手機或電腦，指揮多個具備獨特職責的 AI Agent。透過專屬的工作區隔離、動態配置的團隊協作，以及基於 **Cyberbrain (電子腦)** 的長期狀態維持機制，AI 助手將如同真實團隊般在背景持續執行任務。
 
-本系統原生支援 Linux (如 Ubuntu/Debian/CentOS/RHEL) 與 macOS，並支援透過 WSL 在 Windows 上運行。
+本系統原生支援 Linux (如 Ubuntu/Debian/CentOS/RHEL/Fedora/Arch) 與 macOS，並支援透過 WSL 在 Windows 上運行。
 
 ## 🧩 概念架構
 
