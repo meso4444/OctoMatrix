@@ -17,7 +17,9 @@
 
 **OctoMatrix** is a remote AI collaboration environment specifically designed to break communication boundaries. It seamlessly integrates a powerful AI engine with three carefully selected communication platforms: **Telegram, Discord, and Slack**.
 
-This is not merely a chatbot, but a complete **AI team ecosystem**. As a "Matrix Operator," you can command multiple AI Agents with distinct responsibilities from anywhere, anytime, using your phone or computer. Through dedicated workspace isolation, dynamically configured team collaboration, and a long-term state maintenance mechanism based on **Cyberbrain (Electronic Brain)**, AI assistants will continuously execute tasks in the background like a real team. The system natively supports Linux (e.g., Ubuntu/Debian) and macOS, and can be run on Windows via WSL.
+This is not merely a chatbot, but a complete **AI team ecosystem**. As a "Matrix Operator," you can command multiple AI Agents with distinct responsibilities from anywhere, anytime, using your phone or computer. Through dedicated workspace isolation, dynamically configured team collaboration, and a long-term state maintenance mechanism based on **Cyberbrain (Electronic Brain)**, AI assistants will continuously execute tasks in the background like a real team.
+
+The system natively supports Linux (e.g., Ubuntu/Debian/CentOS/RHEL) and macOS, and can be run on Windows via WSL.
 
 ## 🧩 Conceptual Architecture
 
