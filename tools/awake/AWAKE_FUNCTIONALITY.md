@@ -32,7 +32,7 @@ Agent 必須從 `octo_cyberbrain/.cyberbrain_env` 讀取 `ROUTER_PORT` 環境變
 
 **Agent 操作**：
 ```bash
-curl -X GET http://127.0.0.1:${ROUTER_PORT}/awake/jobs
+python3 toolbox/awake_task_manager.py list
 ```
 
 **預期響應**：
@@ -93,50 +93,37 @@ curl -X GET http://127.0.0.1:${ROUTER_PORT}/awake/jobs
 
 **daily（每天）**：
 ```bash
-curl -X POST http://127.0.0.1:${ROUTER_PORT}/awake/jobs/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "晨會提醒",
-    "type": "agent_command",
-    "target_agent": "Güpa",
-    "prompt": "提醒用戶進行晨會",
-    "trigger": "daily",
-    "hour": 8,
-    "minute": 0,
-    "second": 0
-  }'
+python3 toolbox/awake_task_manager.py register \
+  --id "晨會提醒" \
+  --target "Güpa" \
+  --trigger "daily" \
+  --hour 8 --minute 0 \
+  --prompt "提醒用戶進行晨會" \
+  --type "agent_command"
 ```
 
 **weekly（每週）**：
 ```bash
-curl -X POST http://127.0.0.1:${ROUTER_PORT}/awake/jobs/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "週一報告",
-    "type": "agent_command",
-    "target_agent": "Güpa",
-    "prompt": "生成本週報告",
-    "trigger": "weekly",
-    "day_of_week": 0,
-    "hour": 9,
-    "minute": 0
-  }'
+python3 toolbox/awake_task_manager.py register \
+  --id "週一報告" \
+  --target "Güpa" \
+  --trigger "weekly" \
+  --day_of_week "0" \
+  --hour 9 --minute 0 \
+  --prompt "生成本週報告" \
+  --type "agent_command"
 ```
 
 **monthly（每月）**：
 ```bash
-curl -X POST http://127.0.0.1:${ROUTER_PORT}/awake/jobs/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "月初檢討",
-    "type": "agent_command",
-    "target_agent": "Güpa",
-    "prompt": "進行月度檢討",
-    "trigger": "monthly",
-    "day": 1,
-    "hour": 9,
-    "minute": 0
-  }'
+python3 toolbox/awake_task_manager.py register \
+  --id "月初檢討" \
+  --target "Güpa" \
+  --trigger "monthly" \
+  --day 1 \
+  --hour 9 --minute 0 \
+  --prompt "進行月度檢討" \
+  --type "agent_command"
 ```
 
 #### 第四步：處理響應
@@ -193,7 +180,7 @@ curl -X POST http://127.0.0.1:${ROUTER_PORT}/awake/jobs/register \
 
 #### 第二步：調用 API
 ```bash
-curl -X DELETE http://127.0.0.1:${ROUTER_PORT}/awake/jobs/晨會提醒
+python3 toolbox/awake_task_manager.py delete --id "晨會提醒"
 ```
 
 #### 第三步：確認結果
@@ -397,18 +384,14 @@ DELETE http://127.0.0.1:${ROUTER_PORT}/awake/jobs/{job_id}
 
 ### Step 2：構造請求
 ```bash
-curl -X POST http://127.0.0.1:${ROUTER_PORT}/awake/jobs/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "週一週報生成",
-    "type": "agent_command",
-    "target_agent": "Güpa",
-    "prompt": "根據本週數據生成周報",
-    "trigger": "weekly",
-    "day_of_week": 0,
-    "hour": 9,
-    "minute": 0
-  }'
+python3 toolbox/awake_task_manager.py register \
+  --id "週一週報生成" \
+  --target "Güpa" \
+  --trigger "weekly" \
+  --day_of_week "0" \
+  --hour 9 --minute 0 \
+  --prompt "根據本週數據生成周報" \
+  --type "agent_command"
 ```
 
 ### Step 3：確認成功

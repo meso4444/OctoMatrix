@@ -94,17 +94,17 @@ python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png
 
 矩陣透過「喚醒系統」定時對 Agent 下達指令。詳細實現見 `knowledge/AWAKE_FUNCTIONALITY.md`。
 
-Agent **必須透過 REST API** 與路由中樞通訊來管理自動化行為，且禁止直接編輯 `awake.yaml`。
+Agent **必須透過專用腳本** 來管理自動化行為，嚴禁直接編輯 `awake.yaml` 或打裸露的 curl。
 
-- **API 定址**：請從 `octo_cyberbrain/.cyberbrain_env` 讀取 `ROUTER_PORT` 組裝 URL。
 - **新增喚醒任務 (支援 trigger: daily, weekly, monthly, interval, date, cron)**：
     ```bash
-    curl -X POST http://127.0.0.1:${ROUTER_PORT}/awake/jobs/register \
-      -H "Content-Type: application/json" \
-      -d '{"id": "task_id", "type": "agent_command", "trigger": "cron", "hour": 9, "minute": 30, "target_agent": "{agent_name}", "prompt": "執行任務內容"}'
+    python3 toolbox/awake_task_manager.py register \
+      --id "task_id" --target "{agent_name}" --trigger "cron" \
+      --hour 9 --minute 30 --prompt "執行任務內容"
     ```
-- **檢視與撤銷**：
-    - `curl http://127.0.0.1:${ROUTER_PORT}/awake/jobs`
-    - `curl -X DELETE http://127.0.0.1:${ROUTER_PORT}/awake/jobs/task_id`
+- **檢視與管理**：
+    - `python3 toolbox/awake_task_manager.py list`
+    - `python3 toolbox/awake_task_manager.py delete --id "task_id"`
+    - `python3 toolbox/awake_task_manager.py update --id "task_id" --hour 10 --prompt "新內容"`
 
 ---
