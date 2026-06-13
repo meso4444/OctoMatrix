@@ -17,7 +17,7 @@
 
 **OctoMatrix** 是一套專為打破通訊邊界而生的遠端 AI 協作環境。它能將強大的 AI 引擎同時整合至 **Telegram、Discord 與 Slack** 三個精選的通訊軟體中。
 
-這不僅是一個對話機器人，而是一個完整的 **AI 團隊生態系統**。作為「矩陣操作員 (Matrix Operator)」，可隨時隨地透過手機或電腦，指揮多個具備獨特職責的 AI Agent。透過專屬的工作區隔離、動態配置的團隊協作，以及基於 **Cyberbrain (電子腦)** 的長期狀態維持機制，AI 助手將如同真實團隊般在背景持續執行任務。
+這不僅是一個對話機器人，而是一個完整的 **AI 團隊生態系統**。作為「矩陣操作員 (Matrix Operator)」，可隨時隨地透過手機或電腦，指揮多個具備獨特職責的 AI Agent。透過專屬的工作區隔離、動態配置的團隊協作，以及基於 **Cyberbrain (電子腦)** 的長期狀態維持機制，AI 助手將如同真實團隊般在背景持續執行任務。本系統原生支援 Linux (如 Ubuntu/Debian) 與 macOS，並支援透過 WSL 在 Windows 上運行。
 
 ## 🧩 概念架構
 
@@ -54,13 +54,13 @@ graph TD
 *   **跨平臺不中斷 (Tri-Channel)**：支援 Telegram、Discord 與 Slack。當常用的通訊平臺不穩定時，隨時切換到另一個平臺，AI 團隊與任務進度依然保持同步。
 *   **電子腦系統 (Cyberbrain)**：以「grep-based RAG」取代傳統向量檢索的長期記憶機制。致敬「GHOST in the SHELL」概念，AI 會將對話重點「收攝」與「刻印」為高密度的 GHOST 索引，並透過「深潛 (Deep Dive)」技術從 SHELL 紀錄中物理級提煉歷史脈絡，賦予 Agent 突破上下文窗口限制的高效追溯能力。
 *   **零門檻設定精靈**：提供 100% 互動式的安裝精靈，無需手動修改複雜的程式碼或設定檔，即可輕鬆建立專屬的 AI 團隊。
-*   **定時喚醒任務 (Awake Tasks)**：支援透過自然語言直接指派週期性或定時任務，系統將自動於指定時間喚醒 Agent 執行背景工作。
+*   **喚醒任務 (Awake Tasks)**：支援透過自然語言直接指派週期性或定時任務，系統將自動於指定時間喚醒 Agent 執行背景工作。
 *   **代理間橫向通訊 (Agent-to-Agent Interaction)**：Agent 之間具備互相交辦與傳遞訊息的能力，能實現分工合作與邏輯覆核。
-*   **角色感知與視覺情緒 (Role Perception)**：Agent 具備獨特的人格設定，並會根據對話情境自動發送符合當下情緒的專屬 Avatar 貼圖。
+*   **角色感知 (Role Awareness)**：Agent 具備獨特的人格設定，並會根據對話情境自動發送符合當下情緒的專屬 Avatar 貼圖。
 
 ---
 
-## 🎭 角色感知與視覺呈現 (Role-play & Avatar Aesthetics)
+## 🎭 角色感知與視覺呈現 (Role Awareness & Avatar Aesthetics)
 
 OctoMatrix 不僅賦予 Agent 執行任務的能力，更強調其「自我認知」與「視覺情緒」。
 
@@ -199,13 +199,15 @@ cd OctoMatrix
 ```
 
 **精靈主選單功能：**
-*   **[1]-[3] 通訊通道設定**：引導綁定 Telegram、Discord 或 Slack 的 Token，並可隨時開關特定通道。
-*   **[4] 網路與連接埠 (Ports)**：自訂 Router、Gateway 與 ngrok 隧道的本地 Port口，避免與主機其他服務衝突。
-*   **[5] 設定 AI Agent 軍團與進階參數**：
+*   **[1] 👤 設定使用者暱稱 (Username)**：設定您的稱呼，Agent 會以此名稱來稱呼您。
+*   **[2]-[4] 通訊通道設定**：引導綁定 Telegram、Discord 或 Slack 的 Token，並可隨時開關特定通道。
+*   **[5] 🌍 設定網路與連接埠 (Ports)**：自訂 Router、Gateway 與 ngrok 隧道的本地 Port口，避免與主機其他服務衝突。
+*   **[6] 🤖 設定 AI Agent 軍團與進階參數**：
     *   **配置 Agent**：為 AI 命名，指定它的 **職責 (usecase)**（用於 AI 認知）與 **描述 (description)**（用於選單展示給使用者），並自由搭配 AI 引擎（Gemini、Claude 或 Codex）與模型。
     *   **配置 Agent 協作群組**：建立團隊共享空間，並指定群組內的 Agent 之間互相監督與交辦任務的對接關係。
     *   **通訊選單配置**：除了系統已內建基礎選單，還可以「自訂專屬按鈕」，將常用的提示詞或指令綁定至圖形化按鍵，一鍵發送。
-*   **[6] AI Agent CLI 認證設定**：內建認證流程，協助一鍵呼叫 Google、Anthropic 或 OpenAI 的授權介面完成終端登入。
+*   **[7] 🔐 AI Agent CLI 認證設定**：內建認證流程，協助一鍵呼叫 Google、Anthropic 或 OpenAI 的授權介面完成終端登入。
+*   **[8] ⬆️ AI CLI 版本管理 (升級/退版)**：內建各家 AI CLI 工具的升級與退版機制，保障底層工具版本與專案的最佳相容性。
 
 ### 3. 啟動系統 (Native 本機模式)
 完成上述精靈設定與認證後，就可以直接在本機啟動 AI 矩陣了！
@@ -222,7 +224,7 @@ cd docker-deploy
 ./setup_docker.sh
 
 # 2. 啟動專屬容器
-docker compose -f docker-compose.[設定的實例名稱].yml up -d --build
+docker compose -p octo_[設定的實例名稱] -f docker-compose.[設定的實例名稱].yml up -d --build
 ```
 
 ---
@@ -232,6 +234,7 @@ docker compose -f docker-compose.[設定的實例名稱].yml up -d --build
 OctoMatrix 支援將服務設定為系統常駐（不死鳥模式），讓您的 AI 團隊在主機重啟後能自動復活。
 * **Linux 環境**：請參考 [`auto-startup`](./auto-startup) 目錄下的說明文件，透過 Systemd 建立背景服務。
 * **Windows 系統**：建議透過 WSL (Windows Subsystem for Linux) 進行部署，請參考 [`windows-wsl-setup`](./windows-wsl-setup) 目錄，透過內附的腳本可快速建立無縫的 AI 運行環境。
+* **macOS 系統**：請參考 [`auto-startup`](./auto-startup) 目錄下針對 `launchd` 的說明文件，以原生的方式註冊背景守護行程。
 
 ---
 
@@ -261,7 +264,9 @@ OctoMatrix 提供高度模組化的技能擴充機制。
 * **`/inspect [Agent名稱]`**：指派當前的活躍 Agent，深潛進入目標 Agent 的終端機視窗執行診斷與巡檢。
 * **`/resume_latest`**：當發生非預期的中斷時，嘗試從 CLI 的本地快取中恢復最近一次的對話紀錄。
 * **`/sys_refresh`**：檢查並強制更新 Agent 所遵守的系統協定與行為規範。
+* **`/avatar_renew [需求]`**：根據給定的需求，動態為 Agent 生成並更新專屬的 Avatar 貼圖組。
 * **`/menu`**：在支援的平臺上（如 Telegram）彈出實體管理按鍵選單，方便手機用戶點擊操作。
+* **`/help`**：顯示幫助選單，列出可用的系統指令與操作說明。
 
 ---
 
@@ -275,7 +280,7 @@ OctoMatrix 提供高度模組化的技能擴充機制。
 
 OctoMatrix 具備先進的 Agent 橫向通訊機制，允許 AI 團隊成員之間互相交流與交辦任務：
 
-* **觸發方式**：當 Agent 判斷任務需要其他成員（例如專精寫程式的 Solas 或專精統整的 Aleister）協助時，只需執行系統提供的標準作業流程 (SOP) 與專屬通訊工具，即可主動向目標 Agent 傳送訊息。
+* **觸發方式**：當使用者明確要求 Agent 和 Agent 協作夥伴進行協作任務，或者在設定精靈的協作定義中已明確定義特定任務需要交由 Agent 夥伴進行協作時，Agent 便會主動發起通訊。
 * **運作機制**：訊息會透過內部的安全 API 路由 (Router) 進行精準投遞。接收方的 Agent 在收到訊息後，會自動建立背景任務處理需求，並在完成後主動將結果或報告回傳給委託的 Agent 或操作員。整個過程具備防無限迴圈的自我驗證機制，確保團隊協作高效且安全。
 
 ---
@@ -287,7 +292,7 @@ OctoMatrix 針對三大通訊平臺，皆採用無需破壞主機防火牆的連
 *   **Telegram (Webhook 隧道)**：透過動態配置的 `ngrok` 建立安全的 HTTPS 逆向隧道。主機不需對外開放任何 Port，Webhook 網址亦為每次啟動動態產生，大幅降低被探測攻擊的風險。
 *   **Discord (WebSocket 直連)**：採用基於 WebSocket 的即時雙向通訊協議。主機純粹作為 Client 往外連線，穿透內網限制。
 *   **Slack (Socket Mode)**：採用企業級的 Socket Mode 連線。不依賴公開的 Request URL，所有事件與指令皆透過安全隧道進行雙向傳輸。
-*   **權限隔離防護網 (Privilege Isolation & Sandboxing)**：無論訊息來自哪個通道，Agent 皆於專屬的 Linux 使用者帳戶與獨立的 `agent_home` 目錄下運行。結合嚴格的權限控管與物理隔離機制，確保 AI 僅能在授權的沙盒範圍內活動，從系統底層完美防止任何越權讀取或誤改核心架構的風險。
+*   **權限隔離防護網 (Privilege Isolation & Sandboxing)**：無論訊息來自哪個通道，Agent 皆於專屬的 Linux 使用者帳戶與獨立的 `agent_home` 目錄下運行。這種設計讓 Agent 嚴格受限於該使用者所具有的最小權限 (Least Privilege)；只有在 `agent_home` 中的檔案與目錄才具有較完整的操作權，而外層的系統腳本與核心文件皆已拔除其寫入權限，從系統底層精準防止任何越權竄改的風險。
 
 ---
 
