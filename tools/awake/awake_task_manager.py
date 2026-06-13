@@ -43,9 +43,12 @@ ROUTER_URL = get_router_url()
 
 def validate_trigger_args(args):
     """Front-end parameter validation to ensure corresponding scheduling parameters are provided"""
-    if args.trigger == 'daily' or args.trigger == 'cron':
+    if args.trigger == 'daily':
         if args.hour is None or args.minute is None:
-            return False, "When trigger is 'daily' or 'cron', --hour and --minute must be specified"
+            return False, "When trigger is 'daily', --hour and --minute must be specified"
+    elif args.trigger == 'cron':
+        if args.hour is None and args.minute is None and args.day_of_week is None and args.day is None:
+            return False, "When trigger is 'cron', at least one time parameter (e.g., --hour, --minute, --day_of_week) must be specified"
     elif args.trigger == 'weekly':
         if args.day_of_week is None or args.hour is None or args.minute is None:
             return False, "When trigger is 'weekly', --day_of_week, --hour, and --minute must be specified"

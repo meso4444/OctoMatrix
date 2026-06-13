@@ -15,13 +15,6 @@ The wake-up system allows users to set scheduled commands without needing to res
 
 ---
 
-## 📋 Script Execution Specification
-
-Agents **do not** need to manually construct API requests or search for `ROUTER_PORT`. All operations are encapsulated in the dedicated CLI script `awake_task_manager.py`, which automatically searches for the port upwards and communicates with the Router.
-**Execution**: `python3 toolbox/awake_task_manager.py [command] [arguments]`
-
----
-
 ## 📋 User-delegable Tasks
 
 ### 1. Query Existing Wake-ups
@@ -37,7 +30,7 @@ python3 toolbox/awake_task_manager.py list
 
 **Expected terminal output**:
 ```text
-=== Awake 任務列表 (共 3 筆) ===
+=== Awake 任務列表 (共 1 筆) ===
 ID: Daily system cleanup
   目標: Güpa
   排程: <CronTrigger (hour=2, minute=0, second=0)>
@@ -135,7 +128,7 @@ python3 toolbox/awake_task_manager.py delete --id "Morning meeting reminder"
 
 The trigger parameters supported by the script correspond as follows:
 
-### daily (Every day) or cron (Complex expression)
+### daily (Every day)
 Must specify `--hour` and `--minute`. Optional `--second`.
 ```bash
 --trigger daily --hour 8 --minute 30
@@ -164,6 +157,12 @@ Must specify `--run_time` (Format: YYYY-MM-DD HH:MM:SS).
 ```bash
 --trigger date --run_time "2026-12-31 23:59:59"
 ```
+
+### cron (Complex expression)
+Used for complex scheduling logic. Can combine `--hour`, `--minute`, `--day_of_week`, `--day` and supports range and list expressions.
+**Common usage**:
+- `--day_of_week "0-4"` = Monday to Friday
+- `--day "1,15"` = 1st and 15th of each month
 
 ---
 
