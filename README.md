@@ -17,7 +17,7 @@
 
 **OctoMatrix** is a remote AI collaboration environment specifically designed to break communication boundaries. It seamlessly integrates a powerful AI engine with three carefully selected communication platforms: **Telegram, Discord, and Slack**.
 
-This is not merely a chatbot, but a complete **AI team ecosystem**. As a "Matrix Operator," you can command multiple AI Agents with distinct responsibilities from anywhere, anytime, using your phone or computer. Through dedicated workspace isolation, dynamically configured team collaboration, and a long-term state maintenance mechanism based on **Cyberbrain (Electronic Brain)**, AI assistants will continuously execute tasks in the background like a real team.
+This is not merely a chatbot, but a complete **AI team ecosystem**. As a "Matrix Operator," you can command multiple AI Agents with distinct responsibilities from anywhere, anytime, using your phone or computer. Through dedicated workspace isolation, dynamically configured team collaboration, and a long-term state maintenance mechanism based on **Cyberbrain (Electronic Brain)**, AI assistants will continuously execute tasks in the background like a real team. The system natively supports Linux (e.g., Ubuntu/Debian) and macOS, and can be run on Windows via WSL.
 
 ## 🧩 Conceptual Architecture
 
@@ -54,13 +54,13 @@ graph TD
 *   **Uninterrupted Cross-Platform (Tri-Channel)**: Support for Telegram, Discord, and Slack. When a commonly used communication platform becomes unstable, seamlessly switch to another platform while keeping the AI team and task progress synchronized.
 *   **Cyberbrain System (Cyberbrain)**: A long-term memory mechanism using "grep-based RAG" in place of traditional vector retrieval. Paying homage to the "GHOST in the SHELL" concept, AI will "compress" and "imprint" conversation highlights as high-density GHOST indices, and through "Deep Dive" technology extract historical context at the physical level from SHELL records, granting Agents efficient retrospection ability that breaks through context window limitations.
 *   **Zero-Threshold Configuration Wizard**: Provides 100% interactive installation wizard, allowing you to easily create your own AI team without manually modifying complex code or configuration files.
-*   **Scheduled Awake Tasks (Awake Tasks)**: Support assigning periodic or scheduled tasks directly through natural language. The system will automatically wake up the Agent at the specified time to execute background work.
+*   **Awake Tasks (Awake Tasks)**: Support assigning periodic or scheduled tasks directly through natural language. The system will automatically wake up the Agent at the specified time to execute background work.
 *   **Agent-to-Agent Interaction (Agent Interaction)**: Agents have the ability to delegate tasks and communicate with each other, enabling division of labor and logical cross-checking.
-*   **Role Perception & Visual Emotion (Role Perception)**: Agents are imbued with unique personalities and automatically send exclusive Avatar stickers reflecting their current emotional state based on the context of the conversation.
+*   **Role Awareness**: Agents are imbued with unique personalities and automatically send exclusive Avatar stickers reflecting their current emotional state based on the context of the conversation.
 
 ---
 
-## 🎭 Role Perception & Avatar Aesthetics
+## 🎭 Role Awareness & Avatar Aesthetics
 
 OctoMatrix not only empowers Agents with task execution capabilities but also emphasizes their "self-awareness" and "visual emotion."
 
@@ -199,13 +199,15 @@ After dependencies are installed, start the interactive configuration wizard. Yo
 ```
 
 **Wizard Main Menu Features:**
-*   **[1]-[3] Communication Channel Setup**: Guide for binding Telegram, Discord, or Slack tokens, and you can toggle specific channels anytime.
-*   **[4] Network & Ports**: Customize local port numbers for Router, Gateway, and ngrok tunnel to avoid conflicts with other services on your host.
-*   **[5] Configure AI Agent Squadron & Advanced Parameters**:
+*   **[1] 👤 Set Username (Username)**: Set your preferred name, which the Agents will use to address you.
+*   **[2]-[4] Communication Channel Setup**: Guide for binding Telegram, Discord, or Slack tokens, and you can toggle specific channels anytime.
+*   **[5] 🌍 Network & Ports Setup (Ports)**: Customize local port numbers for Router, Gateway, and ngrok tunnel to avoid conflicts with other services on your host.
+*   **[6] 🤖 Configure AI Agent Squadron & Advanced Parameters**:
     *   **Configure Agent**: Name the AI, specify its **usecase** (for AI awareness) and **description** (for menu display to users), and freely combine AI engines (Gemini, Claude, or Codex) with models.
     *   **Configure Agent Collaboration Groups**: Create team shared spaces and specify mutual supervision and task delegation relationships between agents within groups.
     *   **Communication Menu Configuration**: In addition to the system's built-in basic menu, you can "customize dedicated buttons" to bind commonly used prompts or commands to graphical buttons for one-click sending.
-*   **[6] AI Agent CLI Authentication Setup**: Built-in authentication flow to help you with one-click authorization from Google, Anthropic, or OpenAI to complete terminal login.
+*   **[7] 🔐 AI Agent CLI Authentication Setup**: Built-in authentication flow to help you with one-click authorization from Google, Anthropic, or OpenAI to complete terminal login.
+*   **[8] ⬆️ AI CLI Version Management (Upgrade/Rollback)**: Built-in mechanism to upgrade or rollback various AI CLI tools, ensuring optimal compatibility between underlying tools and the project.
 
 ### 3. Start the System (Native Local Mode)
 After completing the wizard setup and authentication above, you can directly start the AI matrix locally!
@@ -222,7 +224,7 @@ cd docker-deploy
 ./setup_docker.sh
 
 # 2. Start dedicated container
-docker compose -f docker-compose.[configured instance name].yml up -d --build
+docker compose -p octo_[configured instance name] -f docker-compose.[configured instance name].yml up -d --build
 ```
 
 ---
@@ -232,6 +234,7 @@ docker compose -f docker-compose.[configured instance name].yml up -d --build
 OctoMatrix supports configuring the service as a background daemon (Phoenix Mode), allowing your AI team to automatically resurrect after a host reboot.
 * **Linux Environment**: Please refer to the documentation in the [`auto-startup`](./auto-startup) directory to set up background services via Systemd.
 * **Windows System**: We recommend deploying via WSL (Windows Subsystem for Linux). Please check the [`windows-wsl-setup`](./windows-wsl-setup) directory, which provides scripts for a quick and seamless AI environment setup.
+* **macOS System**: Please refer to the `launchd` documentation in the [`auto-startup`](./auto-startup) directory to natively register background daemon processes.
 
 ---
 
@@ -261,7 +264,9 @@ In addition to natural language conversation, you can send system commands throu
 * **`/inspect [Agent Name]`**: Assign the current active Agent to deep dive into the target Agent's terminal window for diagnostics and inspection.
 * **`/resume_latest`**: In the event of an unexpected interruption, attempt to restore the most recent conversation record from the CLI's local cache.
 * **`/sys_refresh`**: Check and forcefully update the system protocols and behavioral rules that the Agent must follow.
+* **`/avatar_renew [Requirements]`**: Dynamically generate and update the Agent's exclusive Avatar sticker set based on the given requirements.
 * **`/menu`**: Pop up a physical management key menu on supported platforms (like Telegram) for easy tapping by mobile users.
+* **`/help`**: Show the help menu listing available system commands and instructions.
 
 ---
 
@@ -275,7 +280,7 @@ After the system starts and establishes a connection with Agent, you can directl
 
 OctoMatrix features an advanced lateral communication mechanism that allows AI team members to interact and delegate tasks to one another:
 
-* **Trigger Method**: When an Agent determines that a task requires assistance from another member (e.g., a coding specialist or a data summarizer), it simply executes the system's Standard Operating Procedure (SOP) and dedicated communication tools to proactively send a message to the target Agent.
+* **Trigger Method**: The Agent initiates communication when the user explicitly requests it to collaborate with an Agent partner, or when a specific task is predefined in the collaboration settings of the configuration wizard to be delegated to an Agent partner.
 * **Operation Mechanism**: Messages are accurately delivered via an internal secure API Router. Upon receiving the message, the receiving Agent automatically creates a background task to process the request, and proactively returns the result or report to the delegating Agent or the Operator once completed. The entire process incorporates a self-verification mechanism to prevent infinite loops, ensuring efficient and secure team collaboration.
 
 ---
@@ -287,7 +292,7 @@ OctoMatrix uses connection architectures that don't require breaking the host's 
 *   **Telegram (Webhook Tunnel)**: Creates a secure HTTPS reverse tunnel through dynamically configured `ngrok`. The host doesn't need to open any ports, and the Webhook URL is dynamically generated with each startup, significantly reducing the risk of probe attacks.
 *   **Discord (WebSocket Direct Connection)**: Uses a real-time bidirectional communication protocol based on WebSocket. The host acts purely as a Client connecting outbound, penetrating intranet restrictions.
 *   **Slack (Socket Mode)**: Uses enterprise-grade Socket Mode connections. Doesn't rely on public Request URLs; all events and commands are transmitted bidirectionally through secure tunnels.
-*   **Privilege Isolation & Sandboxing**: Regardless of which channel the message comes from, Agents run under dedicated Linux user accounts and independent `agent_home` directories. Combined with strict access controls and physical isolation mechanisms, this ensures that AI can only operate within its authorized sandbox, perfectly preventing any risk of unauthorized access or modification to the core architecture from the system's lowest level.
+*   **Privilege Isolation & Sandboxing**: Regardless of which channel the message comes from, Agents run under dedicated Linux user accounts and independent `agent_home` directories. This design strictly restricts the Agent to the least privilege of that user; it only has full operational rights within its `agent_home` directory, while write permissions for all external system scripts and core documents have been completely stripped, precisely preventing any risk of unauthorized modifications from the system's lowest level.
 
 ---
 
