@@ -54,6 +54,9 @@ graph TD
 *   **Uninterrupted Cross-Platform (Tri-Channel)**: Support for Telegram, Discord, and Slack. When a commonly used communication platform becomes unstable, seamlessly switch to another platform while keeping the AI team and task progress synchronized.
 *   **Cyberbrain System (Cyberbrain)**: A long-term memory mechanism using "grep-based RAG" in place of traditional vector retrieval. Paying homage to the "GHOST in the SHELL" concept, AI will "compress" and "imprint" conversation highlights as high-density GHOST indices, and through "Deep Dive" technology extract historical context at the physical level from SHELL records, granting Agents efficient retrospection ability that breaks through context window limitations.
 *   **Zero-Threshold Configuration Wizard**: Provides 100% interactive installation wizard, allowing you to easily create your own AI team without manually modifying complex code or configuration files.
+*   **Scheduled Awake Tasks (Awake Tasks)**: Support assigning periodic or scheduled tasks directly through natural language. The system will automatically wake up the Agent at the specified time to execute background work.
+*   **Agent-to-Agent Interaction (Agent Interaction)**: Agents have the ability to delegate tasks and communicate with each other, enabling division of labor and logical cross-checking.
+*   **Role Perception & Visual Emotion (Role Perception)**: Agents are imbued with unique personalities and automatically send exclusive Avatar stickers reflecting their current emotional state based on the context of the conversation.
 
 ---
 
@@ -268,6 +271,15 @@ After the system starts and establishes a connection with Agent, you can directl
 
 ---
 
+## 🤝 Agent-to-Agent Interaction & Collaboration
+
+OctoMatrix features an advanced lateral communication mechanism that allows AI team members to interact and delegate tasks to one another:
+
+* **Trigger Method**: When an Agent determines that a task requires assistance from another member (e.g., a coding specialist or a data summarizer), it simply executes the system's Standard Operating Procedure (SOP) and dedicated communication tools to proactively send a message to the target Agent.
+* **Operation Mechanism**: Messages are accurately delivered via an internal secure API Router. Upon receiving the message, the receiving Agent automatically creates a background task to process the request, and proactively returns the result or report to the delegating Agent or the Operator once completed. The entire process incorporates a self-verification mechanism to prevent infinite loops, ensuring efficient and secure team collaboration.
+
+---
+
 ## 🔒 Privacy & Security Design
 
 OctoMatrix uses connection architectures that don't require breaking the host's firewall for all three major communication platforms, ensuring system privacy and operational security:
@@ -275,7 +287,7 @@ OctoMatrix uses connection architectures that don't require breaking the host's 
 *   **Telegram (Webhook Tunnel)**: Creates a secure HTTPS reverse tunnel through dynamically configured `ngrok`. The host doesn't need to open any ports, and the Webhook URL is dynamically generated with each startup, significantly reducing the risk of probe attacks.
 *   **Discord (WebSocket Direct Connection)**: Uses a real-time bidirectional communication protocol based on WebSocket. The host acts purely as a Client connecting outbound, penetrating intranet restrictions.
 *   **Slack (Socket Mode)**: Uses enterprise-grade Socket Mode connections. Doesn't rely on public Request URLs; all events and commands are transmitted bidirectionally through secure tunnels.
-*   **Sandbox Protection**: Regardless of which channel the message comes from, Agents run independently within their dedicated `agent_home` sandbox directory. Underlying system executable files (`.py`, `.sh`) have strict write-lock mechanisms to prevent AI from inadvertently modifying the core system architecture.
+*   **Privilege Isolation & Sandboxing**: Regardless of which channel the message comes from, Agents run under dedicated Linux user accounts and independent `agent_home` directories. Combined with strict access controls and physical isolation mechanisms, this ensures that AI can only operate within its authorized sandbox, perfectly preventing any risk of unauthorized access or modification to the core architecture from the system's lowest level.
 
 ---
 
