@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # auto_permission_responder.py
-# 【物理硬化版】：支援日誌監聽模式與環境自適應
 
 import sys
 import subprocess

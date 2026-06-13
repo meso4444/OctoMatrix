@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # awake_manager.py
 # 負責處理定時任務
-# 【物理硬化版】：修正 0.0.0.0 撥號錯誤與數據透傳
 
 import os
 import sys
