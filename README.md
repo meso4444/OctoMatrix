@@ -54,6 +54,9 @@ graph TD
 *   **跨平臺不中斷 (Tri-Channel)**：支援 Telegram、Discord 與 Slack。當常用的通訊平臺不穩定時，隨時切換到另一個平臺，AI 團隊與任務進度依然保持同步。
 *   **電子腦系統 (Cyberbrain)**：以「grep-based RAG」取代傳統向量檢索的長期記憶機制。致敬「GHOST in the SHELL」概念，AI 會將對話重點「收攝」與「刻印」為高密度的 GHOST 索引，並透過「深潛 (Deep Dive)」技術從 SHELL 紀錄中物理級提煉歷史脈絡，賦予 Agent 突破上下文窗口限制的高效追溯能力。
 *   **零門檻設定精靈**：提供 100% 互動式的安裝精靈，無需手動修改複雜的程式碼或設定檔，即可輕鬆建立專屬的 AI 團隊。
+*   **定時喚醒任務 (Awake Tasks)**：支援透過自然語言直接指派週期性或定時任務，系統將自動於指定時間喚醒 Agent 執行背景工作。
+*   **代理間橫向通訊 (Agent-to-Agent Interaction)**：Agent 之間具備互相交辦與傳遞訊息的能力，能實現分工合作與邏輯覆核。
+*   **角色感知與視覺情緒 (Role Perception)**：Agent 具備獨特的人格設定，並會根據對話情境自動發送符合當下情緒的專屬 Avatar 貼圖。
 
 ---
 
@@ -268,6 +271,15 @@ OctoMatrix 提供高度模組化的技能擴充機制。
 
 ---
 
+## 🤝 Agent 對話與橫向協作 (Agent-to-Agent Interaction)
+
+OctoMatrix 具備先進的 Agent 橫向通訊機制，允許 AI 團隊成員之間互相交流與交辦任務：
+
+* **觸發方式**：當 Agent 判斷任務需要其他成員（例如專精寫程式的 Solas 或專精統整的 Aleister）協助時，只需執行系統提供的標準作業流程 (SOP) 與專屬通訊工具，即可主動向目標 Agent 傳送訊息。
+* **運作機制**：訊息會透過內部的安全 API 路由 (Router) 進行精準投遞。接收方的 Agent 在收到訊息後，會自動建立背景任務處理需求，並在完成後主動將結果或報告回傳給委託的 Agent 或操作員。整個過程具備防無限迴圈的自我驗證機制，確保團隊協作高效且安全。
+
+---
+
 ## 🔒 隱私與安全設計 (Privacy & Security)
 
 OctoMatrix 針對三大通訊平臺，皆採用無需破壞主機防火牆的連線架構，確保系統的隱私與運行安全：
@@ -275,7 +287,7 @@ OctoMatrix 針對三大通訊平臺，皆採用無需破壞主機防火牆的連
 *   **Telegram (Webhook 隧道)**：透過動態配置的 `ngrok` 建立安全的 HTTPS 逆向隧道。主機不需對外開放任何 Port，Webhook 網址亦為每次啟動動態產生，大幅降低被探測攻擊的風險。
 *   **Discord (WebSocket 直連)**：採用基於 WebSocket 的即時雙向通訊協議。主機純粹作為 Client 往外連線，穿透內網限制。
 *   **Slack (Socket Mode)**：採用企業級的 Socket Mode 連線。不依賴公開的 Request URL，所有事件與指令皆透過安全隧道進行雙向傳輸。
-*   **沙盒防護 (Sandboxing)**：無論訊息來自哪個通道，Agent 皆於專屬的 `agent_home` 沙盒目錄下獨立運行。底層的系統執行檔 (`.py`, `.sh`) 具備嚴格的防寫入鎖定機制，防止 AI 越權誤改系統核心架構。
+*   **權限隔離防護網 (Privilege Isolation & Sandboxing)**：無論訊息來自哪個通道，Agent 皆於專屬的 Linux 使用者帳戶與獨立的 `agent_home` 目錄下運行。結合嚴格的權限控管與物理隔離機制，確保 AI 僅能在授權的沙盒範圍內活動，從系統底層完美防止任何越權讀取或誤改核心架構的風險。
 
 ---
 
