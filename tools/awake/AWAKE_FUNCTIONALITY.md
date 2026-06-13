@@ -32,7 +32,7 @@ Agents must read the `ROUTER_PORT` environment variable from `octo_cyberbrain/.c
 
 **Agent operation**:
 ```bash
-curl -X GET http://127.0.0.1:${ROUTER_PORT}/awake/jobs
+python3 toolbox/awake_task_manager.py list
 ```
 
 **Expected response**:
@@ -93,50 +93,37 @@ Choose the corresponding trigger type based on frequency:
 
 **daily (Every day)**:
 ```bash
-curl -X POST http://127.0.0.1:${ROUTER_PORT}/awake/jobs/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "Morning meeting reminder",
-    "type": "agent_command",
-    "target_agent": "Güpa",
-    "prompt": "Remind user to attend morning meeting",
-    "trigger": "daily",
-    "hour": 8,
-    "minute": 0,
-    "second": 0
-  }'
+python3 toolbox/awake_task_manager.py register \
+  --id "Morning meeting reminder" \
+  --target "Güpa" \
+  --trigger "daily" \
+  --hour 8 --minute 0 \
+  --prompt "Remind user to attend morning meeting" \
+  --type "agent_command"
 ```
 
 **weekly (Every week)**:
 ```bash
-curl -X POST http://127.0.0.1:${ROUTER_PORT}/awake/jobs/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "Monday report",
-    "type": "agent_command",
-    "target_agent": "Güpa",
-    "prompt": "Generate this week report",
-    "trigger": "weekly",
-    "day_of_week": 0,
-    "hour": 9,
-    "minute": 0
-  }'
+python3 toolbox/awake_task_manager.py register \
+  --id "Monday report" \
+  --target "Güpa" \
+  --trigger "weekly" \
+  --day_of_week "0" \
+  --hour 9 --minute 0 \
+  --prompt "Generate this week report" \
+  --type "agent_command"
 ```
 
 **monthly (Every month)**:
 ```bash
-curl -X POST http://127.0.0.1:${ROUTER_PORT}/awake/jobs/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "Monthly review",
-    "type": "agent_command",
-    "target_agent": "Güpa",
-    "prompt": "Perform monthly review",
-    "trigger": "monthly",
-    "day": 1,
-    "hour": 9,
-    "minute": 0
-  }'
+python3 toolbox/awake_task_manager.py register \
+  --id "Monthly review" \
+  --target "Güpa" \
+  --trigger "monthly" \
+  --day 1 \
+  --hour 9 --minute 0 \
+  --prompt "Perform monthly review" \
+  --type "agent_command"
 ```
 
 #### Step 4: Handle response
@@ -193,7 +180,7 @@ Which one do you want to delete?
 
 #### Step 2: Call API
 ```bash
-curl -X DELETE http://127.0.0.1:${ROUTER_PORT}/awake/jobs/Morning%20meeting%20reminder
+python3 toolbox/awake_task_manager.py delete --id "Morning%20meeting%20reminder"
 ```
 
 #### Step 3: Confirm result
@@ -397,18 +384,14 @@ Is this correct?
 
 ### Step 2: Construct request
 ```bash
-curl -X POST http://127.0.0.1:${ROUTER_PORT}/awake/jobs/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "Monday weekly report generation",
-    "type": "agent_command",
-    "target_agent": "Güpa",
-    "prompt": "Generate weekly report based on this week data",
-    "trigger": "weekly",
-    "day_of_week": 0,
-    "hour": 9,
-    "minute": 0
-  }'
+python3 toolbox/awake_task_manager.py register \
+  --id "Monday weekly report generation" \
+  --target "Güpa" \
+  --trigger "weekly" \
+  --day_of_week "0" \
+  --hour 9 --minute 0 \
+  --prompt "Generate weekly report based on this week data" \
+  --type "agent_command"
 ```
 
 ### Step 3: Confirm success

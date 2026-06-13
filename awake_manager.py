@@ -120,7 +120,7 @@ class AwakeManager:
         except Exception as e:
             print(f"⏰ [Awake] Failed to awaken Agent (Internal API error): {e}")
 
-    def register_job(self, task_data):
+    def _validate_job_data(self, task_data):
         allowed_fields = {'id', 'name', 'trigger', 'type', 'target_agent', 'agent', 'prompt', 'command', 'hour', 'minute', 'second', 'day_of_week', 'day', 'hours', 'minutes', 'seconds', 'run_time'}
         allowed_triggers = {'daily', 'weekly', 'monthly', 'interval', 'date', 'cron'}
         
@@ -155,6 +155,12 @@ class AwakeManager:
         elif trigger_val == 'interval':
             if not any(k in task_data for k in ['hours', 'minutes', 'seconds']):
                 return {"status": "error", "message": f"Trigger 'interval' requires at least one of hours, minutes, or seconds"}
+        return None
+
+    def register_job(self, task_data):
+        validation_error = self._validate_job_data(task_data)
+        if validation_error:
+            return validation_error
             
         jobs = []
         if os.path.exists(self.awake_file):
@@ -168,6 +174,51 @@ class AwakeManager:
             yaml.dump(jobs, f, allow_unicode=True)
         self._add_task_to_scheduler(task_data)
         return {"status": "success", "message": f"Registered awake task: {task_id}"}
+
+    def update_job(self, job_id, update_data):
+        if not os.path.exists(self.awake_file):
+            return {"status": "error", "message": "File does not exist"}
+            
+        with open(self.awake_file, 'r', encoding='utf-8') as f:
+            jobs = yaml.safe_load(f) or []
+            
+        target_job = None
+        for job in jobs:
+            if (job.get('id') or job.get('name')) == job_id:
+                target_job = job
+                break
+                
+        if not target_job:
+            return {"status": "error", "message": f"Task not found: {job_id}"}
+            
+        # Post-Merge Validation
+        merged_job = target_job.copy()
+        for k, v in update_data.items():
+            if v is not None:
+                merged_job[k] = v
+                
+        # Remove empty string or None values that might have been passed to override
+        merged_job = {k: v for k, v in merged_job.items() if v is not None}
+                
+        validation_error = self._validate_job_data(merged_job)
+        if validation_error:
+            return validation_error
+            
+        # Remove old job
+        jobs = [t for t in jobs if (t.get('id') or t.get('name')) != job_id]
+        jobs.append(merged_job)
+        
+        with open(self.awake_file, 'w', encoding='utf-8') as f:
+            yaml.dump(jobs, f, allow_unicode=True)
+            
+        # Update Scheduler
+        try:
+            self.scheduler.remove_job(job_id)
+        except:
+            pass
+        self._add_task_to_scheduler(merged_job)
+        
+        return {"status": "success", "message": f"Updated awake task: {job_id}"}
 
     def delete_job(self, job_id):
         if not os.path.exists(self.awake_file): return {"status": "error", "message": "File does not exist"}

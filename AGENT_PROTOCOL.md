@@ -93,17 +93,17 @@ python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png
 
 The matrix issues commands to Agents on schedule through the "Awake System". For detailed implementation, see `knowledge/AWAKE_FUNCTIONALITY.md`.
 
-Agents **must communicate with the routing hub through REST API** to manage automated behavior and are prohibited from directly editing `awake.yaml`.
+Agents **must use the dedicated script** to manage automated behavior. Direct editing of `awake.yaml` or using bare curl is strictly prohibited.
 
-- **API Addressing**: Read `ROUTER_PORT` from `octo_cyberbrain/.cyberbrain_env` to assemble the URL.
 - **Add Awake Tasks (Supports trigger: daily, weekly, monthly, interval, date, cron)**:
     ```bash
-    curl -X POST http://127.0.0.1:${ROUTER_PORT}/awake/jobs/register \
-      -H "Content-Type: application/json" \
-      -d '{"id": "task_id", "type": "agent_command", "trigger": "cron", "hour": 9, "minute": 30, "target_agent": "{agent_name}", "prompt": "Execute task content"}'
+    python3 toolbox/awake_task_manager.py register \
+      --id "task_id" --target "{agent_name}" --trigger "cron" \
+      --hour 9 --minute 30 --prompt "Execute task content"
     ```
-- **View and Revoke**:
-    - `curl http://127.0.0.1:${ROUTER_PORT}/awake/jobs`
-    - `curl -X DELETE http://127.0.0.1:${ROUTER_PORT}/awake/jobs/task_id`
+- **View and Manage**:
+    - `python3 toolbox/awake_task_manager.py list`
+    - `python3 toolbox/awake_task_manager.py delete --id "task_id"`
+    - `python3 toolbox/awake_task_manager.py update --id "task_id" --hour 10 --prompt "New content"`
 
 ---

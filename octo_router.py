@@ -539,6 +539,9 @@ def awake_register():
     data = request.get_json(); return jsonify(awake.register_job(data))
 @app.route('/awake/jobs/<job_id>', methods=['DELETE'])
 def awake_delete(job_id): return jsonify(awake.delete_job(job_id))
+@app.route('/awake/jobs/<job_id>', methods=['PUT'])
+def awake_update(job_id):
+    data = request.get_json(); return jsonify(awake.update_job(job_id, data))
 @app.route('/awake/jobs', methods=['GET'])
 def awake_list(): return jsonify(awake.list_jobs())
 

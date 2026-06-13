@@ -223,6 +223,12 @@ try:
         if os.path.exists(agent_intercom_src):
             safe_copy(agent_intercom_src, agent_intercom_dst)
 
+        # Copy awake_task_manager.py to agent_home toolbox
+        awake_manager_src = os.path.join(script_dir, 'tools', 'awake', 'awake_task_manager.py')
+        awake_manager_dst = os.path.join(toolbox_path, 'awake_task_manager.py')
+        if os.path.exists(awake_manager_src):
+            safe_copy(awake_manager_src, awake_manager_dst)
+
         # Create shared space, knowledge base and GHOST directory
         shared_space_path = os.path.join(home_path, 'my_shared_space')
         os.makedirs(shared_space_path, exist_ok=True)
