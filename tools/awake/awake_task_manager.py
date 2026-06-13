@@ -43,9 +43,12 @@ ROUTER_URL = get_router_url()
 
 def validate_trigger_args(args):
     """前端參數防呆檢查，確保提供對應的排程參數"""
-    if args.trigger == 'daily' or args.trigger == 'cron':
+    if args.trigger == 'daily':
         if args.hour is None or args.minute is None:
-            return False, "trigger 為 'daily' 或 'cron' 時，必須指定 --hour 與 --minute"
+            return False, "trigger 為 'daily' 時，必須指定 --hour 與 --minute"
+    elif args.trigger == 'cron':
+        if args.hour is None and args.minute is None and args.day_of_week is None and args.day is None:
+            return False, "trigger 為 'cron' 時，至少須指定一項時間參數 (如 --hour, --minute, --day_of_week 等)"
     elif args.trigger == 'weekly':
         if args.day_of_week is None or args.hour is None or args.minute is None:
             return False, "trigger 為 'weekly' 時，必須指定 --day_of_week, --hour 與 --minute"

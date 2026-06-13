@@ -15,13 +15,6 @@
 
 ---
 
-## 📋 腳本定址與執行規範
-
-Agent **無須**手動組裝 API 請求或尋找 `ROUTER_PORT`，所有操作皆已封裝至專用的 CLI 腳本 `awake_task_manager.py` 中，該腳本會自動向上搜尋端口並與 Router 通訊。
-**執行腳本**: `python3 toolbox/awake_task_manager.py [指令] [參數]`
-
----
-
 ## 📋 用戶可委託的任務
 
 ### 1. 查詢現有喚醒
@@ -38,7 +31,7 @@ python3 toolbox/awake_task_manager.py list
 
 **預期終端輸出**：
 ```text
-=== Awake 任務列表 (共 3 筆) ===
+=== Awake 任務列表 (共 1 筆) ===
 ID: 每日系統清理
   目標: Güpa
   排程: <CronTrigger (hour=2, minute=0, second=0)>
@@ -137,7 +130,7 @@ python3 toolbox/awake_task_manager.py delete --id "晨會提醒"
 
 腳本支援的 Trigger 參數對應如下：
 
-### daily（每天） 或 cron（複雜表達式）
+### daily（每天）
 必須指定 `--hour` 與 `--minute`。可選 `--second`。
 ```bash
 --trigger daily --hour 8 --minute 30
@@ -166,6 +159,12 @@ python3 toolbox/awake_task_manager.py delete --id "晨會提醒"
 ```bash
 --trigger date --run_time "2026-12-31 23:59:59"
 ```
+
+### cron（複雜表達式）
+用於複雜的排程邏輯。可組合使用 `--hour`, `--minute`, `--day_of_week`, `--day` 等參數，並支援範圍與列表表達式。
+**常見用法**：
+- `--day_of_week "0-4"` = 週一到週五
+- `--day "1,15"` = 每月 1 號和 15 號
 
 ---
 
