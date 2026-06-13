@@ -10,14 +10,15 @@
 喚醒系統允許用戶設置定時指令，無需重啟服務。Agent 可以幫助用戶：
 - 查詢現有喚醒任務
 - 註冊新的喚醒任務
+- 更新現有喚醒任務
 - 刪除不需要的任務
 
 ---
 
-## 📋 API 定址規範
+## 📋 腳本定址與執行規範
 
-Agent 必須從 `octo_cyberbrain/.cyberbrain_env` 讀取 `ROUTER_PORT` 環境變數來組裝請求。
-**基準 URL**: `http://127.0.0.1:${ROUTER_PORT}/awake/jobs`
+Agent **無須**手動組裝 API 請求或尋找 `ROUTER_PORT`，所有操作皆已封裝至專用的 CLI 腳本 `awake_task_manager.py` 中，該腳本會自動向上搜尋端口並與 Router 通訊。
+**執行腳本**: `python3 toolbox/awake_task_manager.py [指令] [參數]`
 
 ---
 
@@ -35,27 +36,21 @@ Agent 必須從 `octo_cyberbrain/.cyberbrain_env` 讀取 `ROUTER_PORT` 環境變
 python3 toolbox/awake_task_manager.py list
 ```
 
-**預期響應**：
-```json
-{
-  "status": "ok",
-  "total": 3,
-  "jobs": [
-    {
-      "id": "每日系統清理",
-      "trigger": "<CronTrigger (hour=2, minute=0, second=0)>",
-      "next_run_time": "2026-02-20 02:00:00"
-    }
-  ]
-}
+**預期終端輸出**：
+```text
+=== Awake 任務列表 (共 3 筆) ===
+ID: 每日系統清理
+  目標: Güpa
+  排程: <CronTrigger (hour=2, minute=0, second=0)>
+  下次執行: 2026-02-20 02:00:00
+  指令: 執行系統清理
+------------------------------
 ```
 
 **Agent 回應範例**：
 ```
-✅ 目前有 3 個活躍的喚醒任務：
+✅ 目前有 1 個活躍的喚醒任務：
 1. 每日系統清理 - 每天凌晨 2 點執行
-2. 晨間新聞 - 每天上午 8 點執行
-3. 週五週報 - 每週五下午 5 點執行
 ```
 
 ---
@@ -64,32 +59,14 @@ python3 toolbox/awake_task_manager.py list
 
 **用戶表達**：
 - 「幫我設置每天早上 8 點的晨會提醒」
-- 「我想要每週一上午 9 點自動執行任務」
 - 「設定每月 1 號的檢查任務」
 
 **Agent 流程**：
 
-#### 第一步：理解需求
-從用戶描述中提取：
-- ⏰ **頻率**：每天 / 每週 / 每月 / 自定義
-- 🕐 **時間**：具體時刻（如 8:00）
-- 📝 **內容**：執行什麼任務
+#### 第一步：理解需求與確認參數
+提取 頻率、時間 與 任務內容，並向用戶確認。
 
-#### 第二步：確認參數
-向用戶確認一遍，避免誤解：
-```
-確認一下，您要設置的喚醒任務是：
-- 頻率：每天
-- 時間：早上 8 點
-- 任務：發送晨會提醒
-- 激活：是
-
-是這樣嗎？
-```
-
-#### 第三步：構造 API 請求
-
-根據頻率選擇對應的 trigger 類型：
+#### 第二步：執行腳本註冊
 
 **daily（每天）**：
 ```bash
@@ -102,337 +79,115 @@ python3 toolbox/awake_task_manager.py register \
   --type "agent_command"
 ```
 
-**weekly（每週）**：
+#### 第三步：處理響應
+
+**成功**：
+```text
+[Success] 任務已註冊: 晨會提醒
+```
+
+**失敗**：
+```text
+[Error] trigger 為 'daily' 或 'cron' 時，必須指定 --hour 與 --minute
+```
+
+回應用戶成功或請用戶補充參數。
+
+---
+
+### 3. 更新現有喚醒
+
+**用戶表達**：
+- 「把晨會提醒改成 8 點半」
+- 「週一週報的目標換成 Dapa」
+
+**Agent 操作**：
 ```bash
-python3 toolbox/awake_task_manager.py register \
-  --id "週一報告" \
-  --target "Güpa" \
-  --trigger "weekly" \
-  --day_of_week "0" \
-  --hour 9 --minute 0 \
-  --prompt "生成本週報告" \
-  --type "agent_command"
+python3 toolbox/awake_task_manager.py update \
+  --id "晨會提醒" \
+  --minute 30
 ```
+*(未提供的參數將保持原樣不變)*
 
-**monthly（每月）**：
-```bash
-python3 toolbox/awake_task_manager.py register \
-  --id "月初檢討" \
-  --target "Güpa" \
-  --trigger "monthly" \
-  --day 1 \
-  --hour 9 --minute 0 \
-  --prompt "進行月度檢討" \
-  --type "agent_command"
-```
-
-#### 第四步：處理響應
-
-**成功**（HTTP 200）：
-```json
-{
-  "status": "success",
-  "message": "已註冊喚醒任務"
-}
-```
-
-回應用戶：
-```
-✅ 喚醒已成功設置！
-任務名稱：晨會提醒
-執行時間：每天早上 8:00
-下次執行：明天早上 8 點
-```
-
-**失敗**（HTTP 400/500）：
-```json
-{
-  "status": "error",
-  "message": "缺少必需欄位: hour, minute"
-}
-```
-
-回應用戶：
-```
-❌ 設置喚醒失敗：缺少時間參數
-請告訴我您想要的具體時間（如：早上 8 點、下午 3 點）
+**預期終端輸出**：
+```text
+[Success] 任務已更新: 晨會提醒
 ```
 
 ---
 
-### 3. 刪除喚醒
+### 4. 刪除喚醒
 
 **用戶表達**：
 - 「取消之前設的晨會提醒」
-- 「刪除週五的報告任務」
-- 「停止每日清理任務」
 
-**Agent 流程**：
-
-#### 第一步：確認任務 ID
-```
-我找到以下相關任務：
-1. 晨會提醒 - 每天 8:00
-2. 晨間新聞 - 每天 8:00
-
-您要刪除哪一個？
-```
-
-#### 第二步：調用 API
+**Agent 操作**：
 ```bash
 python3 toolbox/awake_task_manager.py delete --id "晨會提醒"
 ```
 
-#### 第三步：確認結果
-成功：
-```
-✅ 喚醒任務 '晨會提醒' 已刪除
-下次更新時將停止執行
-```
-
-失敗：
-```
-❌ 刪除失敗：找不到名為 '晨會提醒' 的任務
-請檢查任務名稱是否正確
+**預期終端輸出**：
+```text
+[Success] 任務已刪除: 晨會提醒
 ```
 
 ---
 
-## 🔧 API 端點完整參考
+## ⏰ Trigger 類型詳解與腳本參數
 
-### 查詢所有任務
+腳本支援的 Trigger 參數對應如下：
+
+### daily（每天） 或 cron（複雜表達式）
+必須指定 `--hour` 與 `--minute`。可選 `--second`。
+```bash
+--trigger daily --hour 8 --minute 30
 ```
-GET http://127.0.0.1:${ROUTER_PORT}/awake/jobs
-```
-
-### 註冊新喚醒
-```
-POST http://127.0.0.1:${ROUTER_PORT}/awake/jobs/register
-Content-Type: application/json
-```
-
-### 刪除喚醒
-```
-DELETE http://127.0.0.1:${ROUTER_PORT}/awake/jobs/{job_id}
-```
-
----
-
-## ⏰ Trigger 類型詳解
-
-### daily（每天）
-**何時使用**：需要每天的固定時間執行
-
-```json
-{
-  "trigger": "daily",
-  "hour": 8,        // 0-23
-  "minute": 0,      // 0-59
-  "second": 0       // 0-59 (可選，默認 0)
-}
-```
-
-**示例**：每天早上 8:30
-```json
-{
-  "hour": 8,
-  "minute": 30,
-  "second": 0
-}
-```
-
----
 
 ### weekly（每週）
-**何時使用**：需要每週特定日期的特定時間執行
-
-```json
-{
-  "trigger": "weekly",
-  "day_of_week": 0,  // 0=週一, 1=週二, ..., 6=週日
-  "hour": 9,
-  "minute": 0
-}
+必須指定 `--day_of_week` (0-6), `--hour`, `--minute`。
+```bash
+--trigger weekly --day_of_week 4 --hour 17 --minute 0
 ```
-
-**示例**：每週五下午 5 點
-```json
-{
-  "day_of_week": 4,
-  "hour": 17,
-  "minute": 0
-}
-```
-
----
 
 ### monthly（每月）
-**何時使用**：需要每月特定日期執行
-
-```json
-{
-  "trigger": "monthly",
-  "day": 1,         // 1-31（1 = 每月 1 號）
-  "hour": 9,
-  "minute": 0
-}
+必須指定 `--day` (1-31), `--hour`, `--minute`。
+```bash
+--trigger monthly --day 15 --hour 12 --minute 0
 ```
-
-**示例**：每月 15 號中午 12 點
-```json
-{
-  "day": 15,
-  "hour": 12,
-  "minute": 0
-}
-```
-
----
 
 ### interval（固定間隔）
-**何時使用**：需要每隔 N 小時/分鐘/秒執行
-
-```json
-{
-  "trigger": "interval",
-  "hours": 6,       // 小時數（可選）
-  "minutes": 0,     // 分鐘數（可選）
-  "seconds": 0      // 秒數（可選）
-}
+至少指定 `--hours`, `--minutes`, 或 `--seconds` 其中之一。
+```bash
+--trigger interval --hours 6
 ```
-
-**示例**：每 6 小時檢查一次
-```json
-{
-  "hours": 6,
-  "minutes": 0,
-  "seconds": 0
-}
-```
-
----
 
 ### date（特定日期時間）
-**何時使用**：需要在未來的某個具體時間點單次執行
-
-```json
-{
-  "trigger": "date",
-  "run_time": "2026-12-31 23:59:59"  // 格式: YYYY-MM-DD HH:MM:SS
-}
-```
-
-**示例**：在 2026 年底發送新年快樂
-```json
-{
-  "run_time": "2026-12-31 23:59:59"
-}
-```
-
----
-
-### cron（複雜表達式）
-**何時使用**：需要複雜的時間邏輯
-
-```json
-{
-  "trigger": "cron",
-  "day_of_week": "0-4",  // 週一到週五
-  "hour": 9,
-  "minute": 0
-}
-```
-
-**常見用法**：
-- `"0-4"` = 週一到週五
-- `"5,6"` = 週六、週日
-- `"1,15"` = 每月 1 號和 15 號
-- `"L"` = 月末最後一天
-
----
-
-## 🎬 任務類型
-
-### agent_command（Agent 指令）
-**用途**：定時向 Agent 發送指令
-
-```json
-{
-  "type": "agent_command",
-  "target_agent": "Güpa",
-  "prompt": "生成今日報告"
-}
-```
-
-指定時間時，系統會自動向該 Agent 的 tmux 窗口發送命令。
-
----
-
-## 📝 完整工作流範例
-
-**用戶需求**：「我想每週一早上 9 點自動生成週報」
-
-### Step 1：Agent 確認需求
-```
-讓我確認一下：
-- 頻率：每週一
-- 時間：早上 9 點
-- 內容：自動生成週報
-
-是這樣對嗎？
-```
-
-### Step 2：構造請求
+必須指定 `--run_time` (格式: YYYY-MM-DD HH:MM:SS)。
 ```bash
-python3 toolbox/awake_task_manager.py register \
-  --id "週一週報生成" \
-  --target "Güpa" \
-  --trigger "weekly" \
-  --day_of_week "0" \
-  --hour 9 --minute 0 \
-  --prompt "根據本週數據生成周報" \
-  --type "agent_command"
-```
-
-### Step 3：確認成功
-```
-✅ 喚醒已設置成功！
-任務：週一週報生成
-頻率：每週一
-時間：早上 9:00
-下次執行：本週一早上 9 點
+--trigger date --run_time "2026-12-31 23:59:59"
 ```
 
 ---
 
-## 🛡️ 錯誤處理
+## 🎬 任務類型與通用參數
 
-### 常見錯誤
-
-| 錯誤訊息 | 原因 | 解決方案 |
-|---------|------|--------|
-| 缺少必需欄位 | 缺少 id/type/trigger | 檢查所有必需字段是否填寫 |
-| 無效的 trigger 類型 | trigger 不是支援的 5 種 | 確認使用 daily/weekly/monthly/cron/interval |
-| agent_command 需要 target_agent | type 為 agent_command 但缺少 target_agent | 添加 target_agent 字段 |
-| 找不到名為 X 的喚醒任務 | 刪除時任務不存在 | 先查詢確認任務名稱 |
+- `--id`：(必填) 任務的唯一識別碼。
+- `--target`：目標 Agent 名稱 (如 Güpa)。
+- `--prompt`：要執行的命令或提詞。
+- `--type`：預設為 `agent_command`。
 
 ---
 
 ## 💡 最佳實踐
 
 ### ✅ Do（應該做）
-1. 用自然語言與用戶溝通，隱藏技術細節
-2. 在執行前確認用戶的需求
-3. 給出清晰的執行結果反饋
-4. 遇到錯誤時解釋原因並提供解決方案
+1. 用自然語言與用戶溝通，隱藏技術細節。
+2. 遇到 `[Error]` 時解釋原因並提供解決方案。
 
 ### ❌ Don't（不應該做）
-1. 向用戶暴露 JSON 格式或 API 細節
-2. 假設用戶知道 trigger 類型
-3. 在未確認的情況下創建喚醒
-4. 忽視 API 返回的錯誤信息
-5. 使用不明確的任務名稱（如 "task1", "test"）
+1. 不要試圖使用 `curl` 或直接呼叫 `http://127.0.0.1...`，請務必使用 `awake_task_manager.py` 腳本。
+2. 避免在未確認的情況下創建或修改喚醒。
 
 ---
 
-**最後更新**：2026-04-13
+**最後更新**：2026-06-13
