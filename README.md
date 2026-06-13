@@ -218,13 +218,14 @@ cd OctoMatrix
 ### 4. 容器化部署 (Docker 可選進階模式)
 如果希望在同一台伺服器上運行多組獨立的矩陣，或是希望擁有更嚴格的系統隔離，也可以選擇使用 Docker 進行部署。
 ```bash
+./install_docker.sh
 cd docker-deploy
 
 # 1. 執行 Docker 專屬精靈，依照提示產生設定
 ./setup_docker.sh
 
 # 2. 啟動專屬容器
-docker compose -p octo_[設定的實例名稱] -f docker-compose.[設定的實例名稱].yml up -d --build
+docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} build --no-cache && docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} up -d
 ```
 
 ---
@@ -292,7 +293,7 @@ OctoMatrix 針對三大通訊平臺，皆採用無需破壞主機防火牆的連
 *   **Telegram (Webhook 隧道)**：透過動態配置的 `ngrok` 建立安全的 HTTPS 逆向隧道。主機不需對外開放任何 Port，Webhook 網址亦為每次啟動動態產生，大幅降低被探測攻擊的風險。
 *   **Discord (WebSocket 直連)**：採用基於 WebSocket 的即時雙向通訊協議。主機純粹作為 Client 往外連線，穿透內網限制。
 *   **Slack (Socket Mode)**：採用企業級的 Socket Mode 連線。不依賴公開的 Request URL，所有事件與指令皆透過安全隧道進行雙向傳輸。
-*   **權限隔離防護網 (Privilege Isolation & Sandboxing)**：無論訊息來自哪個通道，Agent 皆於專屬的 Linux 使用者帳戶與獨立的 `agent_home` 目錄下運行。這種設計讓 Agent 嚴格受限於該使用者所具有的最小權限 (Least Privilege)；只有在 `agent_home` 中的檔案與目錄才具有較完整的操作權，而外層的系統腳本與核心文件皆已拔除其寫入權限，從系統底層精準防止任何越權竄改的風險。
+*   **權限隔離防護網 (Privilege Isolation & Sandboxing)**：無論訊息來自哪個通道，Agent 皆於專屬的 Linux 使用者帳戶與獨立的 `agent_home` 目錄下運行。這種設計讓 Agent 嚴格受限於該使用者所具有的最小權限 (Least Privilege)；只有在 `agent_home` 中的檔案與目錄才具有較完整的操作權，而系統賦予的系統腳本與核心文件皆已拔除其寫入權限，從系統底層精準防止任何越權竄改的風險。
 
 ---
 
