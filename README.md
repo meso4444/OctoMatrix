@@ -218,13 +218,14 @@ After completing the wizard setup and authentication above, you can directly sta
 ### 4. Containerized Deployment (Docker Optional Advanced Mode)
 If you want to run multiple independent matrices on the same server or have stricter system isolation, you can also choose to deploy using Docker.
 ```bash
+./install_docker.sh
 cd docker-deploy
 
 # 1. Run Docker-specific wizard and generate configuration as prompted
 ./setup_docker.sh
 
 # 2. Start dedicated container
-docker compose -p octo_[configured instance name] -f docker-compose.[configured instance name].yml up -d --build
+docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} build --no-cache && docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} up -d
 ```
 
 ---
@@ -292,7 +293,7 @@ OctoMatrix uses connection architectures that don't require breaking the host's 
 *   **Telegram (Webhook Tunnel)**: Creates a secure HTTPS reverse tunnel through dynamically configured `ngrok`. The host doesn't need to open any ports, and the Webhook URL is dynamically generated with each startup, significantly reducing the risk of probe attacks.
 *   **Discord (WebSocket Direct Connection)**: Uses a real-time bidirectional communication protocol based on WebSocket. The host acts purely as a Client connecting outbound, penetrating intranet restrictions.
 *   **Slack (Socket Mode)**: Uses enterprise-grade Socket Mode connections. Doesn't rely on public Request URLs; all events and commands are transmitted bidirectionally through secure tunnels.
-*   **Privilege Isolation & Sandboxing**: Regardless of which channel the message comes from, Agents run under dedicated Linux user accounts and independent `agent_home` directories. This design strictly restricts the Agent to the least privilege of that user; it only has full operational rights within its `agent_home` directory, while write permissions for all external system scripts and core documents have been completely stripped, precisely preventing any risk of unauthorized modifications from the system's lowest level.
+*   **Privilege Isolation & Sandboxing**: Regardless of which channel the message comes from, Agents run under dedicated Linux user accounts and independent `agent_home` directories. This design strictly restricts the Agent to the least privilege of that user; it only has full operational rights within its `agent_home` directory, while write permissions for the system-provided scripts and core documents have been completely stripped, precisely preventing any risk of unauthorized modifications from the system's lowest level.
 
 ---
 
