@@ -601,6 +601,21 @@ def inter_agent_message():
         
     logger.info(f"🔄 [Inter-Agent] Received horizontal communication request | Source: {source} -> Target: {target_agent}")
     
+    agent_dir = os.path.join(AGENT_HOME_BASE, target_agent)
+    flag_file = os.path.join(agent_dir, 'octo_cyberbrain', '.rotation_flag')
+    pending_agent_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_agent.txt')
+
+    if os.path.exists(flag_file):
+        try:
+            with open(pending_agent_file, 'a', encoding='utf-8') as f:
+                if os.path.exists(pending_agent_file) and os.path.getsize(pending_agent_file) > 0:
+                    f.write("\n\n")
+                f.write(message)
+            logger.info(f"👻 [Inter-Agent] {target_agent} is reorganizing, message queued to pending_agent.txt")
+            return jsonify({"status": "success", "message": "queued in pending_agent.txt"}), 200
+        except Exception as e:
+            logger.error(f"❌ [Router] Failed to write to pending_agent temporary file: {e}")
+
     # Call AtomicInjector for physical keystroke injection
     # Force interrupt_first=False, retaining User's absolute interrupt privilege, Agent messages can only queue
     success = handler.injector.inject(message, target_agent, interrupt_first=False)
