@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # awake_manager.py
 # Responsible for handling scheduled tasks
-# 【Physical Hardened Version】: Fix 0.0.0.0 dial error and data transmission
 
 import os
 import sys

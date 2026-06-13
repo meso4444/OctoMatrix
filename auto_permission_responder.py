@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # auto_permission_responder.py
-# 【Physical Hardened Version】: Support log listening mode and environment adaptation
 
 import sys
 import subprocess
