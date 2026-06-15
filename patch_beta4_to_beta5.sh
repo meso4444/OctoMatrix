@@ -4,10 +4,7 @@
 
 set -e
 
-echo "🐙 [OctoMatrix] Executing Beta.4 -> Beta.5 environment upgrade patch (V4)..."
-echo "⚠️ [WARNING] This script is currently UNDER TESTING. Please use with caution to avoid misuse!"
-echo "========================================================="
-sleep 2
+echo "🐙 [OctoMatrix] Executing Beta.4 -> Beta.5 environment upgrade patch (V5)..."
 
 # 1. Environment & Command Detection (Strict POSIX compliant)
 os_type=$(uname -s)
@@ -16,14 +13,20 @@ if [ "$os_type" = "Darwin" ]; then
     pip_cmd="python3 -m pip"
 else
     ENVIRONMENT="Linux"
-    pip_cmd="sudo python3 -m pip"
+    # Dynamic detection of Conda or Virtual Environment
+    if [ -n "$CONDA_PREFIX" ] || [ -n "$VIRTUAL_ENV" ]; then
+        pip_cmd="python3 -m pip"
+        echo "✅ Detected virtual environment (Conda/Venv), using local environment..."
+    else
+        pip_cmd="sudo python3 -m pip"
+    fi
 fi
 
-echo "✅ Detected environment: $ENVIRONMENT"
+echo "✅ Detected system: $ENVIRONMENT"
 
-# 1.5 Check if "global" environment has pip (Bypass Conda false positive)
+# 1.5 Check if target environment has pip
 if ! $pip_cmd --version > /dev/null 2>&1; then
-    echo "🔧 Missing pip module in global system. Attempting to auto-install python3-pip..."
+    echo "🔧 Missing pip module. Attempting to auto-install python3-pip..."
     if command -v apt-get > /dev/null 2>&1; then
         sudo apt-get update && sudo apt-get install -y python3-pip
     elif command -v yum > /dev/null 2>&1; then
