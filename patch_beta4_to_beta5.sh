@@ -89,18 +89,22 @@ if ! command -v node > /dev/null 2>&1 || ! command -v npm > /dev/null 2>&1; then
     fi
 fi
 
-# 5. 強制重裝 AI CLI 工具
-echo "🤖 正在重新安裝最新版 AI CLI 工具..."
+# 5. 清理舊版與錯裝的局部 AI CLI，並強制全域重裝
+echo "🤖 正在清理舊版局部 AI CLI 並全域重新安裝..."
 npm_prefix=""
 if [ "$ENVIRONMENT" != "macOS" ]; then
-    if [ -n "$CONDA_PREFIX" ] || [ -n "$VIRTUAL_ENV" ] || [[ "$(which npm 2>/dev/null)" == *".nvm"* ]]; then
-        npm_prefix=""
-    else
-        npm_prefix="sudo"
-    fi
+    npm_prefix="sudo"
 fi
 
 if command -v npm > /dev/null 2>&1; then
+    echo "🧹 正在移除殘留的局部 AI CLI (包含 User 目錄與虛擬環境)..."
+    npm uninstall -g @anthropic-ai/claude-code @google/gemini-cli @openai/codex > /dev/null 2>&1 || true
+    
+    # 針對可能存在的 ~/.npm-global 手動清理防呆
+    if [ -d "$HOME/.npm-global/bin" ]; then
+        rm -f "$HOME/.npm-global/bin/claude" "$HOME/.npm-global/bin/gemini" "$HOME/.npm-global/bin/codex" 2>/dev/null || true
+    fi
+
     $npm_prefix npm install -g @anthropic-ai/claude-code @google/gemini-cli @openai/codex || echo "⚠️ AI CLI 安裝失敗，請手動檢查 Node.js 環境或權限。"
     echo "✅ AI CLI 工具重裝完成！"
 else
