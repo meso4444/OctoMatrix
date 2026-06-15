@@ -4,10 +4,11 @@
 
 set -e
 
-echo "🐙 [OctoMatrix] Executing Beta.4 -> Beta.5 environment upgrade patch (V5)..."
+echo "🐙 [OctoMatrix] Executing Beta.4 -> Beta.5 environment upgrade patch (V6)..."
 
 # 1. Environment & Command Detection (Strict POSIX compliant)
 os_type=$(uname -s)
+IS_VENV="false"
 if [ "$os_type" = "Darwin" ]; then
     ENVIRONMENT="macOS"
     pip_cmd="python3 -m pip"
@@ -16,6 +17,7 @@ else
     # Dynamic detection of Conda or Virtual Environment
     if [ -n "$CONDA_PREFIX" ] || [ -n "$VIRTUAL_ENV" ]; then
         pip_cmd="python3 -m pip"
+        IS_VENV="true"
         echo "✅ Detected virtual environment (Conda/Venv), using local environment..."
     else
         pip_cmd="sudo python3 -m pip"
@@ -39,18 +41,23 @@ if ! $pip_cmd --version > /dev/null 2>&1; then
     fi
 fi
 
-# 2. Remove old user-local packages to prevent dependency shadowing
-echo "🗑 Cleaning up old local Python dependencies..."
 PACKAGES="flask requests pyyaml apscheduler pillow discord.py slack-sdk websockets aiohttp"
-python3 -m pip uninstall -y $PACKAGES > /dev/null 2>&1 || true
 
-# 3. Reinstall Python packages globally
-echo "📦 Reinstalling Python core packages globally..."
-if $pip_cmd install --upgrade $PACKAGES --break-system-packages > /dev/null 2>&1 || $pip_cmd install --upgrade $PACKAGES; then
-    echo "✅ Python packages globally installed successfully"
+# 2. Remove old user-local packages to prevent dependency shadowing
+if [ "$IS_VENV" = "true" ]; then
+    echo "⏭️ Detected virtual environment, skipping uninstall to protect existing dependencies..."
 else
-    echo "❌ Python package global installation failed!"
-    echo "💡 Hint: Please try running manually: $pip_cmd install --upgrade $PACKAGES --break-system-packages"
+    echo "🗑 Cleaning up old local Python dependencies..."
+    python3 -m pip uninstall -y $PACKAGES > /dev/null 2>&1 || true
+fi
+
+# 3. Install Python packages (no forced --upgrade to prevent breaking Conda dependencies)
+echo "📦 Installing Python core packages..."
+if $pip_cmd install $PACKAGES --break-system-packages > /dev/null 2>&1 || $pip_cmd install $PACKAGES; then
+    echo "✅ Python packages installed successfully"
+else
+    echo "❌ Python package installation failed!"
+    echo "💡 Hint: Please try running manually: $pip_cmd install $PACKAGES --break-system-packages"
 fi
 
 # 4. Install Node.js for CentOS/RHEL
