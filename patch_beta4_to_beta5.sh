@@ -4,7 +4,7 @@
 
 set -e
 
-echo "🐙 [OctoMatrix] 正在執行 Beta.4 -> Beta.5 升級環境修復 (V9 終極除錯版)..."
+echo "🐙 [OctoMatrix] 正在執行 Beta.4 -> Beta.5 升級環境修復 (V10 完美無瑕版)..."
 
 # 1. 環境與指令偵測 (嚴格 POSIX 相容)
 os_type=$(uname -s)
@@ -39,6 +39,25 @@ if ! $pip_cmd --version > /dev/null 2>&1; then
     fi
 fi
 
+# 1.8 檢查並補齊缺失的系統基礎依賴 (jq, tmux, zstd 等)
+echo "📦 正在檢查系統基礎依賴 (curl, wget, jq, tmux, zstd)..."
+if [[ "$ENVIRONMENT" == "macOS" ]]; then
+    TOOLS="curl wget jq tmux zstd"
+    for tool in $TOOLS; do
+        if ! command -v $tool &> /dev/null; then
+            echo "   安裝 $tool..."
+            brew install $tool
+        fi
+    done
+else
+    if command -v apt-get > /dev/null 2>&1; then
+        sudo apt-get update > /dev/null 2>&1 || true
+        sudo apt-get install -y curl wget jq tmux zstd
+    elif command -v yum > /dev/null 2>&1; then
+        sudo yum install -y curl wget jq tmux zstd
+    fi
+fi
+
 PACKAGES="flask requests pyyaml apscheduler pillow discord.py slack-sdk websockets aiohttp"
 
 # 2. 強制移除舊版套件，徹底淨化環境
@@ -54,18 +73,27 @@ else
     echo "💡 提示: 請嘗試手動執行: $pip_cmd install --upgrade --force-reinstall $PACKAGES --break-system-packages"
 fi
 
-# 4. 補齊 CentOS/RHEL 的 Node.js 安裝
-if [ "$ENVIRONMENT" != "macOS" ] && command -v yum > /dev/null 2>&1 && ! command -v node > /dev/null 2>&1; then
-    echo "🤖 正在為 CentOS/RHEL 補裝 Node.js..."
-    curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo -E bash -
-    sudo yum install -y nodejs
+# 4. 補齊所有系統的 Node.js 安裝 (不僅限 CentOS)
+if ! command -v node > /dev/null 2>&1 || ! command -v npm > /dev/null 2>&1; then
+    echo "🤖 正在為系統補裝 Node.js..."
+    if [[ "$ENVIRONMENT" == "macOS" ]]; then
+        brew install node
+    elif command -v apt-get > /dev/null 2>&1; then
+        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+        sudo apt-get install -y nodejs
+    elif command -v yum > /dev/null 2>&1; then
+        curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo -E bash -
+        sudo yum install -y nodejs
+    else
+        echo "⚠️ 無法自動安裝 Node.js，後續 CLI 安裝可能失敗，請手動安裝"
+    fi
 fi
 
 # 5. 強制重裝 AI CLI 工具
 echo "🤖 正在重新安裝最新版 AI CLI 工具..."
 npm_prefix=""
 if [ "$ENVIRONMENT" != "macOS" ]; then
-    if [ -n "$CONDA_PREFIX" ] || [ -n "$VIRTUAL_ENV" ] || [[ "$(which npm 2>/dev/null)" == *".nvm"* ]] || [[ "$(which npm 2>/dev/null)" == *".nvm"* ]]; then
+    if [ -n "$CONDA_PREFIX" ] || [ -n "$VIRTUAL_ENV" ] || [[ "$(which npm 2>/dev/null)" == *".nvm"* ]]; then
         npm_prefix=""
     else
         npm_prefix="sudo"
