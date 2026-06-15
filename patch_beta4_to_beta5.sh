@@ -1,0 +1,62 @@
+#!/bin/bash
+# OctoMatrix Beta.4 to Beta.5 Environment Patch Script
+# 解決 V4 隔離架構下的 Python 全域套件衝突與 sudo pip3 路徑問題，並補齊 CentOS Node.js 支援
+
+set -e
+
+echo "🐙 [OctoMatrix] 正在執行 Beta.4 -> Beta.5 升級環境修復..."
+
+# 1. 環境偵測
+os_type=$(uname -s)
+if [[ "$os_type" == "Darwin" ]]; then
+    ENVIRONMENT="macOS"
+else
+    ENVIRONMENT="Linux"
+fi
+
+echo "✅ 偵測到的環境：$ENVIRONMENT"
+
+# 1.5 檢查並自動安裝 python3-pip
+if ! python3 -m pip --version > /dev/null 2>&1; then
+    echo "🔧 偵測到系統缺少 pip 模組，正在嘗試自動安裝 python3-pip..."
+    if command -v apt-get > /dev/null 2>&1; then
+        sudo apt-get update && sudo apt-get install -y python3-pip
+    elif command -v yum > /dev/null 2>&1; then
+        sudo yum install -y python3-pip
+    elif command -v pacman > /dev/null 2>&1; then
+        sudo pacman -Sy --noconfirm python-pip
+    else
+        echo "❌ 無法自動安裝 pip，請手動執行系統的 pip 安裝指令 (如 sudo apt install python3-pip)"
+        exit 1
+    fi
+fi
+
+# 2. 移除舊版使用者本地 (User-Local) 套件，防止依賴衝突 (Shadowing)
+echo "🗑 正在清理舊版本地 Python 依賴..."
+PACKAGES="flask requests pyyaml apscheduler pillow discord.py slack-sdk websockets aiohttp"
+python3 -m pip uninstall -y $PACKAGES > /dev/null 2>&1 || true
+
+# 3. 全域安裝 Python 套件
+# 改用 python3 -m pip 以避開 sudo pip3 command not found 錯誤
+# 並強制覆寫全域套件，以相容 V4 架構
+pip_cmd="sudo python3 -m pip install --upgrade"
+if [[ "$ENVIRONMENT" == "macOS" ]]; then
+    pip_cmd="python3 -m pip install --upgrade"
+fi
+
+echo "📦 正在全域重新安裝 Python 核心套件..."
+if $pip_cmd $PACKAGES --break-system-packages 2>/dev/null || $pip_cmd $PACKAGES; then
+    echo "✅ Python 套件全域安裝成功"
+else
+    echo "❌ Python 套件全域安裝失敗！"
+    echo "💡 提示: 請嘗試手動執行: $pip_cmd $PACKAGES --break-system-packages"
+fi
+
+# 4. 補齊 CentOS/RHEL 的 Node.js 安裝 (Beta.5 新增支援)
+if [[ "$ENVIRONMENT" != "macOS" ]] && command -v yum &> /dev/null && ! command -v node &> /dev/null; then
+    echo "🤖 正在為 CentOS/RHEL 補裝 Node.js..."
+    curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo -E bash -
+    sudo yum install -y nodejs
+fi
+
+echo "✅ Beta.4 -> Beta.5 環境升級修復完成！請接續執行 ./start_octo_services.sh"
