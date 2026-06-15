@@ -1,14 +1,14 @@
 #!/bin/bash
 # OctoMatrix Beta.4 to Beta.5 Environment Patch Script
-# 解決 V4 隔離架構下的 Python 全域套件衝突與 sudo pip3 路徑問題，並補齊 CentOS Node.js 支援
+# 解決 V4 隔離架構下的 Python 全域套件衝突、pip3 路徑問題，與缺失 pip 模組的防呆安裝。
 
 set -e
 
-echo "🐙 [OctoMatrix] 正在執行 Beta.4 -> Beta.5 升級環境修復..."
+echo "🐙 [OctoMatrix] 正在執行 Beta.4 -> Beta.5 升級環境修復 (V3)..."
 
-# 1. 環境偵測
+# 1. 環境偵測 (嚴格 POSIX 相容寫法)
 os_type=$(uname -s)
-if [[ "$os_type" == "Darwin" ]]; then
+if [ "$os_type" = "Darwin" ]; then
     ENVIRONMENT="macOS"
 else
     ENVIRONMENT="Linux"
@@ -37,23 +37,21 @@ PACKAGES="flask requests pyyaml apscheduler pillow discord.py slack-sdk websocke
 python3 -m pip uninstall -y $PACKAGES > /dev/null 2>&1 || true
 
 # 3. 全域安裝 Python 套件
-# 改用 python3 -m pip 以避開 sudo pip3 command not found 錯誤
-# 並強制覆寫全域套件，以相容 V4 架構
 pip_cmd="sudo python3 -m pip install --upgrade"
-if [[ "$ENVIRONMENT" == "macOS" ]]; then
+if [ "$ENVIRONMENT" = "macOS" ]; then
     pip_cmd="python3 -m pip install --upgrade"
 fi
 
 echo "📦 正在全域重新安裝 Python 核心套件..."
-if $pip_cmd $PACKAGES --break-system-packages 2>/dev/null || $pip_cmd $PACKAGES; then
+if $pip_cmd $PACKAGES --break-system-packages > /dev/null 2>&1 || $pip_cmd $PACKAGES; then
     echo "✅ Python 套件全域安裝成功"
 else
     echo "❌ Python 套件全域安裝失敗！"
     echo "💡 提示: 請嘗試手動執行: $pip_cmd $PACKAGES --break-system-packages"
 fi
 
-# 4. 補齊 CentOS/RHEL 的 Node.js 安裝 (Beta.5 新增支援)
-if [[ "$ENVIRONMENT" != "macOS" ]] && command -v yum &> /dev/null && ! command -v node &> /dev/null; then
+# 4. 補齊 CentOS/RHEL 的 Node.js 安裝 (嚴格 POSIX 相容寫法)
+if [ "$ENVIRONMENT" != "macOS" ] && command -v yum > /dev/null 2>&1 && ! command -v node > /dev/null 2>&1; then
     echo "🤖 正在為 CentOS/RHEL 補裝 Node.js..."
     curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo -E bash -
     sudo yum install -y nodejs
