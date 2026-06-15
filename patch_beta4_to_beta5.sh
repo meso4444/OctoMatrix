@@ -4,10 +4,11 @@
 
 set -e
 
-echo "🐙 [OctoMatrix] 正在執行 Beta.4 -> Beta.5 升級環境修復 (V5)..."
+echo "🐙 [OctoMatrix] 正在執行 Beta.4 -> Beta.5 升級環境修復 (V6)..."
 
 # 1. 環境與指令偵測 (嚴格 POSIX 相容)
 os_type=$(uname -s)
+IS_VENV="false"
 if [ "$os_type" = "Darwin" ]; then
     ENVIRONMENT="macOS"
     pip_cmd="python3 -m pip"
@@ -16,6 +17,7 @@ else
     # 動態偵測是否處於 Conda 或虛擬環境中
     if [ -n "$CONDA_PREFIX" ] || [ -n "$VIRTUAL_ENV" ]; then
         pip_cmd="python3 -m pip"
+        IS_VENV="true"
         echo "✅ 偵測到虛擬環境 (Conda/Venv)，將使用本地環境安裝..."
     else
         pip_cmd="sudo python3 -m pip"
@@ -39,18 +41,23 @@ if ! $pip_cmd --version > /dev/null 2>&1; then
     fi
 fi
 
-# 2. 移除舊版使用者本地 (User-Local) 套件，防止依賴衝突 (Shadowing)
-echo "🗑 正在清理舊版本地 Python 依賴..."
 PACKAGES="flask requests pyyaml apscheduler pillow discord.py slack-sdk websockets aiohttp"
-python3 -m pip uninstall -y $PACKAGES > /dev/null 2>&1 || true
 
-# 3. 全域安裝 Python 套件
-echo "📦 正在全域重新安裝 Python 核心套件..."
-if $pip_cmd install --upgrade $PACKAGES --break-system-packages > /dev/null 2>&1 || $pip_cmd install --upgrade $PACKAGES; then
-    echo "✅ Python 套件全域安裝成功"
+# 2. 移除舊版使用者本地 (User-Local) 套件，防止依賴衝突 (Shadowing)
+if [ "$IS_VENV" = "true" ]; then
+    echo "⏭️ 偵測到虛擬環境，跳過卸載步驟以保護現有依賴..."
 else
-    echo "❌ Python 套件全域安裝失敗！"
-    echo "💡 提示: 請嘗試手動執行: $pip_cmd install --upgrade $PACKAGES --break-system-packages"
+    echo "🗑 正在清理舊版本地 Python 依賴..."
+    python3 -m pip uninstall -y $PACKAGES > /dev/null 2>&1 || true
+fi
+
+# 3. 安裝 Python 套件 (不再強制 --upgrade，避免破壞 Conda 生態系)
+echo "📦 正在安裝 Python 核心套件..."
+if $pip_cmd install $PACKAGES --break-system-packages > /dev/null 2>&1 || $pip_cmd install $PACKAGES; then
+    echo "✅ Python 套件安裝成功"
+else
+    echo "❌ Python 套件安裝失敗！"
+    echo "💡 提示: 請嘗試手動執行: $pip_cmd install $PACKAGES --break-system-packages"
 fi
 
 # 4. 補齊 CentOS/RHEL 的 Node.js 安裝
