@@ -4,21 +4,23 @@
 
 set -e
 
-echo "🐙 [OctoMatrix] Executing Beta.4 -> Beta.5 environment upgrade patch (V3)..."
+echo "🐙 [OctoMatrix] Executing Beta.4 -> Beta.5 environment upgrade patch (V4)..."
 
-# 1. Environment Detection (Strict POSIX compliant syntax)
+# 1. Environment & Command Detection (Strict POSIX compliant)
 os_type=$(uname -s)
 if [ "$os_type" = "Darwin" ]; then
     ENVIRONMENT="macOS"
+    pip_cmd="python3 -m pip"
 else
     ENVIRONMENT="Linux"
+    pip_cmd="sudo python3 -m pip"
 fi
 
 echo "✅ Detected environment: $ENVIRONMENT"
 
-# 1.5 Check and auto-install pip
-if ! python3 -m pip --version > /dev/null 2>&1; then
-    echo "🔧 Missing pip module detected. Attempting to auto-install python3-pip..."
+# 1.5 Check if "global" environment has pip (Bypass Conda false positive)
+if ! $pip_cmd --version > /dev/null 2>&1; then
+    echo "🔧 Missing pip module in global system. Attempting to auto-install python3-pip..."
     if command -v apt-get > /dev/null 2>&1; then
         sudo apt-get update && sudo apt-get install -y python3-pip
     elif command -v yum > /dev/null 2>&1; then
@@ -37,20 +39,15 @@ PACKAGES="flask requests pyyaml apscheduler pillow discord.py slack-sdk websocke
 python3 -m pip uninstall -y $PACKAGES > /dev/null 2>&1 || true
 
 # 3. Reinstall Python packages globally
-pip_cmd="sudo python3 -m pip install --upgrade"
-if [ "$ENVIRONMENT" = "macOS" ]; then
-    pip_cmd="python3 -m pip install --upgrade"
-fi
-
 echo "📦 Reinstalling Python core packages globally..."
-if $pip_cmd $PACKAGES --break-system-packages > /dev/null 2>&1 || $pip_cmd $PACKAGES; then
+if $pip_cmd install --upgrade $PACKAGES --break-system-packages > /dev/null 2>&1 || $pip_cmd install --upgrade $PACKAGES; then
     echo "✅ Python packages globally installed successfully"
 else
     echo "❌ Python package global installation failed!"
-    echo "💡 Hint: Please try running manually: $pip_cmd $PACKAGES --break-system-packages"
+    echo "💡 Hint: Please try running manually: $pip_cmd install --upgrade $PACKAGES --break-system-packages"
 fi
 
-# 4. Install Node.js for CentOS/RHEL (Strict POSIX compliant syntax)
+# 4. Install Node.js for CentOS/RHEL
 if [ "$ENVIRONMENT" != "macOS" ] && command -v yum > /dev/null 2>&1 && ! command -v node > /dev/null 2>&1; then
     echo "🤖 Installing Node.js for CentOS/RHEL..."
     curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo -E bash -
