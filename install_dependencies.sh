@@ -194,12 +194,17 @@ install_nodejs() {
     echo ""
     echo "🤖 正在檢查與安裝 Node.js..."
 
-    if command -v npm &> /dev/null; then
-        echo "✅ Node.js 已安裝: $(node --version)"
+    local npm_prefix=""
+    if [[ "$ENVIRONMENT" != "macOS" ]]; then
+        npm_prefix="sudo"
+    fi
+
+    if $npm_prefix bash -c "command -v npm" &> /dev/null; then
+        echo "✅ 系統級 Node.js 已安裝"
         return
     fi
 
-    echo "📦 正在安裝 Node.js..."
+    echo "📦 正在安裝系統級 Node.js (v22.x)..."
 
     if [[ "$ENVIRONMENT" == "macOS" ]]; then
         # macOS: 使用 brew
@@ -207,10 +212,10 @@ install_nodejs() {
     else
         # Linux/WSL: 使用 deb.nodesource.com 或 rpm.nodesource.com
         if command -v apt-get &> /dev/null; then
-            curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+            curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
             sudo apt-get install -y nodejs
         elif command -v yum &> /dev/null; then
-            curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo -E bash -
+            curl -fsSL https://rpm.nodesource.com/setup_22.x | sudo -E bash -
             sudo yum install -y nodejs
         else
             echo "⚠️  無法自動安裝 Node.js，請手動安裝後重試"
@@ -222,6 +227,12 @@ install_nodejs() {
 install_ai_cli_tools() {
     echo ""
     echo "🤖 正在檢查與安裝 AI Agent CLI..."
+
+    # 確保先卸載可能存在於局部 (非 sudo) 或舊版的 CLI，避免路徑衝突或未更新
+    if command -v npm &> /dev/null; then
+        echo "🧹 正在清除可能衝突的局部 AI CLI..."
+        npm uninstall -g @anthropic-ai/claude-code @google/gemini-cli @openai/codex 2>/dev/null || true
+    fi
 
     # 是否需要 sudo (Linux/WSL 需要，macOS 通常不需要)
     local npm_prefix=""
