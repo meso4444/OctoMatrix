@@ -89,22 +89,14 @@ if ! command -v node > /dev/null 2>&1 || ! command -v npm > /dev/null 2>&1; then
     fi
 fi
 
-# 5. Clean up old user/local installations and Force reinstall AI CLI Tools
-echo "🤖 Cleaning up old local/user AI CLI tools and reinstalling globally..."
+# 5. Force reinstall AI CLI Tools
+echo "🤖 Reinstalling latest AI CLI Tools..."
 npm_prefix=""
 if [ "$ENVIRONMENT" != "macOS" ]; then
     npm_prefix="sudo"
 fi
 
 if command -v npm > /dev/null 2>&1; then
-    echo "🧹 Removing legacy user/local AI CLI installations..."
-    npm uninstall -g @anthropic-ai/claude-code @google/gemini-cli @openai/codex > /dev/null 2>&1 || true
-    
-    # 針對可能存在的 ~/.npm-global 手動清理防呆
-    if [ -d "$HOME/.npm-global/bin" ]; then
-        rm -f "$HOME/.npm-global/bin/claude" "$HOME/.npm-global/bin/gemini" "$HOME/.npm-global/bin/codex" 2>/dev/null || true
-    fi
-
     $npm_prefix npm install -g @anthropic-ai/claude-code @google/gemini-cli @openai/codex || echo "⚠️ AI CLI installation failed, please check Node.js environment or permissions."
     echo "✅ AI CLI Tools reinstallation complete!"
 else
