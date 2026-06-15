@@ -5,6 +5,9 @@
 set -e
 
 echo "🐙 [OctoMatrix] Executing Beta.4 -> Beta.5 environment upgrade patch (V4)..."
+echo "⚠️ [WARNING] This script is currently UNDER TESTING. Please use with caution to avoid misuse!"
+echo "========================================================="
+sleep 2
 
 # 1. Environment & Command Detection (Strict POSIX compliant)
 os_type=$(uname -s)
