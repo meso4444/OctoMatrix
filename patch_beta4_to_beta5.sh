@@ -4,7 +4,7 @@
 
 set -e
 
-echo "🐙 [OctoMatrix] Executing Beta.4 -> Beta.5 environment upgrade patch (V9 Ultimate Debug Version)..."
+echo "🐙 [OctoMatrix] Executing Beta.4 -> Beta.5 environment upgrade patch (V10 Perfect Edition)..."
 
 # 1. Environment & Command Detection (Strict POSIX compliant)
 os_type=$(uname -s)
@@ -39,6 +39,25 @@ if ! $pip_cmd --version > /dev/null 2>&1; then
     fi
 fi
 
+# 1.8 Check and install missing basic system dependencies (jq, tmux, zstd, etc.)
+echo "📦 Checking basic system dependencies (curl, wget, jq, tmux, zstd)..."
+if [[ "$ENVIRONMENT" == "macOS" ]]; then
+    TOOLS="curl wget jq tmux zstd"
+    for tool in $TOOLS; do
+        if ! command -v $tool &> /dev/null; then
+            echo "   Installing $tool..."
+            brew install $tool
+        fi
+    done
+else
+    if command -v apt-get > /dev/null 2>&1; then
+        sudo apt-get update > /dev/null 2>&1 || true
+        sudo apt-get install -y curl wget jq tmux zstd
+    elif command -v yum > /dev/null 2>&1; then
+        sudo yum install -y curl wget jq tmux zstd
+    fi
+fi
+
 PACKAGES="flask requests pyyaml apscheduler pillow discord.py slack-sdk websockets aiohttp"
 
 # 2. Forcefully remove old packages to ensure a clean slate
@@ -54,11 +73,20 @@ else
     echo "💡 Hint: Please try running manually: $pip_cmd install --upgrade --force-reinstall $PACKAGES --break-system-packages"
 fi
 
-# 4. Install Node.js for CentOS/RHEL
-if [ "$ENVIRONMENT" != "macOS" ] && command -v yum > /dev/null 2>&1 && ! command -v node > /dev/null 2>&1; then
-    echo "🤖 Installing Node.js for CentOS/RHEL..."
-    curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo -E bash -
-    sudo yum install -y nodejs
+# 4. Install Node.js for all missing environments (Not just CentOS)
+if ! command -v node > /dev/null 2>&1 || ! command -v npm > /dev/null 2>&1; then
+    echo "🤖 Installing missing Node.js..."
+    if [[ "$ENVIRONMENT" == "macOS" ]]; then
+        brew install node
+    elif command -v apt-get > /dev/null 2>&1; then
+        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+        sudo apt-get install -y nodejs
+    elif command -v yum > /dev/null 2>&1; then
+        curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo -E bash -
+        sudo yum install -y nodejs
+    else
+        echo "⚠️ Failed to auto-install Node.js. Subsequent CLI installs may fail. Please install manually."
+    fi
 fi
 
 # 5. Force reinstall AI CLI Tools
