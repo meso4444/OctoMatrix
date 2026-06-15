@@ -194,12 +194,17 @@ install_nodejs() {
     echo ""
     echo "🤖 Checking and installing Node.js..."
 
-    if command -v npm &> /dev/null; then
-        echo "✅ Node.js already installed: $(node --version)"
+    local npm_prefix=""
+    if [[ "$ENVIRONMENT" != "macOS" ]]; then
+        npm_prefix="sudo"
+    fi
+
+    if $npm_prefix bash -c "command -v npm" &> /dev/null; then
+        echo "✅ System Node.js already installed"
         return
     fi
 
-    echo "📦 Installing Node.js..."
+    echo "📦 Installing System Node.js (v22.x)..."
 
     if [[ "$ENVIRONMENT" == "macOS" ]]; then
         # macOS: Use brew
@@ -207,10 +212,10 @@ install_nodejs() {
     else
         # Linux/WSL: Use deb.nodesource.com or rpm.nodesource.com
         if command -v apt-get &> /dev/null; then
-            curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+            curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
             sudo apt-get install -y nodejs
         elif command -v yum &> /dev/null; then
-            curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo -E bash -
+            curl -fsSL https://rpm.nodesource.com/setup_22.x | sudo -E bash -
             sudo yum install -y nodejs
         else
             echo "⚠️  Unable to automatically install Node.js, please install manually and retry"
@@ -222,6 +227,12 @@ install_nodejs() {
 install_ai_cli_tools() {
     echo ""
     echo "🤖 Checking and installing AI Agent CLI..."
+
+    # Ensure local (non-sudo) or old CLIs are uninstalled first to prevent path conflicts
+    if command -v npm &> /dev/null; then
+        echo "🧹 Clearing potentially conflicting local AI CLIs..."
+        npm uninstall -g @anthropic-ai/claude-code @google/gemini-cli @openai/codex 2>/dev/null || true
+    fi
 
     # Whether sudo is needed (Linux/WSL needs it, macOS usually doesn't)
     local npm_prefix=""
