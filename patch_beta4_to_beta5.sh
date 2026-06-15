@@ -4,7 +4,7 @@
 
 set -e
 
-echo "🐙 [OctoMatrix] Executing Beta.4 -> Beta.5 environment upgrade patch (V8 Complete Clean Version)..."
+echo "🐙 [OctoMatrix] Executing Beta.4 -> Beta.5 environment upgrade patch (V9 Ultimate Debug Version)..."
 
 # 1. Environment & Command Detection (Strict POSIX compliant)
 os_type=$(uname -s)
@@ -65,7 +65,11 @@ fi
 echo "🤖 Reinstalling latest AI CLI Tools..."
 npm_prefix=""
 if [ "$ENVIRONMENT" != "macOS" ]; then
-    npm_prefix="sudo"
+    if [ -n "$CONDA_PREFIX" ] || [ -n "$VIRTUAL_ENV" ] || [[ "$(which npm 2>/dev/null)" == *".nvm"* ]]; then
+        npm_prefix=""
+    else
+        npm_prefix="sudo"
+    fi
 fi
 
 if command -v npm > /dev/null 2>&1; then
