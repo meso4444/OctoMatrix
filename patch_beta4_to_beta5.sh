@@ -1,14 +1,14 @@
 #!/bin/bash
 # OctoMatrix Beta.4 to Beta.5 Environment Patch Script
-# Resolves global Python package conflicts and sudo pip3 path issues under V4 Isolation, and adds CentOS Node.js support.
+# Resolves global Python package conflicts, pip3 path issues, and missing pip module.
 
 set -e
 
-echo "🐙 [OctoMatrix] Executing Beta.4 -> Beta.5 environment upgrade patch..."
+echo "🐙 [OctoMatrix] Executing Beta.4 -> Beta.5 environment upgrade patch (V3)..."
 
-# 1. Environment Detection
+# 1. Environment Detection (Strict POSIX compliant syntax)
 os_type=$(uname -s)
-if [[ "$os_type" == "Darwin" ]]; then
+if [ "$os_type" = "Darwin" ]; then
     ENVIRONMENT="macOS"
 else
     ENVIRONMENT="Linux"
@@ -37,23 +37,21 @@ PACKAGES="flask requests pyyaml apscheduler pillow discord.py slack-sdk websocke
 python3 -m pip uninstall -y $PACKAGES > /dev/null 2>&1 || true
 
 # 3. Reinstall Python packages globally
-# Use 'python3 -m pip' to bypass 'sudo pip3: command not found' error
-# Force global installation to comply with V4 architecture
 pip_cmd="sudo python3 -m pip install --upgrade"
-if [[ "$ENVIRONMENT" == "macOS" ]]; then
+if [ "$ENVIRONMENT" = "macOS" ]; then
     pip_cmd="python3 -m pip install --upgrade"
 fi
 
 echo "📦 Reinstalling Python core packages globally..."
-if $pip_cmd $PACKAGES --break-system-packages 2>/dev/null || $pip_cmd $PACKAGES; then
+if $pip_cmd $PACKAGES --break-system-packages > /dev/null 2>&1 || $pip_cmd $PACKAGES; then
     echo "✅ Python packages globally installed successfully"
 else
     echo "❌ Python package global installation failed!"
     echo "💡 Hint: Please try running manually: $pip_cmd $PACKAGES --break-system-packages"
 fi
 
-# 4. Install Node.js for CentOS/RHEL (New in Beta.5)
-if [[ "$ENVIRONMENT" != "macOS" ]] && command -v yum &> /dev/null && ! command -v node &> /dev/null; then
+# 4. Install Node.js for CentOS/RHEL (Strict POSIX compliant syntax)
+if [ "$ENVIRONMENT" != "macOS" ] && command -v yum > /dev/null 2>&1 && ! command -v node > /dev/null 2>&1; then
     echo "🤖 Installing Node.js for CentOS/RHEL..."
     curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo -E bash -
     sudo yum install -y nodejs
