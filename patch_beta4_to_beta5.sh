@@ -4,7 +4,7 @@
 
 set -e
 
-echo "🐙 [OctoMatrix] 正在執行 Beta.4 -> Beta.5 升級環境修復 (V7 霸道淨化版)..."
+echo "🐙 [OctoMatrix] 正在執行 Beta.4 -> Beta.5 升級環境修復 (V8 完整淨化版)..."
 
 # 1. 環境與指令偵測 (嚴格 POSIX 相容)
 os_type=$(uname -s)
@@ -59,6 +59,18 @@ if [ "$ENVIRONMENT" != "macOS" ] && command -v yum > /dev/null 2>&1 && ! command
     echo "🤖 正在為 CentOS/RHEL 補裝 Node.js..."
     curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo -E bash -
     sudo yum install -y nodejs
+fi
+
+echo "✅ Beta.4 -> Beta.5 環境升級修復完成！請接續執行 ./start_octo_services.sh"efix=""
+if [ "$ENVIRONMENT" != "macOS" ]; then
+    npm_prefix="sudo"
+fi
+
+if command -v npm > /dev/null 2>&1; then
+    $npm_prefix npm install -g @anthropic-ai/claude-code @google/gemini-cli @openai/codex || echo "⚠️ AI CLI 安裝失敗，請手動檢查 Node.js 環境或權限。"
+    echo "✅ AI CLI 工具重裝完成！"
+else
+    echo "❌ 偵測不到 npm，跳過 AI CLI 重裝，請手動安裝 Node.js！"
 fi
 
 echo "✅ Beta.4 -> Beta.5 環境升級修復完成！請接續執行 ./start_octo_services.sh"
