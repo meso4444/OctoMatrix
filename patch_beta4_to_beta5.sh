@@ -4,7 +4,7 @@
 
 set -e
 
-echo "🐙 [OctoMatrix] 正在執行 Beta.4 -> Beta.5 升級環境修復 (V8 完整淨化版)..."
+echo "🐙 [OctoMatrix] 正在執行 Beta.4 -> Beta.5 升級環境修復 (V9 終極除錯版)..."
 
 # 1. 環境與指令偵測 (嚴格 POSIX 相容)
 os_type=$(uname -s)
@@ -61,9 +61,15 @@ if [ "$ENVIRONMENT" != "macOS" ] && command -v yum > /dev/null 2>&1 && ! command
     sudo yum install -y nodejs
 fi
 
-echo "✅ Beta.4 -> Beta.5 環境升級修復完成！請接續執行 ./start_octo_services.sh"efix=""
+# 5. 強制重裝 AI CLI 工具
+echo "🤖 正在重新安裝最新版 AI CLI 工具..."
+npm_prefix=""
 if [ "$ENVIRONMENT" != "macOS" ]; then
-    npm_prefix="sudo"
+    if [ -n "$CONDA_PREFIX" ] || [ -n "$VIRTUAL_ENV" ] || [[ "$(which npm 2>/dev/null)" == *".nvm"* ]] || [[ "$(which npm 2>/dev/null)" == *".nvm"* ]]; then
+        npm_prefix=""
+    else
+        npm_prefix="sudo"
+    fi
 fi
 
 if command -v npm > /dev/null 2>&1; then
