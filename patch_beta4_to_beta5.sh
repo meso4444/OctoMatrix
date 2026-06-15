@@ -107,26 +107,4 @@ else
     echo "❌ npm not found, skipping AI CLI reinstallation. Please install Node.js manually!"
 fi
 
-echo "✅ Beta.4 -> Beta.5 environment patch complete! You may now run ./start_octo_services.sh"LI installs may fail. Please install manually."
-    fi
-fi
-
-# 5. Force reinstall AI CLI Tools
-echo "🤖 Reinstalling latest AI CLI Tools..."
-npm_prefix=""
-if [ "$ENVIRONMENT" != "macOS" ]; then
-    if [ -n "$CONDA_PREFIX" ] || [ -n "$VIRTUAL_ENV" ] || [[ "$(which npm 2>/dev/null)" == *".nvm"* ]]; then
-        npm_prefix=""
-    else
-        npm_prefix="sudo"
-    fi
-fi
-
-if command -v npm > /dev/null 2>&1; then
-    $npm_prefix npm install -g @anthropic-ai/claude-code @google/gemini-cli @openai/codex || echo "⚠️ AI CLI installation failed, please check Node.js environment or permissions."
-    echo "✅ AI CLI Tools reinstallation complete!"
-else
-    echo "❌ npm not found, skipping AI CLI reinstallation. Please install Node.js manually!"
-fi
-
 echo "✅ Beta.4 -> Beta.5 environment patch complete! You may now run ./start_octo_services.sh"
