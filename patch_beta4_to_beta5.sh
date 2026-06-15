@@ -4,21 +4,23 @@
 
 set -e
 
-echo "🐙 [OctoMatrix] 正在執行 Beta.4 -> Beta.5 升級環境修復 (V3)..."
+echo "🐙 [OctoMatrix] 正在執行 Beta.4 -> Beta.5 升級環境修復 (V4)..."
 
-# 1. 環境偵測 (嚴格 POSIX 相容寫法)
+# 1. 環境與指令偵測 (嚴格 POSIX 相容)
 os_type=$(uname -s)
 if [ "$os_type" = "Darwin" ]; then
     ENVIRONMENT="macOS"
+    pip_cmd="python3 -m pip"
 else
     ENVIRONMENT="Linux"
+    pip_cmd="sudo python3 -m pip"
 fi
 
 echo "✅ 偵測到的環境：$ENVIRONMENT"
 
-# 1.5 檢查並自動安裝 python3-pip
-if ! python3 -m pip --version > /dev/null 2>&1; then
-    echo "🔧 偵測到系統缺少 pip 模組，正在嘗試自動安裝 python3-pip..."
+# 1.5 檢查「全域」環境是否具備 pip (避開 Conda 誤判)
+if ! $pip_cmd --version > /dev/null 2>&1; then
+    echo "🔧 偵測到全域系統缺少 pip 模組，正在嘗試自動安裝 python3-pip..."
     if command -v apt-get > /dev/null 2>&1; then
         sudo apt-get update && sudo apt-get install -y python3-pip
     elif command -v yum > /dev/null 2>&1; then
@@ -37,20 +39,15 @@ PACKAGES="flask requests pyyaml apscheduler pillow discord.py slack-sdk websocke
 python3 -m pip uninstall -y $PACKAGES > /dev/null 2>&1 || true
 
 # 3. 全域安裝 Python 套件
-pip_cmd="sudo python3 -m pip install --upgrade"
-if [ "$ENVIRONMENT" = "macOS" ]; then
-    pip_cmd="python3 -m pip install --upgrade"
-fi
-
 echo "📦 正在全域重新安裝 Python 核心套件..."
-if $pip_cmd $PACKAGES --break-system-packages > /dev/null 2>&1 || $pip_cmd $PACKAGES; then
+if $pip_cmd install --upgrade $PACKAGES --break-system-packages > /dev/null 2>&1 || $pip_cmd install --upgrade $PACKAGES; then
     echo "✅ Python 套件全域安裝成功"
 else
     echo "❌ Python 套件全域安裝失敗！"
-    echo "💡 提示: 請嘗試手動執行: $pip_cmd $PACKAGES --break-system-packages"
+    echo "💡 提示: 請嘗試手動執行: $pip_cmd install --upgrade $PACKAGES --break-system-packages"
 fi
 
-# 4. 補齊 CentOS/RHEL 的 Node.js 安裝 (嚴格 POSIX 相容寫法)
+# 4. 補齊 CentOS/RHEL 的 Node.js 安裝
 if [ "$ENVIRONMENT" != "macOS" ] && command -v yum > /dev/null 2>&1 && ! command -v node > /dev/null 2>&1; then
     echo "🤖 正在為 CentOS/RHEL 補裝 Node.js..."
     curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo -E bash -
