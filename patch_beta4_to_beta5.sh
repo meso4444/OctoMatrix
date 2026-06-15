@@ -4,10 +4,7 @@
 
 set -e
 
-echo "🐙 [OctoMatrix] 正在執行 Beta.4 -> Beta.5 升級環境修復 (V4)..."
-echo "⚠️ [警告] 此腳本目前處於【測試中】狀態，請謹慎使用以避免誤用！"
-echo "========================================================="
-sleep 2
+echo "🐙 [OctoMatrix] 正在執行 Beta.4 -> Beta.5 升級環境修復 (V5)..."
 
 # 1. 環境與指令偵測 (嚴格 POSIX 相容)
 os_type=$(uname -s)
@@ -16,14 +13,20 @@ if [ "$os_type" = "Darwin" ]; then
     pip_cmd="python3 -m pip"
 else
     ENVIRONMENT="Linux"
-    pip_cmd="sudo python3 -m pip"
+    # 動態偵測是否處於 Conda 或虛擬環境中
+    if [ -n "$CONDA_PREFIX" ] || [ -n "$VIRTUAL_ENV" ]; then
+        pip_cmd="python3 -m pip"
+        echo "✅ 偵測到虛擬環境 (Conda/Venv)，將使用本地環境安裝..."
+    else
+        pip_cmd="sudo python3 -m pip"
+    fi
 fi
 
-echo "✅ 偵測到的環境：$ENVIRONMENT"
+echo "✅ 偵測到的系統：$ENVIRONMENT"
 
-# 1.5 檢查「全域」環境是否具備 pip (避開 Conda 誤判)
+# 1.5 檢查當前目標環境是否具備 pip
 if ! $pip_cmd --version > /dev/null 2>&1; then
-    echo "🔧 偵測到全域系統缺少 pip 模組，正在嘗試自動安裝 python3-pip..."
+    echo "🔧 偵測到缺少 pip 模組，正在嘗試自動安裝 python3-pip..."
     if command -v apt-get > /dev/null 2>&1; then
         sudo apt-get update && sudo apt-get install -y python3-pip
     elif command -v yum > /dev/null 2>&1; then
