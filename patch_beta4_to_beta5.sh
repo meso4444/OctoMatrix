@@ -4,7 +4,7 @@
 
 set -e
 
-echo "🐙 [OctoMatrix] Executing Beta.4 -> Beta.5 environment upgrade patch (V7 Dedicated Clean Version)..."
+echo "🐙 [OctoMatrix] Executing Beta.4 -> Beta.5 environment upgrade patch (V8 Complete Clean Version)..."
 
 # 1. Environment & Command Detection (Strict POSIX compliant)
 os_type=$(uname -s)
@@ -59,6 +59,20 @@ if [ "$ENVIRONMENT" != "macOS" ] && command -v yum > /dev/null 2>&1 && ! command
     echo "🤖 Installing Node.js for CentOS/RHEL..."
     curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo -E bash -
     sudo yum install -y nodejs
+fi
+
+# 5. Force reinstall AI CLI Tools
+echo "🤖 Reinstalling latest AI CLI Tools..."
+npm_prefix=""
+if [ "$ENVIRONMENT" != "macOS" ]; then
+    npm_prefix="sudo"
+fi
+
+if command -v npm > /dev/null 2>&1; then
+    $npm_prefix npm install -g @anthropic-ai/claude-code @google/gemini-cli @openai/codex || echo "⚠️ AI CLI installation failed, please check Node.js environment or permissions."
+    echo "✅ AI CLI Tools reinstallation complete!"
+else
+    echo "❌ npm not found, skipping AI CLI reinstallation. Please install Node.js manually!"
 fi
 
 echo "✅ Beta.4 -> Beta.5 environment patch complete! You may now run ./start_octo_services.sh"
