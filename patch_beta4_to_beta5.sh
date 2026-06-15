@@ -107,26 +107,4 @@ else
     echo "❌ 偵測不到 npm，跳過 AI CLI 重裝，請手動安裝 Node.js！"
 fi
 
-echo "✅ Beta.4 -> Beta.5 環境升級修復完成！請接續執行 ./start_octo_services.sh"️ 無法自動安裝 Node.js，後續 CLI 安裝可能失敗，請手動安裝"
-    fi
-fi
-
-# 5. 強制重裝 AI CLI 工具
-echo "🤖 正在重新安裝最新版 AI CLI 工具..."
-npm_prefix=""
-if [ "$ENVIRONMENT" != "macOS" ]; then
-    if [ -n "$CONDA_PREFIX" ] || [ -n "$VIRTUAL_ENV" ] || [[ "$(which npm 2>/dev/null)" == *".nvm"* ]]; then
-        npm_prefix=""
-    else
-        npm_prefix="sudo"
-    fi
-fi
-
-if command -v npm > /dev/null 2>&1; then
-    $npm_prefix npm install -g @anthropic-ai/claude-code @google/gemini-cli @openai/codex || echo "⚠️ AI CLI 安裝失敗，請手動檢查 Node.js 環境或權限。"
-    echo "✅ AI CLI 工具重裝完成！"
-else
-    echo "❌ 偵測不到 npm，跳過 AI CLI 重裝，請手動安裝 Node.js！"
-fi
-
 echo "✅ Beta.4 -> Beta.5 環境升級修復完成！請接續執行 ./start_octo_services.sh"
