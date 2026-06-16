@@ -17,7 +17,7 @@
 
 **OctoMatrix** is a remote AI collaboration environment specifically designed to break communication boundaries. It seamlessly integrates a powerful AI engine with three carefully selected communication platforms: **Telegram, Discord, and Slack**.
 
-This is not merely a chatbot, but a complete **AI team ecosystem**. As a "Matrix Operator," you can command multiple AI Agents with distinct responsibilities from anywhere, anytime, using your phone or computer. Through dedicated workspace isolation, dynamically configured team collaboration, and a long-term state maintenance mechanism based on **Cyberbrain (Electronic Brain)**, AI assistants will continuously execute tasks in the background like a real team.
+This is not merely a chatbot, but a complete **AI team ecosystem**. As a "Matrix Operator," you can command multiple AI Agents with distinct responsibilities from anywhere, anytime, using your phone or computer. Through dedicated workspace isolation, dynamically configured team collaboration, and a long-term state maintenance mechanism based on **Cyberbrain**, AI assistants will continuously execute tasks in the background like a real team.
 
 The system natively supports Linux (e.g., Ubuntu/Debian/CentOS/RHEL) and macOS, and can be run on Windows via WSL.
 
@@ -51,13 +51,13 @@ graph TD
 ```
 ---
 ## ✨ Core Features
-*   **Conversation as Command (Command-Driven)**: Simply send a message in any communication platform to directly command remote AI to execute complex commands and tasks.
-*   **Multi-Agent Squadron (Multi-Agent)**: Support simultaneous configuration of multiple Agents with different specialties (such as data retrieval, code authoring, logical analysis).
-*   **Uninterrupted Cross-Platform (Tri-Channel)**: Support for Telegram, Discord, and Slack. When a commonly used communication platform becomes unstable, seamlessly switch to another platform while keeping the AI team and task progress synchronized.
-*   **Cyberbrain System (Cyberbrain)**: A long-term memory mechanism using "grep-based RAG" in place of traditional vector retrieval. Paying homage to the "GHOST in the SHELL" concept, AI will "compress" and "imprint" conversation highlights as high-density GHOST indices, and through "Deep Dive" technology extract historical context at the physical level from SHELL records, granting Agents efficient retrospection ability that breaks through context window limitations.
+*   **Conversation as Command**: Simply send a message in any communication platform to directly command remote AI to execute complex commands and tasks.
+*   **Multi-Agent Squadron**: Support simultaneous configuration of multiple Agents with different specialties (such as data retrieval, code authoring, logical analysis).
+*   **Uninterrupted Cross-Platform Support**: Support for Telegram, Discord, and Slack. When a commonly used communication platform becomes unstable, seamlessly switch to another platform while keeping the AI team and task progress synchronized.
+*   **Cyberbrain System**: A long-term memory mechanism using "grep-based RAG" in place of traditional vector retrieval. Paying homage to the "GHOST in the SHELL" concept, AI will "compress" and "imprint" conversation highlights as high-density GHOST indices, and through "Deep Dive" technology extract historical context at the physical level from SHELL records, granting Agents efficient retrospection ability that breaks through context window limitations.
 *   **Zero-Threshold Configuration Wizard**: Provides 100% interactive installation wizard, allowing you to easily create your own AI team without manually modifying complex code or configuration files.
-*   **Awake Tasks (Awake Tasks)**: Support assigning periodic or scheduled tasks directly through natural language. The system will automatically wake up the Agent at the specified time to execute background work.
-*   **Agent-to-Agent Interaction (Agent Interaction)**: Agents have the ability to delegate tasks and communicate with each other, enabling division of labor and logical cross-checking.
+*   **Awake Tasks**: Support assigning periodic or scheduled tasks directly through natural language. The system will automatically wake up the Agent at the specified time to execute background work.
+*   **Agent-to-Agent Interaction**: Agents have the ability to delegate tasks and communicate with each other, enabling division of labor and logical cross-checking.
 *   **Role Awareness**: Agents are imbued with unique personalities and automatically send exclusive Avatar stickers reflecting their current emotional state based on the context of the conversation.
 
 ---
