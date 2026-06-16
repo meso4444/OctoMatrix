@@ -41,7 +41,7 @@ graph TD
         
         subgraph Sandbox [Agent Isolated Sandbox Environment]
             Agents[Agent Squadron]
-            Cyberbrain[[Cyberbrain Electronic Brain]]
+            Cyberbrain[[Cyberbrain]]
             Agents <--> Cyberbrain
         end
     end
