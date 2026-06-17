@@ -52,8 +52,8 @@ def save_config():
             yaml.dump(ordered_config, f, allow_unicode=True, sort_keys=False)
         print("✅ 設定已成功儲存。")
         
-        # v4: 建立專屬 Linux 帳號 (非容器環境)
-        if not os.path.exists('/.dockerenv'):
+        # v4: 建立專屬 Linux 帳號 (非容器環境，且排除生成 Docker 部署設定檔的情況)
+        if not os.path.exists('/.dockerenv') and 'docker-deploy' not in os.path.abspath(CONFIG_PATH):
             import subprocess
             password = CONFIG.get("agent_password", "octomatrix")
             print("🔒 正在配置專屬 Linux 帳號隔離...")
