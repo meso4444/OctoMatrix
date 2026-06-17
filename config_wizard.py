@@ -52,8 +52,8 @@ def save_config():
             yaml.dump(ordered_config, f, allow_unicode=True, sort_keys=False)
         print("✅ Configuration saved successfully.")
         
-        # v4: Create dedicated Linux account (Non-container environment)
-        if not os.path.exists('/.dockerenv'):
+        # v4: Create dedicated Linux account (Non-container environment, and exclude generating Docker deployment configs)
+        if not os.path.exists('/.dockerenv') and 'docker-deploy' not in os.path.abspath(CONFIG_PATH):
             import subprocess
             password = CONFIG.get("agent_password", "octomatrix")
             print("🔒 Configuring dedicated Linux account isolation...")
