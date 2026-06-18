@@ -74,15 +74,10 @@ is_docker = os.path.exists('/.dockerenv')
 
 def safe_copy(src, dst):
     if os.path.exists(src):
-        if is_docker and os.path.exists(dst):
-            subprocess.run(['sudo', 'chattr', '-i', dst], check=False, stderr=subprocess.DEVNULL)
         subprocess.run(['rm', '-f', dst], check=False)
         subprocess.run(['cp', src, dst], check=True)
         if dst.endswith('.py') or dst.endswith('.sh'):
-            if is_docker:
-                subprocess.run(['sudo', 'chattr', '+i', dst], check=False, stderr=subprocess.DEVNULL)
-            else:
-                subprocess.run(['chmod', 'o-w', dst], check=False)
+            subprocess.run(['chmod', 'o-w', dst], check=False)
 
 def wait_for_prompt(session_name, window_name, engine, max_wait=30):
     """Wait for tmux pane to show the corresponding CLI prompt (stable detection)

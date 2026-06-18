@@ -48,6 +48,11 @@ else
     exit 1
 fi
 
+if [ "$(id -u)" = "0" ]; then
+    echo "🔒 [Root] Services started, locking core scripts to prevent tampering..."
+    find "$SCRIPT_DIR/agent_home" -type f \( -name "*.py" -o -name "*.sh" \) -exec chattr +i {} + 2>/dev/null || true
+fi
+
 echo "🏁 [Entrypoint] Startup sequence completed. Container entering daemon mode."
 # Keep container running
 tail -f /dev/null

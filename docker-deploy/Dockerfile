@@ -32,8 +32,7 @@ RUN npm install -g @google/gemini-cli @anthropic-ai/claude-code @openai/codex &&
     which gemini && which claude && which codex
 
 # Create non-root user (using the dynamically specified username)
-RUN useradd -m -s /bin/bash $BUILD_USER && \
-    echo "$BUILD_USER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+RUN useradd -m -s /bin/bash $BUILD_USER 
 
 # [Image Hardening] Only copy necessary production code
 RUN mkdir -p /app/octomatrix/docker-deploy/scripts
