@@ -49,8 +49,10 @@ else
 fi
 
 if [ "$(id -u)" = "0" ]; then
-    echo "🔒 [Root] Services started, locking core scripts to prevent tampering..."
-    find "$SCRIPT_DIR/agent_home" -type f \( -name "*.py" -o -name "*.sh" \) -exec chattr +i {} + 2>/dev/null || true
+    echo "🔒 [Root] Services started, precisely locking system distributed scripts to prevent tampering..."
+    if [ -f "/tmp/system_distributed_files.txt" ]; then
+        xargs -a /tmp/system_distributed_files.txt chattr +i 2>/dev/null || true
+    fi
 fi
 
 echo "🏁 [Entrypoint] Startup sequence completed. Container entering daemon mode."
