@@ -5,6 +5,23 @@ set -e
 
 # 解析為絕對路徑
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# ----------------------------------------------------
+# 攔截系統的 Stop 信號 (針對 macOS launchctl stop)
+# ----------------------------------------------------
+trap 'echo "收到系統停止信號 (SIGTERM/SIGINT)，正在關閉服務..."; "$SCRIPT_DIR/stop_octo_services.sh"; exit 0' SIGTERM SIGINT
+
+# ----------------------------------------------------
+# 等待網路的 Ping 迴圈 (無限期等待，確保離線開機時能接續)
+# ----------------------------------------------------
+echo "正在檢查網路連線..."
+while ! ping -c 1 -W 1 8.8.8.8 &>/dev/null; do
+  # 在迴圈中使用 wait 來搭配 sleep，這樣 trap 才能即時響應信號
+  sleep 5 &
+  wait $!
+done
+echo "網路已連線！"
+
 CONFIG_FILE="$SCRIPT_DIR/config.py"
 ENV_FILE="$SCRIPT_DIR/.env"
 
@@ -609,3 +626,9 @@ echo "✅ 驗證步驟:"
 echo "   1. tmux attach -t $TMUX_SESSION_NAME"
 echo "   2. 檢查 router 窗口: curl http://localhost:12210/health"
 echo "   3. 在 Telegram/Discord/Slack 發送訊息並驗證 router 日誌"
+
+# ----------------------------------------------------
+# 讓腳本保持存活 (針對 macOS launchd Graceful Stop)
+# ----------------------------------------------------
+tail -f /dev/null &
+wait $!
