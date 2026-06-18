@@ -31,7 +31,12 @@ if [ "$(id -u)" = "0" ]; then
         chmod 700 "/home/$APP_USER/.tmux"
     fi
 
-    echo "✅ Permissions fix completed"
+    echo "🔓 [Root] Unlocking core scripts to allow overwriting updates..."
+    if [ -f "$SCRIPT_DIR/agent_home/.system_distributed_files.txt" ]; then
+        xargs -a "$SCRIPT_DIR/agent_home/.system_distributed_files.txt" chattr -i 2>/dev/null || true
+    fi
+
+    echo "✅ Permissions fix and unlock completed"
 fi
 
 # 3. Use gosu to switch to the dynamic user and execute the startup script
