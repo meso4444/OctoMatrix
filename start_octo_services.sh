@@ -76,8 +76,11 @@ def safe_copy(src, dst):
     if os.path.exists(src):
         subprocess.run(['rm', '-f', dst], check=False)
         subprocess.run(['cp', src, dst], check=True)
-        if dst.endswith('.py') or dst.endswith('.sh'):
-            subprocess.run(['chmod', 'o-w', dst], check=False)
+        # 無條件拔除 Local 模式下的 Other 寫入權限
+        subprocess.run(['chmod', 'o-w', dst], check=False)
+        # 記錄系統派發的檔案路徑，供 Docker 模式下的 entrypoint.sh 進行精準 chattr 鎖定
+        with open('/tmp/system_distributed_files.txt', 'a') as list_file:
+            list_file.write(dst + '\n')
 
 def wait_for_prompt(session_name, window_name, engine, max_wait=30):
     """等待 tmux pane 出現對應的 CLI 提示符（穩定檢測）
@@ -152,6 +155,9 @@ try:
     
     with open(template_path, 'r') as f:
         gen_template = f.read()
+        
+    if os.path.exists('/tmp/system_distributed_files.txt'):
+        os.remove('/tmp/system_distributed_files.txt')
 
     for i, agent in enumerate(AGENTS):
         name = agent['name']

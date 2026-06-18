@@ -32,7 +32,12 @@ if [ "$(id -u)" = "0" ]; then
     fi
 
     echo "🔓 [Root] 解鎖核心腳本以允許覆寫更新..."
-    find "$SCRIPT_DIR/agent_home" -type f \( -name "*.py" -o -name "*.sh" \) -exec chattr -i {} + 2>/dev/null || true
+    # 針對舊版架構做相容性兜底全域解鎖
+    find "$SCRIPT_DIR/agent_home" -type f \( -name "*.py" -o -name "*.sh" -o -name "*.md" -o -name "*.txt" -o -name "*.yaml" \) -exec chattr -i {} + 2>/dev/null || true
+    # 針對新版清單解鎖
+    if [ -f "/tmp/system_distributed_files.txt" ]; then
+        xargs -a /tmp/system_distributed_files.txt chattr -i 2>/dev/null || true
+    fi
 
     echo "✅ 權限修復與解鎖完成"
 fi
@@ -52,8 +57,10 @@ else
 fi
 
 if [ "$(id -u)" = "0" ]; then
-    echo "🔒 [Root] 服務啟動完畢，鎖定核心腳本以防止越權篡改..."
-    find "$SCRIPT_DIR/agent_home" -type f \( -name "*.py" -o -name "*.sh" \) -exec chattr +i {} + 2>/dev/null || true
+    echo "🔒 [Root] 服務啟動完畢，精準鎖定系統派發腳本以防止越權篡改..."
+    if [ -f "/tmp/system_distributed_files.txt" ]; then
+        xargs -a /tmp/system_distributed_files.txt chattr +i 2>/dev/null || true
+    fi
 fi
 
 echo "🏁 [Entrypoint] 啟動序列執行完畢。容器進入守護模式。"
