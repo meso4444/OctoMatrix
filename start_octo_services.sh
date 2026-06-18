@@ -626,9 +626,3 @@ echo "✅ Verification steps:"
 echo "   1. tmux attach -t $TMUX_SESSION_NAME"
 echo "   2. Check router window: curl http://localhost:12210/health"
 echo "   3. Send message in Telegram/Discord/Slack and verify router logs"
-
-# ----------------------------------------------------
-# Keep script alive (for macOS launchd Graceful Stop)
-# ----------------------------------------------------
-tail -f /dev/null &
-wait $!
