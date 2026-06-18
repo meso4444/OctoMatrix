@@ -32,8 +32,7 @@ RUN npm install -g @google/gemini-cli @anthropic-ai/claude-code @openai/codex &&
     which gemini && which claude && which codex
 
 # 建立非 root 用戶（使用動態指定的用戶名）
-RUN useradd -m -s /bin/bash $BUILD_USER && \
-    echo "$BUILD_USER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+RUN useradd -m -s /bin/bash $BUILD_USER 
 
 # 【鏡像固化】只複製必要的生產代碼
 RUN mkdir -p /app/octomatrix/docker-deploy/scripts

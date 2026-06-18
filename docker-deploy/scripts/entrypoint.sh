@@ -31,7 +31,10 @@ if [ "$(id -u)" = "0" ]; then
         chmod 700 "/home/$APP_USER/.tmux"
     fi
 
-    echo "✅ 權限修復完成"
+    echo "🔓 [Root] 解鎖核心腳本以允許覆寫更新..."
+    find "$SCRIPT_DIR/agent_home" -type f \( -name "*.py" -o -name "*.sh" \) -exec chattr -i {} + 2>/dev/null || true
+
+    echo "✅ 權限修復與解鎖完成"
 fi
 
 # 3. 使用 gosu 切換到動態用戶並執行啟動腳本
@@ -46,6 +49,11 @@ if [ -f "./start_octo_services.sh" ]; then
 else
     echo "❌ 致命錯誤: 找不到 /app/octomatrix/start_octo_services.sh"
     exit 1
+fi
+
+if [ "$(id -u)" = "0" ]; then
+    echo "🔒 [Root] 服務啟動完畢，鎖定核心腳本以防止越權篡改..."
+    find "$SCRIPT_DIR/agent_home" -type f \( -name "*.py" -o -name "*.sh" \) -exec chattr +i {} + 2>/dev/null || true
 fi
 
 echo "🏁 [Entrypoint] 啟動序列執行完畢。容器進入守護模式。"
