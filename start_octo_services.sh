@@ -626,9 +626,3 @@ echo "✅ 驗證步驟:"
 echo "   1. tmux attach -t $TMUX_SESSION_NAME"
 echo "   2. 檢查 router 窗口: curl http://localhost:12210/health"
 echo "   3. 在 Telegram/Discord/Slack 發送訊息並驗證 router 日誌"
-
-# ----------------------------------------------------
-# 讓腳本保持存活 (針對 macOS launchd Graceful Stop)
-# ----------------------------------------------------
-tail -f /dev/null &
-wait $!
