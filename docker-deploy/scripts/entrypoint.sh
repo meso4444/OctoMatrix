@@ -50,8 +50,8 @@ fi
 
 if [ "$(id -u)" = "0" ]; then
     echo "🔒 [Root] Services started, precisely locking system distributed scripts to prevent tampering..."
-    if [ -f "/tmp/system_distributed_files.txt" ]; then
-        xargs -a /tmp/system_distributed_files.txt chattr +i 2>/dev/null || true
+    if [ -f "$SCRIPT_DIR/agent_home/.system_distributed_files.txt" ]; then
+        xargs -a "$SCRIPT_DIR/agent_home/.system_distributed_files.txt" chattr +i 2>/dev/null || true
     fi
 fi
 
