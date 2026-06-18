@@ -5,6 +5,23 @@ set -e
 
 # Parse as absolute path
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# ----------------------------------------------------
+# Intercept OS Stop signal (for macOS launchctl stop)
+# ----------------------------------------------------
+trap 'echo "Received OS stop signal (SIGTERM/SIGINT), stopping services..."; "$SCRIPT_DIR/stop_octo_services.sh"; exit 0' SIGTERM SIGINT
+
+# ----------------------------------------------------
+# Wait for network Ping loop (wait indefinitely to ensure offline boot support)
+# ----------------------------------------------------
+echo "Checking network connection..."
+while ! ping -c 1 -W 1 8.8.8.8 &>/dev/null; do
+  # Use wait with sleep in the loop so trap can immediately respond to signals
+  sleep 5 &
+  wait $!
+done
+echo "Network connected!"
+
 CONFIG_FILE="$SCRIPT_DIR/config.py"
 ENV_FILE="$SCRIPT_DIR/.env"
 
@@ -609,3 +626,9 @@ echo "✅ Verification steps:"
 echo "   1. tmux attach -t $TMUX_SESSION_NAME"
 echo "   2. Check router window: curl http://localhost:12210/health"
 echo "   3. Send message in Telegram/Discord/Slack and verify router logs"
+
+# ----------------------------------------------------
+# Keep script alive (for macOS launchd Graceful Stop)
+# ----------------------------------------------------
+tail -f /dev/null &
+wait $!
