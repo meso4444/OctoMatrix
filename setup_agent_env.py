@@ -107,23 +107,6 @@ def setup_collaboration_links(agents, groups):
                         except OSError as e:
                             print(f"   ⚠️ Failed to remove: {e}")
 
-def apply_manual_templates(agent_name, home_path, engine):
-    """Check for manually defined specification templates and copy if found"""
-    template_file = os.path.join(TEMPLATES_DIR, f"{agent_name}.md")
-    if engine.lower() == 'codex':
-        engine_doc_name = 'AGENTS.md'
-    elif engine.lower() == 'agy':
-        engine_doc_name = 'GEMINI.md'
-    else:
-        engine_doc_name = f"{engine.upper()}.md"
-    target_file = os.path.join(home_path, engine_doc_name)
-
-    if os.path.exists(template_file):
-        print(f"   📄 Found custom specification: {agent_name}.md -> Copying")
-        shutil.copy2(template_file, target_file)
-        return True # Manual spec exists
-    return False
-
 def deploy_skills(agents):
     """Deploy Skills and implement Immutable locking"""
     skills_base_dir = os.path.join(BASE_DIR, 'skills')
@@ -203,9 +186,6 @@ def main():
         engine = agent['engine']
         # print(f"   🏠 Agent: {name}")
         home = setup_agent_dirs(name)
-
-        # 2. Check for manual templates
-        apply_manual_templates(name, home, engine)
 
     # 3. Establish collaboration links
     setup_collaboration_links(agents, groups)

@@ -84,7 +84,7 @@ def prompt_model_choice(engine, current_model=None):
     elif 'codex' in engine:
         options = [("gpt-5.4-mini", "gpt-5.4-mini (Default)"), ("gpt-5.4", "gpt-5.4")]
     elif 'agy' in engine or 'antigravity' in engine:
-        options = [("auto", "auto (Default)")]
+        options = [("auto", "auto (Default)"), ("gemini-3.5-flash", "gemini-3.5-flash"), ("gemini-3.1-pro", "gemini-3.1-pro"), ("claude-sonnet-4-6", "claude-sonnet-4-6"), ("claude-opus-4-6", "claude-opus-4-6")]
     else:
         return input(f"Model (press Enter to keep '{current_model or 'default'}'): ").strip()
 
