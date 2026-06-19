@@ -325,7 +325,7 @@ try:
         elif engine == 'agy':
             cmd = 'agy --dangerously-skip-permissions'
             if model and model.lower() != 'auto':
-                cmd += f' --model {model}'
+                cmd += f' --model "{model}"'
             engine_doc_name = 'GEMINI.md'
         else:
             cmd = 'claude --permission-mode bypassPermissions'
