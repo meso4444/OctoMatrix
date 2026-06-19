@@ -15,7 +15,7 @@ trap 'echo "收到系統停止信號 (SIGTERM/SIGINT)，正在關閉服務..."; 
 # 等待網路的 Ping 迴圈 (無限期等待，確保離線開機時能接續)
 # ----------------------------------------------------
 echo "正在檢查網路連線..."
-while ! ping -c 1 -W 1 8.8.8.8 &>/dev/null; do
+while ! python3 -c "import socket; socket.create_connection(('8.8.8.8', 53), timeout=2)" &>/dev/null; do
   # 在迴圈中使用 wait 來搭配 sleep，這樣 trap 才能即時響應信號
   sleep 5 &
   wait $!
