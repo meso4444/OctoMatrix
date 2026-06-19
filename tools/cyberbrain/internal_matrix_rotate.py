@@ -57,6 +57,8 @@ def get_config(agent_name=None):
                         engine_doc_name = "CLAUDE.md"
                     elif engine == 'codex':
                         engine_doc_name = "AGENTS.md"
+                    elif engine == 'agy':
+                        engine_doc_name = "GEMINI.md"
                     break
         return limit, context_size, engine_doc_name, engine
     except Exception:
@@ -165,6 +167,8 @@ def main():
             prompt_markers = ['Claude']
         elif ENGINE == 'codex':
             prompt_markers = ['OpenAI']
+        elif ENGINE == 'agy':
+            prompt_markers = ['Antigravity CLI']
         else:  # gemini
             prompt_markers = ['Gemini']
 

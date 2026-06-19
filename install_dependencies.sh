@@ -232,6 +232,7 @@ install_ai_cli_tools() {
     if command -v npm &> /dev/null; then
         echo "🧹 Clearing potentially conflicting local AI CLIs..."
         npm uninstall -g @anthropic-ai/claude-code @google/gemini-cli @openai/codex 2>/dev/null || true
+        # agy is a native binary, not an npm package — no npm uninstall needed
     fi
 
     # Whether sudo is needed (Linux/WSL needs it, macOS usually doesn't)
@@ -274,6 +275,23 @@ install_ai_cli_tools() {
         fi
     else
         echo "✅ Codex CLI already installed: $(codex --version 2>/dev/null || echo 'Detected')"
+    fi
+
+    # Install agy CLI (Antigravity - native binary, not npm package)
+    if ! command -v agy &> /dev/null; then
+        echo "📦 Installing agy CLI via curl..."
+        if curl -fsSL https://antigravity.google/cli/install.sh | bash; then
+            echo "   🚚 Copying agy to system-wide path..."
+            if [[ "$ENVIRONMENT" != "macOS" ]]; then
+                sudo cp ~/.local/bin/agy /usr/local/bin/agy || echo "⚠️  agy CLI system-wide installation failed (permission denied?)"
+            else
+                cp ~/.local/bin/agy /usr/local/bin/agy || echo "⚠️  agy CLI system-wide installation failed"
+            fi
+        else
+            echo "⚠️  agy CLI installation failed"
+        fi
+    else
+        echo "✅ agy CLI already installed: $(agy --version 2>/dev/null || echo 'Detected')"
     fi
 }
 

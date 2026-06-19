@@ -84,6 +84,13 @@ run_local_auth() {
         sudo su - "$AGENT_USER" -c "codex --yolo" || true
         echo ""
         echo "✅ Codex authentication complete!"
+    elif [[ "${AGENT_ENGINE,,}" == *"agy"* ]] || [[ "${AGENT_ENGINE,,}" == *"antigravity"* ]]; then
+        echo "🚀 Starting Antigravity CLI authentication (Identity: $AGENT_USER)..."
+        echo "💡 Tip: After authentication, credentials will be stored in /home/$AGENT_USER/.gemini"
+        echo ""
+        sudo su - "$AGENT_USER" -c "agy --dangerously-skip-permissions" || true
+        echo ""
+        echo "✅ Antigravity authentication complete!"
     else
         echo "🚀 Starting Gemini CLI authentication (Identity: $AGENT_USER)..."
         echo "💡 Tip: After authentication, credentials will be stored in /home/$AGENT_USER/.gemini"
@@ -134,9 +141,10 @@ run_container_auth() {
     echo "1) Gemini"
     echo "2) Claude"
     echo "3) Codex"
+    echo "4) Antigravity (agy)"
     echo "R) Return / Exit"
     echo ""
-    read -p "Please enter your choice [1-3, R]: " CLI_CHOICE
+    read -p "Please enter your choice [1-4, R]: " CLI_CHOICE
 
     case "$CLI_CHOICE" in
       1)

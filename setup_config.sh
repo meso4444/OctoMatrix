@@ -297,16 +297,17 @@ while true; do
                 echo " [1] 🆙 Upgrade Gemini CLI"
                 echo " [2] 🆙 Upgrade Claude Code"
                 echo " [3] 🆙 Upgrade Codex CLI"
-                echo " [4] 🚀 Upgrade all CLI tools at once"
+                echo " [4] 🆙 Upgrade agy CLI (Antigravity)"
+                echo " [5] 🚀 Upgrade all CLI tools at once"
                 echo "----------------------------------------"
-                echo " [5] ⏪ Rollback Gemini CLI (Restore from backup)"
-                echo " [6] ⏪ Rollback Claude Code (Restore from backup)"
-                echo " [7] ⏪ Rollback Codex CLI (Restore from backup)"
-                echo " [8] 🛡️ Rollback all CLI tools at once"
+                echo " [6] ⏪ Rollback Gemini CLI (Restore from backup)"
+                echo " [7] ⏪ Rollback Claude Code (Restore from backup)"
+                echo " [8] ⏪ Rollback Codex CLI (Restore from backup)"
+                echo " [9] 🛡️ Rollback all CLI tools at once"
                 echo "----------------------------------------"
                 echo " [R] 🔙 Return to Main Menu"
                 echo "=========================================="
-                read -p "Please select an operation [1-8, R]: " cli_choice
+                read -p "Please select an operation [1-9, R]: " cli_choice
 
                 do_update() {
                     local pkg="$1"
@@ -321,6 +322,18 @@ while true; do
                     echo "🚀 Performing global upgrade for $name (requires sudo permission)..."
                     sudo npm update -g "$pkg"
                     echo "✅ $name upgrade complete!"
+                    read -p "Press Enter to continue..." dummy_key
+                }
+
+                do_update_agy() {
+                    echo "🔄 Reinstalling agy CLI (Antigravity) to the latest version..."
+                    if curl -fsSL https://antigravity.google/cli/install.sh | bash; then
+                        echo "   🚚 Copying agy to system-wide path..."
+                        sudo cp ~/.local/bin/agy /usr/local/bin/agy
+                        echo "✅ agy CLI upgrade complete!"
+                    else
+                        echo "⚠️ agy CLI upgrade failed"
+                    fi
                     read -p "Press Enter to continue..." dummy_key
                 }
 
@@ -344,15 +357,17 @@ while true; do
                     1) do_update "@google/gemini-cli" "Gemini CLI" ;;
                     2) do_update "@anthropic-ai/claude-code" "Claude Code" ;;
                     3) do_update "@openai/codex" "Codex CLI" ;;
-                    4)
+                    4) do_update_agy ;;
+                    5)
                         do_update "@google/gemini-cli" "Gemini CLI"
                         do_update "@anthropic-ai/claude-code" "Claude Code"
                         do_update "@openai/codex" "Codex CLI"
+                        do_update_agy
                         ;;
-                    5) do_rollback "@google/gemini-cli" "Gemini CLI" ;;
-                    6) do_rollback "@anthropic-ai/claude-code" "Claude Code" ;;
-                    7) do_rollback "@openai/codex" "Codex CLI" ;;
-                    8)
+                    6) do_rollback "@google/gemini-cli" "Gemini CLI" ;;
+                    7) do_rollback "@anthropic-ai/claude-code" "Claude Code" ;;
+                    8) do_rollback "@openai/codex" "Codex CLI" ;;
+                    9)
                         do_rollback "@google/gemini-cli" "Gemini CLI"
                         do_rollback "@anthropic-ai/claude-code" "Claude Code"
                         do_rollback "@openai/codex" "Codex CLI"

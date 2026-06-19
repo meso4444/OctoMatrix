@@ -247,6 +247,8 @@ class CommandHandler:
                 engine_doc_name = "CLAUDE.md"
             elif engine == "codex":
                 engine_doc_name = "AGENTS.md"
+            elif engine == "agy":
+                engine_doc_name = "GEMINI.md"
             else:
                 engine_doc_name = "GEMINI.md"
 
@@ -343,6 +345,9 @@ Enter the '{target}' window via tmux, view the first 50 lines of status and anal
                         resume_hint = "After waiting 5 seconds for startup to complete, please enter `/resume`, press Enter, wait 3 seconds then press Down arrow, wait 1 second then press enter once more to restore the last conversation record."
                     elif 'codex' in engine:
                         start_cmd = f'codex --yolo --model {model}' if model and model.lower() != 'auto' else 'codex --yolo'
+                        resume_hint = "After waiting 5 seconds for startup to complete, please enter `/resume`, press Enter, wait 3 seconds then press enter once more to restore the last conversation record."
+                    elif 'agy' in engine:
+                        start_cmd = f'agy --dangerously-skip-permissions --model {model}' if model and model.lower() != 'auto' else 'agy --dangerously-skip-permissions'
                         resume_hint = "After waiting 5 seconds for startup to complete, please enter `/resume`, press Enter, wait 3 seconds then press enter once more to restore the last conversation record."
                     else:
                         start_cmd = f'claude --permission-mode bypassPermissions --model {model}' if model and model.lower() != 'auto' else 'claude --permission-mode bypassPermissions'

@@ -83,6 +83,8 @@ def prompt_model_choice(engine, current_model=None):
         options = [("sonnet", "sonnet (Default)"), ("haiku", "haiku"), ("opus", "opus")]
     elif 'codex' in engine:
         options = [("gpt-5.4-mini", "gpt-5.4-mini (Default)"), ("gpt-5.4", "gpt-5.4")]
+    elif 'agy' in engine or 'antigravity' in engine:
+        options = [("auto", "auto (Default)")]
     else:
         return input(f"Model (press Enter to keep '{current_model or 'default'}'): ").strip()
 
@@ -187,7 +189,7 @@ def manage_agents():
         if choice == 'a':
             name = input("Agent Name: ").strip()
             if not name: continue
-            engine = input("Engine (gemini/claude/codex) [gemini]: ").strip() or "gemini"
+            engine = input("Engine (gemini/claude/codex/agy) [gemini]: ").strip() or "gemini"
             model = prompt_model_choice(engine)
             usecase = input("Responsibility (usecase) [for Agent system prompt awareness]: ").strip()
             desc = input("Description (description) [for menu and user identification]: ").strip()

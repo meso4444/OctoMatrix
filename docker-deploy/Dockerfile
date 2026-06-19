@@ -31,6 +31,13 @@ RUN npm install -g @google/gemini-cli @anthropic-ai/claude-code @openai/codex &&
     echo "✅ AI CLI tools installed successfully" && \
     which gemini && which claude && which codex
 
+# Install agy CLI (Antigravity - native binary, not npm package)
+RUN curl -fsSL https://antigravity.google/cli/install.sh | bash && \
+    cp ~/.local/bin/agy /usr/local/bin/agy && \
+    chmod +x /usr/local/bin/agy && \
+    echo "✅ agy CLI installed successfully" && \
+    which agy
+
 # Create non-root user (using the dynamically specified username)
 RUN useradd -m -s /bin/bash $BUILD_USER 
 

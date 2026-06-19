@@ -110,7 +110,12 @@ def setup_collaboration_links(agents, groups):
 def apply_manual_templates(agent_name, home_path, engine):
     """Check for manually defined specification templates and copy if found"""
     template_file = os.path.join(TEMPLATES_DIR, f"{agent_name}.md")
-    engine_doc_name = 'AGENTS.md' if engine.lower() == 'codex' else f"{engine.upper()}.md"
+    if engine.lower() == 'codex':
+        engine_doc_name = 'AGENTS.md'
+    elif engine.lower() == 'agy':
+        engine_doc_name = 'GEMINI.md'
+    else:
+        engine_doc_name = f"{engine.upper()}.md"
     target_file = os.path.join(home_path, engine_doc_name)
 
     if os.path.exists(template_file):
