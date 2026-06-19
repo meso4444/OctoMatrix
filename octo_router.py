@@ -353,7 +353,7 @@ Enter the '{target}' window via tmux, view the first 50 lines of status and anal
                         start_cmd = f'claude --permission-mode bypassPermissions --model {model}' if model and model.lower() != 'auto' else 'claude --permission-mode bypassPermissions'
                         resume_hint = "After waiting 5 seconds for startup to complete, please enter `/resume`, press Enter, wait 3 seconds then press enter once more to restore the last conversation record."
 
-                        prompt = f"""{SYS_PREFIX}
+                    prompt = f"""{SYS_PREFIX}
 Execute the following [SOP]:
 [Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
 [Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If a task, proceed to Step2; if a greeting, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate greeting response}}'`, and do not execute subsequent Steps.
