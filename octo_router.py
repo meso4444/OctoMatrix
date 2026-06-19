@@ -347,7 +347,7 @@ Enter the '{target}' window via tmux, view the first 50 lines of status and anal
                         start_cmd = f'codex --yolo --model {model}' if model and model.lower() != 'auto' else 'codex --yolo'
                         resume_hint = "After waiting 5 seconds for startup to complete, please enter `/resume`, press Enter, wait 3 seconds then press enter once more to restore the last conversation record."
                     elif 'agy' in engine:
-                        start_cmd = f'agy --dangerously-skip-permissions --model "{model}"' if model and model.lower() != 'auto' else 'agy --dangerously-skip-permissions'
+                        start_cmd = f'agy --dangerously-skip-permissions --model "{model}"' if model else 'agy --dangerously-skip-permissions'
                         resume_hint = "After waiting 5 seconds for startup to complete, please enter `/resume`, press Enter, wait 3 seconds then press enter once more to restore the last conversation record."
                     else:
                         start_cmd = f'claude --permission-mode bypassPermissions --model {model}' if model and model.lower() != 'auto' else 'claude --permission-mode bypassPermissions'

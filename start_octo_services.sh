@@ -324,7 +324,7 @@ try:
             engine_doc_name = 'AGENTS.md'
         elif engine == 'agy':
             cmd = 'agy --dangerously-skip-permissions'
-            if model and model.lower() != 'auto':
+            if model:
                 cmd += f' --model "{model}"'
             engine_doc_name = 'GEMINI.md'
         else:
