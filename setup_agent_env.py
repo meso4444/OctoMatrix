@@ -107,23 +107,6 @@ def setup_collaboration_links(agents, groups):
                         except OSError as e:
                             print(f"   ⚠️ 移除失敗: {e}")
 
-def apply_manual_templates(agent_name, home_path, engine):
-    """檢查是否有手動定義的規範範本，若有則複製"""
-    template_file = os.path.join(TEMPLATES_DIR, f"{agent_name}.md")
-    if engine.lower() == 'codex':
-        engine_doc_name = 'AGENTS.md'
-    elif engine.lower() == 'agy':
-        engine_doc_name = 'GEMINI.md'
-    else:
-        engine_doc_name = f"{engine.upper()}.md"
-    target_file = os.path.join(home_path, engine_doc_name)
-    
-    if os.path.exists(template_file):
-        print(f"   📄 發現自定義規範: {agent_name}.md -> 複製中")
-        shutil.copy2(template_file, target_file)
-        return True # 代表已有人工規範
-    return False
-
 def deploy_skills(agents):
     """部署 Skills 並實作 Immutable 鎖定"""
     skills_base_dir = os.path.join(BASE_DIR, 'skills')
@@ -203,10 +186,7 @@ def main():
         engine = agent['engine']
         # print(f"   🏠 Agent: {name}")
         home = setup_agent_dirs(name)
-        
-        # 2. 檢查人工範本
-        apply_manual_templates(name, home, engine)
-        
+
     # 3. 建立協作連結
     setup_collaboration_links(agents, groups)
     

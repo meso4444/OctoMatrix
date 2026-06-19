@@ -84,7 +84,7 @@ def prompt_model_choice(engine, current_model=None):
     elif 'codex' in engine:
         options = [("gpt-5.4-mini", "gpt-5.4-mini (預設)"), ("gpt-5.4", "gpt-5.4")]
     elif 'agy' in engine or 'antigravity' in engine:
-        options = [("auto", "auto (預設)")]
+        options = [("auto", "auto (預設)"), ("gemini-3.5-flash", "gemini-3.5-flash"), ("gemini-3.1-pro", "gemini-3.1-pro"), ("claude-sonnet-4-6", "claude-sonnet-4-6"), ("claude-opus-4-6", "claude-opus-4-6")]
     else:
         return input(f"模型 (model，按 Enter 保留 '{current_model or '預設'}'): ").strip()
 
