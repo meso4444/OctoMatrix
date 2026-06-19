@@ -45,6 +45,8 @@ NOISE_PATTERNS = [
     r'▸ Thought for',
     r'\(ctrl\+o to',
     r'^● \w+\(',
+    r'\* Doodling',
+    r'\* Elucidating',
 ]
 
 # ✅ 必留特徵
