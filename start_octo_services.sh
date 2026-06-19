@@ -15,7 +15,14 @@ trap 'echo "Received OS stop signal (SIGTERM/SIGINT), stopping services..."; "$S
 # Wait for network Ping loop (wait indefinitely to ensure offline boot support)
 # ----------------------------------------------------
 echo "Checking network connection..."
+MAX_RETRIES=6
+RETRY_COUNT=0
 while ! python3 -c "import socket; socket.create_connection(('8.8.8.8', 53), timeout=2)" &>/dev/null; do
+  RETRY_COUNT=$((RETRY_COUNT+1))
+  if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
+    echo "⚠️ Network check timeout, attempting to continue..."
+    break
+  fi
   # Use wait with sleep in the loop so trap can immediately respond to signals
   sleep 5 &
   wait $!
