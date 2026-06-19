@@ -195,6 +195,22 @@ run_container_auth() {
           echo "   Try running: sudo chmod 777 $CONTAINER_HOME"
         fi
         ;;
+      4)
+        echo ""
+        echo "🚀 Starting Antigravity CLI authentication..."
+        echo "📂 Auth path: $CONTAINER_HOME"
+        echo "💡 Hint: Credentials will be stored in $CONTAINER_HOME/.gemini"
+        echo ""
+        if HOME="$CONTAINER_HOME" agy --dangerously-skip-permissions; then
+          echo ""
+          echo "✅ Antigravity authentication complete!"
+          echo "📦 Credentials stored at: $CONTAINER_HOME/.gemini"
+        else
+          echo ""
+          echo "⚠️  Error occurred during authentication, please check directory permissions"
+          echo "   Try running: sudo chmod 777 $CONTAINER_HOME"
+        fi
+        ;;
       [Rr])
         break
         ;;
