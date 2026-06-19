@@ -207,6 +207,7 @@ After dependencies are installed, start the interactive configuration wizard. Yo
 *   **[5] 🌍 Network & Ports Setup (Ports)**: Customize local port numbers for Router, Gateway, and ngrok tunnel to avoid conflicts with other services on your host.
 *   **[6] 🤖 Configure AI Agent Squadron & Advanced Parameters**:
     *   **Configure Agent**: Name the AI, specify its **usecase** (for AI awareness) and **description** (for menu display to users), and freely combine AI engines (Gemini, Claude, Codex, or agy (Antigravity)) with models.
+        > **Note:** It is recommended to switch to the agy (Antigravity) engine for better stability, as the gemini CLI no longer supports Pro subscription users.
     *   **Configure Agent Collaboration Groups**: Create team shared spaces and specify mutual supervision and task delegation relationships between agents within groups.
     *   **Communication Menu Configuration**: In addition to the system's built-in basic menu, you can "customize dedicated buttons" to bind commonly used prompts or commands to graphical buttons for one-click sending.
 *   **[7] 🔐 AI Agent CLI Authentication Setup**: Built-in authentication flow to help you with one-click authorization from Google, Anthropic, or OpenAI to complete terminal login.

@@ -5,7 +5,7 @@ ARG BUILD_USER=appuser
 
 # Install system tools (including gosu for privilege de-escalation)
 RUN apt-get update && apt-get install -y \
-    curl wget jq tmux procps git gnupg2 lsb-release sudo zstd e2fsprogs \
+    curl wget jq tmux procps git gnupg2 lsb-release sudo zstd e2fsprogs iputils-ping \
     && rm -rf /var/lib/apt/lists/*
 
 # Install gosu (lightweight sudo alternative for correct privilege de-escalation)
