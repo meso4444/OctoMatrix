@@ -278,35 +278,21 @@ install_ai_cli_tools() {
     fi
 
     # Install agy CLI (Antigravity - native binary, not npm package)
-    if ! command -v agy &> /dev/null; then
+    # Check system-wide path, not arbitrary PATH — prevents skip if kenzan already has ~/.local/bin/agy
+    if [ ! -f /usr/local/bin/agy ]; then
         echo "📦 Installing agy CLI via curl..."
         if curl -fsSL https://antigravity.google/cli/install.sh | bash; then
             echo "   🚚 Copying agy to system-wide path..."
-            AGY_SRC="$HOME/.local/bin/agy"
-            AGY_DST="/usr/local/bin/agy"
-            if [ -f "$AGY_SRC" ]; then
-                # Try sudo cp (Linux/WSL), fall back to direct cp (macOS/specific environments)
-                if [[ "$ENVIRONMENT" != "macOS" ]]; then
-                    if sudo -n true 2>/dev/null; then
-                        sudo cp "$AGY_SRC" "$AGY_DST" && sudo chmod 755 "$AGY_DST" && echo "   ✅ agy installed to $AGY_DST"
-                    else
-                        # sudo without password not available, try direct write
-                        cp "$AGY_SRC" "$AGY_DST" 2>/dev/null && chmod 755 "$AGY_DST" 2>/dev/null && echo "   ✅ agy installed to $AGY_DST" || {
-                            echo "   ⚠️ Cannot copy to system path (sudo required)"
-                            echo "   💡 Please run manually: sudo cp $AGY_SRC $AGY_DST && sudo chmod 755 $AGY_DST"
-                        }
-                    fi
-                else
-                    cp "$AGY_SRC" "$AGY_DST" && chmod 755 "$AGY_DST" && echo "   ✅ agy installed to $AGY_DST" || echo "   ⚠️ agy CLI system-wide installation failed"
-                fi
+            if [[ "$ENVIRONMENT" != "macOS" ]]; then
+                sudo cp "$HOME/.local/bin/agy" /usr/local/bin/agy && sudo chmod 755 /usr/local/bin/agy || echo "⚠️  agy CLI system-wide installation failed (sudo failed?)"
             else
-                echo "   ⚠️ Install script did not produce $AGY_SRC, please check agy installation"
+                cp "$HOME/.local/bin/agy" /usr/local/bin/agy && chmod 755 /usr/local/bin/agy || echo "⚠️  agy CLI system-wide installation failed"
             fi
         else
             echo "⚠️ agy CLI installation failed"
         fi
     else
-        echo "✅ agy CLI already installed: $(agy --version 2>/dev/null || echo 'Detected')"
+        echo "✅ agy CLI already installed at system-wide path (/usr/local/bin/agy)"
     fi
 }
 
