@@ -247,6 +247,8 @@ class CommandHandler:
                 engine_doc_name = "CLAUDE.md"
             elif engine == "codex":
                 engine_doc_name = "AGENTS.md"
+            elif engine == "agy":
+                engine_doc_name = "GEMINI.md"
             else:
                 engine_doc_name = "GEMINI.md"
 
@@ -341,6 +343,9 @@ class CommandHandler:
                         resume_hint = "等待5秒啟動完成後，請輸入 `/resume` ,執行 Enter, 等待3秒後再輸入向下方向鍵 (Down), 等待1秒後再執行1次enter, 以恢復最近一次的對話紀錄。"
                     elif 'codex' in engine:
                         start_cmd = f'codex --yolo --model {model}' if model and model.lower() != 'auto' else 'codex --yolo'
+                        resume_hint = "等待5秒啟動完成後，請輸入 `/resume` ,執行 Enter, 等待3秒後再執行1次enter, 以恢復最近一次的對話紀錄。"
+                    elif 'agy' in engine:
+                        start_cmd = f'agy --dangerously-skip-permissions --model {model}' if model and model.lower() != 'auto' else 'agy --dangerously-skip-permissions'
                         resume_hint = "等待5秒啟動完成後，請輸入 `/resume` ,執行 Enter, 等待3秒後再執行1次enter, 以恢復最近一次的對話紀錄。"
                     else:
                         start_cmd = f'claude --permission-mode bypassPermissions --model {model}' if model and model.lower() != 'auto' else 'claude --permission-mode bypassPermissions'

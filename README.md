@@ -206,7 +206,7 @@ cd OctoMatrix
 *   **[2]-[4] 通訊通道設定**：引導綁定 Telegram、Discord 或 Slack 的 Token，並可隨時開關特定通道。
 *   **[5] 🌍 設定網路與連接埠 (Ports)**：自訂 Router、Gateway 與 ngrok 隧道的本地 Port口，避免與主機其他服務衝突。
 *   **[6] 🤖 設定 AI Agent 軍團與進階參數**：
-    *   **配置 Agent**：為 AI 命名，指定它的 **職責 (usecase)**（用於 AI 認知）與 **描述 (description)**（用於選單展示給使用者），並自由搭配 AI 引擎（Gemini、Claude 或 Codex）與模型。
+    *   **配置 Agent**：為 AI 命名，指定它的 **職責 (usecase)**（用於 AI 認知）與 **描述 (description)**（用於選單展示給使用者），並自由搭配 AI 引擎（Gemini、Claude、Codex 或 agy (Antigravity)）與模型。
     *   **配置 Agent 協作群組**：建立團隊共享空間，並指定群組內的 Agent 之間互相監督與交辦任務的對接關係。
     *   **通訊選單配置**：除了系統已內建基礎選單，還可以「自訂專屬按鈕」，將常用的提示詞或指令綁定至圖形化按鍵，一鍵發送。
 *   **[7] 🔐 AI Agent CLI 認證設定**：內建認證流程，協助一鍵呼叫 Google、Anthropic 或 OpenAI 的授權介面完成終端登入。

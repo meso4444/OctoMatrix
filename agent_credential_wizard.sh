@@ -84,6 +84,13 @@ run_local_auth() {
         sudo su - "$AGENT_USER" -c "codex --yolo" || true
         echo ""
         echo "✅ Codex 認證完成！"
+    elif [[ "${AGENT_ENGINE,,}" == *"agy"* ]] || [[ "${AGENT_ENGINE,,}" == *"antigravity"* ]]; then
+        echo "🚀 啟動 Antigravity CLI 認證 (身分: $AGENT_USER)..."
+        echo "💡 提示: 完成認證後，憑證將存放在 /home/$AGENT_USER/.gemini"
+        echo ""
+        sudo su - "$AGENT_USER" -c "agy --dangerously-skip-permissions" || true
+        echo ""
+        echo "✅ Antigravity 認證完成！"
     else
         echo "🚀 啟動 Gemini CLI 認證 (身分: $AGENT_USER)..."
         echo "💡 提示: 完成認證後，憑證將存放在 /home/$AGENT_USER/.gemini"
@@ -134,9 +141,10 @@ run_container_auth() {
     echo "1) Gemini"
     echo "2) Claude"
     echo "3) Codex"
+    echo "4) Antigravity (agy)"
     echo "R) 返回 / 退出"
     echo ""
-    read -p "請輸入選擇 [1-3, R]: " CLI_CHOICE
+    read -p "請輸入選擇 [1-4, R]: " CLI_CHOICE
 
     case "$CLI_CHOICE" in
       1)
@@ -181,6 +189,22 @@ run_container_auth() {
           echo ""
           echo "✅ Codex 認證完成！"
           echo "📦 憑證已存放至: $CONTAINER_HOME/.codex"
+        else
+          echo ""
+          echo "⚠️  認證過程中出現錯誤，請檢查目錄權限"
+          echo "   嘗試執行: sudo chmod 777 $CONTAINER_HOME"
+        fi
+        ;;
+      4)
+        echo ""
+        echo "🚀 啟動 Antigravity CLI 認證..."
+        echo "📂 認證路徑: $CONTAINER_HOME"
+        echo "💡 提示: 認證將存放在 $CONTAINER_HOME/.gemini"
+        echo ""
+        if HOME="$CONTAINER_HOME" agy --dangerously-skip-permissions; then
+          echo ""
+          echo "✅ Antigravity 認證完成！"
+          echo "📦 憑證已存放至: $CONTAINER_HOME/.gemini"
         else
           echo ""
           echo "⚠️  認證過程中出現錯誤，請檢查目錄權限"

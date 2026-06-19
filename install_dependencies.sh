@@ -232,6 +232,7 @@ install_ai_cli_tools() {
     if command -v npm &> /dev/null; then
         echo "🧹 正在清除可能衝突的局部 AI CLI..."
         npm uninstall -g @anthropic-ai/claude-code @google/gemini-cli @openai/codex 2>/dev/null || true
+        # agy 是原生 binary 非 npm 套件，不需 npm uninstall
     fi
 
     # 是否需要 sudo (Linux/WSL 需要，macOS 通常不需要)
@@ -274,6 +275,23 @@ install_ai_cli_tools() {
         fi
     else
         echo "✅ Codex CLI 已安裝: $(codex --version 2>/dev/null || echo 'Detected')"
+    fi
+
+    # 安裝 agy CLI (Antigravity - 原生 binary，非 npm 套件)
+    if ! command -v agy &> /dev/null; then
+        echo "📦 正在透過 curl 安裝 agy CLI..."
+        if curl -fsSL https://antigravity.google/cli/install.sh | bash; then
+            echo "   🚚 複製 agy 至系統全域路徑..."
+            if [[ "$ENVIRONMENT" != "macOS" ]]; then
+                sudo cp ~/.local/bin/agy /usr/local/bin/agy || echo "⚠️  agy CLI 全域安裝失敗 (權限不足?)"
+            else
+                cp ~/.local/bin/agy /usr/local/bin/agy || echo "⚠️  agy CLI 全域安裝失敗"
+            fi
+        else
+            echo "⚠️  agy CLI 安裝失敗"
+        fi
+    else
+        echo "✅ agy CLI 已安裝: $(agy --version 2>/dev/null || echo 'Detected')"
     fi
 }
 

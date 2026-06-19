@@ -116,6 +116,8 @@ def wait_for_prompt(session_name, window_name, engine, max_wait=30):
         prompt_markers = ['Claude', 'bypass permissions on']
     elif engine == 'codex':
         prompt_markers = ['OpenAI', '› ']
+    elif engine == 'agy':
+        prompt_markers = ['Antigravity CLI']
     else:  # gemini
         prompt_markers = ['Gemini', 'YOLO']
 
@@ -320,6 +322,11 @@ try:
             if model and model.lower() != 'auto':
                 cmd += f' --model {model}'
             engine_doc_name = 'AGENTS.md'
+        elif engine == 'agy':
+            cmd = 'agy --dangerously-skip-permissions'
+            if model and model.lower() != 'auto':
+                cmd += f' --model {model}'
+            engine_doc_name = 'GEMINI.md'
         else:
             cmd = 'claude --permission-mode bypassPermissions'
             if model and model.lower() != 'auto':

@@ -31,6 +31,13 @@ RUN npm install -g @google/gemini-cli @anthropic-ai/claude-code @openai/codex &&
     echo "✅ AI CLI tools installed successfully" && \
     which gemini && which claude && which codex
 
+# 安裝 agy CLI (Antigravity - 原生 binary，非 npm 套件)
+RUN curl -fsSL https://antigravity.google/cli/install.sh | bash && \
+    cp ~/.local/bin/agy /usr/local/bin/agy && \
+    chmod +x /usr/local/bin/agy && \
+    echo "✅ agy CLI installed successfully" && \
+    which agy
+
 # 建立非 root 用戶（使用動態指定的用戶名）
 RUN useradd -m -s /bin/bash $BUILD_USER 
 

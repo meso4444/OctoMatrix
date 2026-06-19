@@ -297,16 +297,17 @@ while true; do
                 echo " [1] 🆙 升級 Gemini CLI"
                 echo " [2] 🆙 升級 Claude Code"
                 echo " [3] 🆙 升級 Codex CLI"
-                echo " [4] 🚀 一併升級所有 CLI 工具"
+                echo " [4] 🆙 升級 agy CLI (Antigravity)"
+                echo " [5] 🚀 一併升級所有 CLI 工具"
                 echo "----------------------------------------"
-                echo " [5] ⏪ 退版 Gemini CLI (還原至備份版本)"
-                echo " [6] ⏪ 退版 Claude Code (還原至備份版本)"
-                echo " [7] ⏪ 退版 Codex CLI (還原至備份版本)"
-                echo " [8] 🛡️ 一併退版所有 CLI 工具"
+                echo " [6] ⏪ 退版 Gemini CLI (還原至備份版本)"
+                echo " [7] ⏪ 退版 Claude Code (還原至備份版本)"
+                echo " [8] ⏪ 退版 Codex CLI (還原至備份版本)"
+                echo " [9] 🛡️ 一併退版所有 CLI 工具"
                 echo "----------------------------------------"
                 echo " [R] 🔙 返回主選單"
                 echo "=========================================="
-                read -p "請選擇操作 [1-8, R]: " cli_choice
+                read -p "請選擇操作 [1-9, R]: " cli_choice
 
                 do_update() {
                     local pkg="$1"
@@ -321,6 +322,18 @@ while true; do
                     echo "🚀 正在全域升級 $name (需要 sudo 權限)..."
                     sudo npm update -g "$pkg"
                     echo "✅ $name 升級完成！"
+                    read -p "請按 Enter 鍵繼續..." dummy_key
+                }
+
+                do_update_agy() {
+                    echo "🔄 正在重新安裝 agy CLI (Antigravity) 至最新版本..."
+                    if curl -fsSL https://antigravity.google/cli/install.sh | bash; then
+                        echo "   🚚 複製 agy 至系統全域路徑..."
+                        sudo cp ~/.local/bin/agy /usr/local/bin/agy
+                        echo "✅ agy CLI 升級完成！"
+                    else
+                        echo "⚠️ agy CLI 升級失敗"
+                    fi
                     read -p "請按 Enter 鍵繼續..." dummy_key
                 }
 
@@ -344,15 +357,17 @@ while true; do
                     1) do_update "@google/gemini-cli" "Gemini CLI" ;;
                     2) do_update "@anthropic-ai/claude-code" "Claude Code" ;;
                     3) do_update "@openai/codex" "Codex CLI" ;;
-                    4)
+                    4) do_update_agy ;;
+                    5)
                         do_update "@google/gemini-cli" "Gemini CLI"
                         do_update "@anthropic-ai/claude-code" "Claude Code"
                         do_update "@openai/codex" "Codex CLI"
+                        do_update_agy
                         ;;
-                    5) do_rollback "@google/gemini-cli" "Gemini CLI" ;;
-                    6) do_rollback "@anthropic-ai/claude-code" "Claude Code" ;;
-                    7) do_rollback "@openai/codex" "Codex CLI" ;;
-                    8)
+                    6) do_rollback "@google/gemini-cli" "Gemini CLI" ;;
+                    7) do_rollback "@anthropic-ai/claude-code" "Claude Code" ;;
+                    8) do_rollback "@openai/codex" "Codex CLI" ;;
+                    9)
                         do_rollback "@google/gemini-cli" "Gemini CLI"
                         do_rollback "@anthropic-ai/claude-code" "Claude Code"
                         do_rollback "@openai/codex" "Codex CLI"

@@ -83,6 +83,8 @@ def prompt_model_choice(engine, current_model=None):
         options = [("sonnet", "sonnet (預設)"), ("haiku", "haiku"), ("opus", "opus")]
     elif 'codex' in engine:
         options = [("gpt-5.4-mini", "gpt-5.4-mini (預設)"), ("gpt-5.4", "gpt-5.4")]
+    elif 'agy' in engine or 'antigravity' in engine:
+        options = [("auto", "auto (預設)")]
     else:
         return input(f"模型 (model，按 Enter 保留 '{current_model or '預設'}'): ").strip()
 
@@ -187,7 +189,7 @@ def manage_agents():
         if choice == 'a':
             name = input("Agent 名稱: ").strip()
             if not name: continue
-            engine = input("引擎 (gemini/claude/codex) [gemini]: ").strip() or "gemini"
+            engine = input("引擎 (gemini/claude/codex/agy) [gemini]: ").strip() or "gemini"
             model = prompt_model_choice(engine)
             usecase = input("職責 (usecase) [用於 Agent 系統提示認知]: ").strip()
             desc = input("描述 (description) [用於選單與使用者辨認]: ").strip()
