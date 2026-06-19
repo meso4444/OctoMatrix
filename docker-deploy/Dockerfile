@@ -5,7 +5,7 @@ ARG BUILD_USER=appuser
 
 # 安裝系統工具（包括 gosu 用於降權）
 RUN apt-get update && apt-get install -y \
-    curl wget jq tmux procps git gnupg2 lsb-release sudo zstd e2fsprogs iputils-ping \
+    curl wget jq tmux procps git gnupg2 lsb-release sudo zstd e2fsprogs iputils-ping openssl \
     && rm -rf /var/lib/apt/lists/*
 
 # 安裝 gosu（輕量級 sudo 替代品，用於正確降權）
