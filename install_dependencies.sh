@@ -278,35 +278,21 @@ install_ai_cli_tools() {
     fi
 
     # 安裝 agy CLI (Antigravity - 原生 binary，非 npm 套件)
-    if ! command -v agy &> /dev/null; then
+    # 檢查系統全域路徑而非任意 PATH，避免 kenzan 個人 ~/.local/bin/agy 造成誤判跳過
+    if [ ! -f /usr/local/bin/agy ]; then
         echo "📦 正在透過 curl 安裝 agy CLI..."
         if curl -fsSL https://antigravity.google/cli/install.sh | bash; then
             echo "   🚚 複製 agy 至系統全域路徑..."
-            AGY_SRC="$HOME/.local/bin/agy"
-            AGY_DST="/usr/local/bin/agy"
-            if [ -f "$AGY_SRC" ]; then
-                # 嘗試 sudo cp（Linux/WSL），失敗則嘗試直接 cp（macOS/特定環境）
-                if [[ "$ENVIRONMENT" != "macOS" ]]; then
-                    if sudo -n true 2>/dev/null; then
-                        sudo cp "$AGY_SRC" "$AGY_DST" && sudo chmod 755 "$AGY_DST" && echo "   ✅ agy 已安裝至 $AGY_DST"
-                    else
-                        # sudo 無密碼不可用，嘗試直接寫入
-                        cp "$AGY_SRC" "$AGY_DST" 2>/dev/null && chmod 755 "$AGY_DST" 2>/dev/null && echo "   ✅ agy 已安裝至 $AGY_DST" || {
-                            echo "   ⚠️ 無法複製至系統路徑 (需要 sudo 權限)"
-                            echo "   💡 請手動執行: sudo cp $AGY_SRC $AGY_DST && sudo chmod 755 $AGY_DST"
-                        }
-                    fi
-                else
-                    cp "$AGY_SRC" "$AGY_DST" && chmod 755 "$AGY_DST" && echo "   ✅ agy 已安裝至 $AGY_DST" || echo "   ⚠️  agy CLI 全域安裝失敗"
-                fi
+            if [[ "$ENVIRONMENT" != "macOS" ]]; then
+                sudo cp "$HOME/.local/bin/agy" /usr/local/bin/agy && sudo chmod 755 /usr/local/bin/agy || echo "⚠️  agy CLI 全域安裝失敗 (sudo 失敗?)"
             else
-                echo "   ⚠️ 安裝腳本未產出 $AGY_SRC，請檢查 agy 安裝狀況"
+                cp "$HOME/.local/bin/agy" /usr/local/bin/agy && chmod 755 /usr/local/bin/agy || echo "⚠️  agy CLI 全域安裝失敗"
             fi
         else
             echo "⚠️  agy CLI 安裝失敗"
         fi
     else
-        echo "✅ agy CLI 已安裝: $(agy --version 2>/dev/null || echo 'Detected')"
+        echo "✅ agy CLI 已安裝至系統全域路徑 (/usr/local/bin/agy)"
     fi
 }
 
