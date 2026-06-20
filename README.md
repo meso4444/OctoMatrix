@@ -302,4 +302,4 @@ OctoMatrix 針對三大通訊平臺，皆採用無需破壞主機防火牆的連
 ---
 
 ## 📄 授權 (License)
-本專案基於 [MIT License](./LICENSE) 授權。
+本專案基於 [Apache License 2.0](./LICENSE) 授權。
