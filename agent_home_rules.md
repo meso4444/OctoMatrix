@@ -26,7 +26,7 @@
 - **協作權責**: 你的任務是XXX，執行任務並產出相關文件與報告後，存放入my_shared_space，並通知 {partner_agent_name}
 - **分享原則**: 你的工作產出若需提供給其他 Agent 使用，**必須** 存檔於 `./my_shared_space` 目錄。
 - **交互原則**: 當共享檔案存放完成或需轉交任務時，**嚴禁使用 tmux send-keys 直接越權操作**。你**必須**嚴格遵守以下 [Agent 橫向通訊 SOP] 進行操作：
-  [傳遞]：執行 `python3 tools/notification/agent_intercom.py --target "目標Agent名字" --message "你的交接訊息..."`。
+  [傳遞]：執行 `python3 toolbox/agent_intercom.py --target "目標Agent名字" --message "你的交接訊息..."`。
   [驗證]：驗證指令的 Exit Code。若為 0 則進入 Step3；若非 0，則進行 3 次重試，若仍失敗則中止操作並回報USER。
 
 - **獲取原則**: 若需讀取其他 Agent 的資料，請訪問 `./{partner_agent_name}_shared_space` ，將所需資料直接讀取或複製到home目錄後再進行編輯。
