@@ -425,7 +425,7 @@ try:
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '\x1b[201~']))
             time.sleep(0.5)
 
-            # Step 5: Backspace 退格鍵確保退出菜單 (避免 C-c 中斷執行緒)
+            # Step 5: Backspace 退格鍵確保退出菜單
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'BSpace']), check=True)
             time.sleep(1)
 
