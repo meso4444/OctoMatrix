@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-內部橫向通訊封裝 (agent_intercom.py)
+Internal horizontal communication wrapper (agent_intercom.py)
 """
 import os
 import sys
@@ -22,7 +22,7 @@ def get_router_url() -> str:
     return f"http://localhost:{os.getenv('ROUTER_PORT', 12210)}"
 
 def get_source_agent() -> str:
-    # 嘗試從環境變數或專案狀態中取得
+    # Try to get from environment variable or project status
     agent_name = os.getenv("AGENT_NAME")
     if agent_name: return agent_name
     
@@ -40,9 +40,9 @@ def get_source_agent() -> str:
     return "UnknownAgent"
 
 def main():
-    parser = argparse.ArgumentParser(description="Agent-to-Agent 通訊發送器")
-    parser.add_argument("--target", required=True, help="目標 Agent 的名字")
-    parser.add_argument("--message", required=True, help="要傳遞的訊息或指令")
+    parser = argparse.ArgumentParser(description="Agent-to-Agent communication sender")
+    parser.add_argument("--target", required=True, help="Target Agent name")
+    parser.add_argument("--message", required=True, help="Message or instruction to pass")
     args = parser.parse_args()
 
     router_url = f"{get_router_url()}/inter-agent/message"
@@ -77,13 +77,13 @@ Message from {source_agent}:
         response.raise_for_status()
         result = response.json()
         if result.get("status") == "success":
-            print(f"✅ 成功發送訊息至 {args.target}")
+            print(f"✅ Successfully sent message to {args.target}")
             sys.exit(0)
         else:
-            print(f"❌ 傳送失敗: {result.get('error', 'Unknown Error')}")
+            print(f"❌ Transmission failed: {result.get('error', 'Unknown Error')}")
             sys.exit(1)
     except Exception as e:
-        print(f"❌ API 請求異常: {e}")
+        print(f"❌ API request exception: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":
