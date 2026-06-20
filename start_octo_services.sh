@@ -425,8 +425,8 @@ try:
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '\x1b[201~']))
             time.sleep(0.5)
 
-            # Step 5: Ctrl+C 確保退出菜單
-            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'C-c']), check=True)
+            # Step 5: Backspace 退格鍵確保退出菜單 (避免 C-c 中斷執行緒)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'BSpace']), check=True)
             time.sleep(1)
 
             # Step 6: 等待 CLI 提示符重新出現
