@@ -425,7 +425,7 @@ try:
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '\x1b[201~']))
             time.sleep(0.5)
 
-            # Step 5: Backspace to ensure exit from menu (avoiding C-c terminating threads)
+            # Step 5: Backspace to ensure exit from menu
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'BSpace']), check=True)
             time.sleep(1)
 
