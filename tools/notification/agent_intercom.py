@@ -26,6 +26,20 @@ def get_source_agent() -> str:
     agent_name = os.getenv("AGENT_NAME")
     if agent_name: return agent_name
     
+    # 優先從當前執行路徑 (PWD) 往上找，這能正確對應到各 Agent 的 home directory
+    curr = os.getcwd()
+    for _ in range(4):
+        env_file = os.path.join(curr, 'octo_cyberbrain', '.cyberbrain_env')
+        if os.path.exists(env_file):
+            try:
+                with open(env_file, 'r') as f:
+                    for line in f:
+                        if line.startswith("AGENT_NAME="):
+                            return line.strip().split('=', 1)[1]
+            except: pass
+        curr = os.path.dirname(curr)
+        
+    # 備用方案：從腳本所在路徑往上找
     curr = os.path.dirname(os.path.abspath(__file__))
     for _ in range(4):
         env_file = os.path.join(curr, 'octo_cyberbrain', '.cyberbrain_env')
