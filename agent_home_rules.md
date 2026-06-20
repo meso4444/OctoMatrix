@@ -26,7 +26,7 @@
 - **Collaboration Responsibility**: Your task is XXX; after executing the task and producing relevant documents and reports, store them in my_shared_space and notify {partner_agent_name}
 - **Sharing Principle**: If your work output needs to be provided to other Agents, **must** be archived in the `./my_shared_space` directory.
 - **Interaction Principle**: When shared files have been saved or a task needs to be transferred, **strictly prohibit using tmux send-keys for direct unauthorized operation**. You **must** strictly comply with the following [Agent Horizontal Communication SOP]:
-  [Transfer]: Execute `python3 tools/notification/agent_intercom.py --target "TargetAgentName" --message "Your handover message..."`.
+  [Transfer]: Execute `python3 toolbox/agent_intercom.py --target "TargetAgentName" --message "Your handover message..."`.
   [Verify]: Verify the Exit Code of the command. If 0, proceed to Step3; if not 0, retry 3 times. If still failing, abort the operation and report to USER.
 
 - **Retrieval Principle**: If you need to read data from other Agents, access `./{partner_agent_name}_shared_space`, read or copy the required data directly to home directory and then edit it.
