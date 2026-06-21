@@ -206,8 +206,9 @@ class TelegramSender:
                 resp = requests.post(f"{self.api_url}/sendMessage", json=data, timeout=5)
                 if resp.status_code != 200:
                     if parse_mode:
-                        logger.warning(f"[Notifier] Telegram parse error ({resp.status_code}), retrying with plain text. Error: {resp.text}")
-                        data['parse_mode'] = None
+                        logger.warning(f"[Notifier] Telegram 解析錯誤 ({resp.status_code})，正嘗試以純文字模式重發。錯誤: {resp.text}")
+                        if 'parse_mode' in data:
+                            del data['parse_mode']
                         resp = requests.post(f"{self.api_url}/sendMessage", json=data, timeout=5)
                         if resp.status_code != 200:
                             logger.error(f"[Notifier] Telegram plain text retry failed: {resp.text}")
