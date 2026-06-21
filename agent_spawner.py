@@ -302,7 +302,7 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
             if os.path.exists(pending_file) and os.path.getsize(pending_file) > 0:
                 f.write("\n\n")
             f.write(test_msg)
-        print(f"   ✓ 已為 {name} 駐列測試訊息 {name}")
+        print(f"   ✓ 已為 {name} 駐列測試訊息")
     else:
         subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:{name}', test_msg], check=True)
         time.sleep(0.5)
