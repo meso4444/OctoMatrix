@@ -50,14 +50,8 @@ def wait_for_prompt(session_name, window_name, engine, max_wait=30):
                 continue
 
             detected = False
-            if engine == 'agy':
-                if all(marker in output for marker in prompt_markers):
-                    detected = True
-            else:
-                for marker in prompt_markers:
-                    if marker in output:
-                        detected = True
-                        break
+            if all(marker in output for marker in prompt_markers):
+                detected = True
 
             if not trust_handled and ('Trust folder' in output or 'trust the contents' in output.lower() or 'trust' in output.lower()):
                 print(f"       🛡️  Detected {engine.capitalize()} trust prompt, auto-authorizing…")
