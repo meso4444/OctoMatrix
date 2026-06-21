@@ -30,6 +30,19 @@ CONFIG_PATH = os.path.join(BASE_DIR, 'config.yaml')
 AGENT_HOME_BASE = os.path.join(BASE_DIR, 'agent_home')
 TEMPLATES_DIR = BASE_DIR
 
+def safe_copy(src, dst, script_dir):
+    if os.path.exists(src):
+        subprocess.run(['rm', '-f', dst], check=False)
+        subprocess.run(['cp', src, dst], check=True)
+        if dst.endswith('.py') or dst.endswith('.sh'):
+            subprocess.run(['chmod', '755', dst], check=False)
+        else:
+            subprocess.run(['chmod', '644', dst], check=False)
+        # 記錄系統派發的檔案路徑
+        list_path = os.path.join(script_dir, 'agent_home', '.system_distributed_files.txt')
+        with open(list_path, 'a') as list_file:
+            list_file.write(dst + '\n')
+
 def load_config():
     if not os.path.exists(CONFIG_PATH):
         print(f"❌ 錯誤: 找不到設定檔 {CONFIG_PATH}")
@@ -37,17 +50,76 @@ def load_config():
     with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
         return yaml.safe_load(f)
 
-def setup_agent_dirs(agent_name):
-    """建立單一 Agent 的目錄結構"""
+def setup_agent_dirs(agent_config, script_dir):
+    """建立單一 Agent 的目錄結構與拷貝靜態腳本"""
+    agent_name = agent_config['name']
     home = os.path.join(AGENT_HOME_BASE, agent_name)
-    subdirs = ['toolbox', 'knowledge', 'my_shared_space', 'downloads_temp', 'project', 'skillbox']
     
+    subdirs = ['toolbox', 'knowledge', 'my_shared_space', 'downloads_temp', 'project', 'skillbox', 'octo_cyberbrain', 'avatar']
     for d in subdirs:
         path = os.path.join(home, d)
-        if not os.path.exists(path):
-            os.makedirs(path)
-            # print(f"   + 建立目錄: {d}")
-    
+        os.makedirs(path, exist_ok=True)
+        
+    os.makedirs(os.path.join(home, 'octo_cyberbrain', 'ghost'), exist_ok=True)
+    os.makedirs(os.path.join(home, 'octo_cyberbrain', 'shell'), exist_ok=True)
+    os.makedirs(os.path.join(home, 'avatar', 'emojis'), exist_ok=True)
+
+    subprocess.run(['chmod', '777', home], check=False)
+    subprocess.run(['chmod', '777', os.path.join(home, 'octo_cyberbrain')], check=False)
+    subprocess.run(['chmod', '777', os.path.join(home, 'octo_cyberbrain', 'ghost')], check=False)
+    subprocess.run(['chmod', '777', os.path.join(home, 'octo_cyberbrain', 'shell')], check=False)
+    subprocess.run(['chmod', '777', os.path.join(home, 'toolbox')], check=False)
+    subprocess.run(['chmod', '777', os.path.join(home, 'my_shared_space')], check=False)
+    subprocess.run(['chmod', '777', os.path.join(home, 'knowledge')], check=False)
+    subprocess.run(['chmod', '777', os.path.join(home, 'avatar')], check=False)
+    subprocess.run(['chmod', '777', os.path.join(home, 'avatar', 'emojis')], check=False)
+
+    cyber_tools_dir = os.path.join(script_dir, 'tools', 'cyberbrain')
+    if os.path.exists(cyber_tools_dir):
+        for item in os.listdir(cyber_tools_dir):
+            if item.endswith('.py') or item.endswith('.md'):
+                src = os.path.join(cyber_tools_dir, item)
+                dst = os.path.join(home, 'octo_cyberbrain', item)
+                safe_copy(src, dst, script_dir)
+
+    tools_to_copy = [
+        ('tools/notification/matrix_notifier.py', 'matrix_notifier.py'),
+        ('tools/notification/agent_intercom.py', 'agent_intercom.py'),
+        ('tools/awake/awake_task_manager.py', 'awake_task_manager.py'),
+        ('tools/avatar/octo_generator.py', 'octo_generator.py')
+    ]
+    for src_rel, dst_name in tools_to_copy:
+        src = os.path.join(script_dir, src_rel)
+        dst = os.path.join(home, 'toolbox', dst_name)
+        if os.path.exists(src):
+            safe_copy(src, dst, script_dir)
+
+    rule_files_to_copy = ['agent_home_rules.md', 'AGENT_PROTOCOL.md', 'agent_rule_gen_template.txt']
+    for rule_file in rule_files_to_copy:
+        src_file = os.path.join(script_dir, rule_file)
+        dst_file = os.path.join(home, rule_file)
+        if os.path.exists(src_file):
+            safe_copy(src_file, dst_file, script_dir)
+
+    knowledge_files = [
+        ('tools/avatar/AGENT_AVATAR_GUIDE.md', 'AGENT_AVATAR_GUIDE.md'),
+        ('tools/awake/AWAKE_FUNCTIONALITY.md', 'AWAKE_FUNCTIONALITY.md')
+    ]
+    for src_rel, dst_name in knowledge_files:
+        src = os.path.join(script_dir, src_rel)
+        dst = os.path.join(home, 'knowledge', dst_name)
+        if os.path.exists(src):
+            safe_copy(src, dst, script_dir)
+
+
+    parent = script_dir
+    while parent and parent != '/':
+        subprocess.run(['chmod', '755', parent], check=False, stderr=subprocess.DEVNULL)
+        parent = os.path.dirname(parent)
+        
+    subprocess.run(['chmod', '755', script_dir], check=False)
+    subprocess.run(['chmod', '755', os.path.join(script_dir, 'agent_home')], check=False)
+
     return home
 
 def setup_collaboration_links(agents, groups):
@@ -194,18 +266,6 @@ def tmux_cmd(tmux_args):
     """Helper function to run tmux commands"""
     return tmux_args
 
-def safe_copy(src, dst, script_dir):
-    if os.path.exists(src):
-        subprocess.run(['rm', '-f', dst], check=False)
-        subprocess.run(['cp', src, dst], check=True)
-        if dst.endswith('.py') or dst.endswith('.sh'):
-            subprocess.run(['chmod', '755', dst], check=False)
-        else:
-            subprocess.run(['chmod', '644', dst], check=False)
-        # 記錄系統派發的檔案路徑
-        list_path = os.path.join(script_dir, 'agent_home', '.system_distributed_files.txt')
-        with open(list_path, 'a') as list_file:
-            list_file.write(dst + '\n')
 
 def wait_for_prompt(session_name, window_name, engine, max_wait=30):
     start_time = time.time()
@@ -294,26 +354,13 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
         subprocess.run(['tmux'] + tmux_cmd(['new-window', '-t', session_name, '-n', name]), check=True)
 
     cyber_path = os.path.join(home_path, 'octo_cyberbrain')
-    ghost_path = os.path.join(cyber_path, 'ghost')
     shell_path = os.path.join(cyber_path, 'shell')
-    os.makedirs(ghost_path, exist_ok=True)
-    os.makedirs(shell_path, exist_ok=True)
-    subprocess.run(['chmod', '777', cyber_path], check=False)
-    subprocess.run(['chmod', '777', ghost_path], check=False)
-    subprocess.run(['chmod', '777', shell_path], check=False)
 
     env_file = os.path.join(cyber_path, '.cyberbrain_env')
     with open(env_file, 'w') as ef:
         ef.write(f"AGENT_NAME={name}\nTMUX_SESSION_NAME={session_name}\nROUTER_PORT={os.environ.get('ROUTER_PORT', '12210')}\n")
     subprocess.run(['chmod', '644', env_file], check=False)
 
-    cyber_tools_dir = os.path.join(script_dir, 'tools', 'cyberbrain')
-    if os.path.exists(cyber_tools_dir):
-        for item in os.listdir(cyber_tools_dir):
-            if item.endswith('.py') or item.endswith('.md'):
-                src = os.path.join(cyber_tools_dir, item)
-                dst = os.path.join(cyber_path, item)
-                safe_copy(src, dst, script_dir)
 
     pipe_manager = os.path.join(script_dir, 'tools', 'cyberbrain', 'cyberbrain_pipe_manager.py')
     shell_log_path = os.path.join(shell_path, 'octo_shell.log')
@@ -322,52 +369,11 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
     pipe_cmd = f"bash -c 'tee >(python3 -u {responder_script} {session_name}:{name}) | python3 -u {pipe_manager} {shell_log_path} {session_name}:{name}'"
     subprocess.run(['tmux'] + tmux_cmd(['pipe-pane', '-o', '-t', f'{session_name}:{name}', pipe_cmd]), check=True)
 
-    toolbox_path = os.path.join(home_path, 'toolbox')
-    os.makedirs(toolbox_path, exist_ok=True)
-    subprocess.run(['chmod', '777', toolbox_path], check=False)
     
-    tools_to_copy = [
-        ('tools/notification/matrix_notifier.py', 'matrix_notifier.py'),
-        ('tools/notification/agent_intercom.py', 'agent_intercom.py'),
-        ('tools/awake/awake_task_manager.py', 'awake_task_manager.py'),
-        ('tools/avatar/octo_generator.py', 'octo_generator.py')
-    ]
-    for src_rel, dst_name in tools_to_copy:
-        src = os.path.join(script_dir, src_rel)
-        dst = os.path.join(toolbox_path, dst_name)
-        if os.path.exists(src):
-            safe_copy(src, dst, script_dir)
 
-    shared_space_path = os.path.join(home_path, 'my_shared_space')
-    os.makedirs(shared_space_path, exist_ok=True)
-    subprocess.run(['chmod', '777', shared_space_path], check=False)
     
-    knowledge_path = os.path.join(home_path, 'knowledge')
-    os.makedirs(knowledge_path, exist_ok=True)
-    subprocess.run(['chmod', '777', knowledge_path], check=False)
 
-    rule_files_to_copy = ['agent_home_rules.md', 'AGENT_PROTOCOL.md', 'agent_rule_gen_template.txt']
-    for rule_file in rule_files_to_copy:
-        src_file = os.path.join(script_dir, rule_file)
-        dst_file = os.path.join(home_path, rule_file)
-        if os.path.exists(src_file):
-            safe_copy(src_file, dst_file, script_dir)
 
-    knowledge_files = [
-        ('tools/avatar/AGENT_AVATAR_GUIDE.md', 'AGENT_AVATAR_GUIDE.md'),
-        ('tools/awake/AWAKE_FUNCTIONALITY.md', 'AWAKE_FUNCTIONALITY.md')
-    ]
-    for src_rel, dst_name in knowledge_files:
-        src = os.path.join(script_dir, src_rel)
-        dst = os.path.join(knowledge_path, dst_name)
-        if os.path.exists(src):
-            safe_copy(src, dst, script_dir)
-
-    avatar_path = os.path.join(home_path, 'avatar')
-    avatar_emojis_path = os.path.join(avatar_path, 'emojis')
-    os.makedirs(avatar_emojis_path, exist_ok=True)
-    subprocess.run(['chmod', '777', avatar_path], check=False)
-    subprocess.run(['chmod', '777', avatar_emojis_path], check=False)
 
     model = agent_config.get('model', '').strip()
 
@@ -390,14 +396,6 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
 
     agent_user = f"agent_{name.lower()}"
 
-    parent = script_dir
-    while parent and parent != '/':
-        subprocess.run(['chmod', '755', parent], check=False, stderr=subprocess.DEVNULL)
-        parent = os.path.dirname(parent)
-        
-    subprocess.run(['chmod', '755', script_dir], check=False)
-    subprocess.run(['chmod', '755', os.path.join(script_dir, 'agent_home')], check=False)
-    subprocess.run(['chmod', '777', home_path], check=False)
 
     if is_docker:
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', f'cd {home_path}']), check=True)
@@ -530,7 +528,7 @@ def main():
 
     # 1. 建立目錄 (只針對目標 agent，但 collaboration links 還是全局更新比較好，這裡保持全部更新或只更新部分)
     for agent in target_agents:
-        setup_agent_dirs(agent['name'])
+        setup_agent_dirs(agent, script_dir)
 
     # 3. 建立協作連結 (全局)
     setup_collaboration_links(agents, groups)
