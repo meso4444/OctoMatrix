@@ -292,22 +292,6 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
         os.remove(prompt_file)
 
-    # Queue test message
-    test_msg = f"{SYS_PREFIX} Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood, then execute `python3 toolbox/matrix_notifier.py '{{Greet from System Recovery/Init}}'`"
-    flag_file = os.path.join(cyber_path, '.rotation_flag')
-    pending_file = os.path.join(cyber_path, 'pending_inject.txt')
-    
-    if os.path.exists(flag_file):
-        with open(pending_file, 'a', encoding='utf-8') as f:
-            if os.path.exists(pending_file) and os.path.getsize(pending_file) > 0:
-                f.write("\n\n")
-            f.write(test_msg)
-        print(f"   ✓ 已為 {name} 駐列測試訊息")
-    else:
-        subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:{name}', test_msg], check=True)
-        time.sleep(0.5)
-        subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:{name}', 'Enter'], check=True)
-        print(f"   ✓ 已發送測試訊息至: {name}")
 
     return True
 
