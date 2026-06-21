@@ -113,10 +113,14 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
     shell_path = os.path.join(cyber_path, 'shell')
     os.makedirs(ghost_path, exist_ok=True)
     os.makedirs(shell_path, exist_ok=True)
+    subprocess.run(['chmod', 'o+rx', cyber_path], check=False)
+    subprocess.run(['chmod', 'o+rwX', ghost_path], check=False)
+    subprocess.run(['chmod', 'o+rwX', shell_path], check=False)
 
     env_file = os.path.join(cyber_path, '.cyberbrain_env')
     with open(env_file, 'w') as ef:
         ef.write(f"AGENT_NAME={name}\nTMUX_SESSION_NAME={session_name}\nROUTER_PORT={os.environ.get('ROUTER_PORT', '12210')}\n")
+    subprocess.run(['chmod', 'o+r', env_file], check=False)
 
     cyber_tools_dir = os.path.join(script_dir, 'tools', 'cyberbrain')
     if os.path.exists(cyber_tools_dir):
@@ -135,6 +139,7 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
 
     toolbox_path = os.path.join(home_path, 'toolbox')
     os.makedirs(toolbox_path, exist_ok=True)
+    subprocess.run(['chmod', 'o+rx', toolbox_path], check=False)
     
     tools_to_copy = [
         ('tools/notification/matrix_notifier.py', 'matrix_notifier.py'),
@@ -150,8 +155,11 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
 
     shared_space_path = os.path.join(home_path, 'my_shared_space')
     os.makedirs(shared_space_path, exist_ok=True)
+    subprocess.run(['chmod', 'o+rwX', shared_space_path], check=False)
+    
     knowledge_path = os.path.join(home_path, 'knowledge')
     os.makedirs(knowledge_path, exist_ok=True)
+    subprocess.run(['chmod', 'o+rx', knowledge_path], check=False)
 
     rule_files_to_copy = ['agent_home_rules.md', 'AGENT_PROTOCOL.md', 'agent_rule_gen_template.txt']
     for rule_file in rule_files_to_copy:
@@ -173,6 +181,8 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
     avatar_path = os.path.join(home_path, 'avatar')
     avatar_emojis_path = os.path.join(avatar_path, 'emojis')
     os.makedirs(avatar_emojis_path, exist_ok=True)
+    subprocess.run(['chmod', 'o+rx', avatar_path], check=False)
+    subprocess.run(['chmod', 'o+rx', avatar_emojis_path], check=False)
 
     model = agent_config.get('model', '').strip()
 
@@ -202,18 +212,7 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
         
     subprocess.run(['chmod', 'o+rx', script_dir], check=False)
     subprocess.run(['chmod', 'o+rx', os.path.join(script_dir, 'agent_home')], check=False)
-    # Only chmod the home directory itself and specific managed subdirectories,
-    # leaving user-created directories (like 'project') alone to prevent Permission Denied errors.
     subprocess.run(['chmod', 'o+rwX', home_path], check=False)
-    for folder in ['octo_cyberbrain', 'toolbox', 'my_shared_space', 'knowledge', 'avatar']:
-        folder_path = os.path.join(home_path, folder)
-        if os.path.exists(folder_path):
-            subprocess.run(['chmod', '-R', 'o+rwX', folder_path], check=False)
-            
-    for file_name in ['agent_home_rules.md', 'AGENT_PROTOCOL.md', 'agent_rule_gen_template.txt']:
-        file_path = os.path.join(home_path, file_name)
-        if os.path.exists(file_path):
-            subprocess.run(['chmod', 'o+rw', file_path], check=False)
 
     if is_docker:
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', f'cd {home_path}']), check=True)
