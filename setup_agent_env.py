@@ -55,24 +55,30 @@ def setup_agent_dirs(agent_config, script_dir):
     agent_name = agent_config['name']
     home = os.path.join(AGENT_HOME_BASE, agent_name)
     
-    subdirs = ['toolbox', 'knowledge', 'my_shared_space', 'downloads_temp', 'project', 'skillbox', 'octo_cyberbrain', 'avatar']
+    # 定義所有需要建立且賦予初始權限的子目錄
+    subdirs = [
+        'toolbox', 
+        'knowledge', 
+        'my_shared_space', 
+        'downloads_temp', 
+        'project', 
+        'skillbox', 
+        'octo_cyberbrain', 
+        'octo_cyberbrain/ghost', 
+        'octo_cyberbrain/shell', 
+        'avatar', 
+        'avatar/emojis'
+    ]
+    
+    # 建立主目錄並賦權
+    os.makedirs(home, exist_ok=True)
+    subprocess.run(['chmod', '777', home], check=False)
+    
+    # 迴圈處理所有子目錄的創建與賦權
     for d in subdirs:
         path = os.path.join(home, d)
         os.makedirs(path, exist_ok=True)
-        
-    os.makedirs(os.path.join(home, 'octo_cyberbrain', 'ghost'), exist_ok=True)
-    os.makedirs(os.path.join(home, 'octo_cyberbrain', 'shell'), exist_ok=True)
-    os.makedirs(os.path.join(home, 'avatar', 'emojis'), exist_ok=True)
-
-    subprocess.run(['chmod', '777', home], check=False)
-    subprocess.run(['chmod', '777', os.path.join(home, 'octo_cyberbrain')], check=False)
-    subprocess.run(['chmod', '777', os.path.join(home, 'octo_cyberbrain', 'ghost')], check=False)
-    subprocess.run(['chmod', '777', os.path.join(home, 'octo_cyberbrain', 'shell')], check=False)
-    subprocess.run(['chmod', '777', os.path.join(home, 'toolbox')], check=False)
-    subprocess.run(['chmod', '777', os.path.join(home, 'my_shared_space')], check=False)
-    subprocess.run(['chmod', '777', os.path.join(home, 'knowledge')], check=False)
-    subprocess.run(['chmod', '777', os.path.join(home, 'avatar')], check=False)
-    subprocess.run(['chmod', '777', os.path.join(home, 'avatar', 'emojis')], check=False)
+        subprocess.run(['chmod', '777', path], check=False)
 
     cyber_tools_dir = os.path.join(script_dir, 'tools', 'cyberbrain')
     if os.path.exists(cyber_tools_dir):
