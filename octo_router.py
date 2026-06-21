@@ -360,8 +360,8 @@ Message from {MATRIX_USERNAME}:
                     try:
                         subprocess.run(['tmux', 'kill-window', '-t', f'{TMUX_SESSION_NAME}:{target_name}'], check=False)
                         time.sleep(1)
-                        # Call agent_spawner.py directly to rebuild the agent window
-                        subprocess.Popen(['python3', os.path.join(script_dir, 'agent_spawner.py'), '--agent', target_name])
+                        # Call setup_agent_env.py directly to rebuild the agent window
+                        subprocess.Popen(['python3', os.path.join(script_dir, 'setup_agent_env.py'), '--agent', target_name])
                         self.notifier.notify(msg.source, 'custom', {'content': f'✅ <b>[{target_name}]</b> restart sequence initiated. Please wait for the agent to reconnect.'})
                     except Exception as e:
                         self.notifier.notify(msg.source, 'custom', {'content': f'❌ Failed to reset {target_name}: {e}'})

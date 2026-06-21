@@ -79,14 +79,13 @@ tmux new-session -d -s "$TMUX_SESSION_NAME" -n "init" -c "$SCRIPT_DIR"
 
 # 1. Initialize Agent environment
 echo "🧬  Initializing Agent ecosystem environment…"
-python3 "$SCRIPT_DIR/setup_agent_env.py"
+python3 "$SCRIPT_DIR/setup_agent_env.py" --all
 
 # 2. Dynamically start AI Agent squad
 echo "🤖 Deploying AI Agent squad…"
 export SCRIPT_DIR
 export TMUX_SESSION_NAME
 
-python3 "$SCRIPT_DIR/agent_spawner.py" --all
 
 echo "   ✅ All Agents ready"
 
