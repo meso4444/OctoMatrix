@@ -148,9 +148,15 @@ def setup_collaboration_links(agents, groups):
             expected_links[me].add(link_name)
             rel_target = os.path.relpath(target_real_path, my_home)
             
-            if os.path.islink(full_link_path):
-                try: os.unlink(full_link_path)
-                except OSError: pass
+            if os.path.lexists(full_link_path):
+                try:
+                    if os.path.isdir(full_link_path) and not os.path.islink(full_link_path):
+                        import shutil
+                        shutil.rmtree(full_link_path)
+                    else:
+                        os.unlink(full_link_path)
+                except Exception:
+                    pass
                 
             try:
                 os.symlink(rel_target, full_link_path)
@@ -491,6 +497,12 @@ def main():
     config = load_config()
     agents = config.get('agents', [])
     groups = config.get('collaboration_groups', [])
+    
+    # 防呆：確保 Tmux Session 存在，否則自動建立
+    result = subprocess.run(['tmux', 'has-session', '-t', session_name], capture_output=True)
+    if result.returncode != 0:
+        print(f"   [Auto-Fix] Tmux session '{session_name}' not found. Creating it automatically...")
+        subprocess.run(['tmux', 'new-session', '-d', '-s', session_name], check=True)
     
     # Determine which agents to process
     target_agents = []
