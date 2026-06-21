@@ -107,11 +107,11 @@ def main():
                     
                 if not flag_content:
                     try:
-                        if time.time() - os.path.getmtime(flag_file) > polling_interval + 240:
-                            print(f"[Reaper] Found empty Flag timed out for {polling_interval + 240}s, forcefully writing READY_FOR_REAPER ({agent_name})")
-                            with open(flag_file, 'w') as f:
-                                f.write("READY_FOR_REAPER")
-                            flag_content = "READY_FOR_REAPER"
+                        elapsed = time.time() - os.path.getmtime(flag_file)
+                        # Check intervals: 180-245, 420-485, 660-725
+                        if (180 < elapsed <= 245) or (420 < elapsed <= 485) or (660 < elapsed <= 725):
+                            print(f"[Reaper] Found empty Flag (exists for {int(elapsed)}s) in retry interval, resending notification ({agent_name})")
+                            notify_agent(agent_name)
                     except Exception as e:
                         print(f"[Reaper] Failed to check timed out Flag ({agent_name}): {e}")
 
