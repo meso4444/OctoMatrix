@@ -189,9 +189,11 @@ class CommandHandler:
 
         cmd_content = content.lower().strip()
 
+        def is_cmd(c, name): return c == name or c.startswith(name + ' ')
+
         # 3. Core command handling branches
         interfering_cmds = ['/interrupt', '/clear', '/resume_latest', '/sys_refresh']
-        is_interfering = cmd_content in interfering_cmds or cmd_content.startswith('/inspect') or cmd_content.startswith('/fix') or cmd_content.startswith('/avatar_renew')
+        is_interfering = cmd_content in interfering_cmds or is_cmd(cmd_content, '/inspect') or is_cmd(cmd_content, '/fix') or is_cmd(cmd_content, '/avatar_renew')
 
         if is_interfering:
             flag_file = os.path.join(AGENT_HOME_BASE, target_agent, 'octo_cyberbrain', '.rotation_flag')
@@ -199,7 +201,7 @@ class CommandHandler:
                 self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> System is undergoing GHOST deep reorganization, please wait until reset completes before executing window-interfering commands.'})
                 return True
 
-        if cmd_content.startswith('/switch'):
+        if is_cmd(cmd_content, '/switch'):
             parts = content.split()
             if len(parts) > 1:
                 target = parts[1].lower()
@@ -305,7 +307,7 @@ class CommandHandler:
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'Enter'], check=False)
             self.notifier.notify(msg.source, 'custom', {'content': f'🔄 Sent full specification rebuild command to <b>[{target_agent}]</b>'})
             return True
-        elif cmd_content.startswith('/avatar_renew'):
+        elif is_cmd(cmd_content, '/avatar_renew'):
             if not check_cooldown(target_agent, 'avatar_renew'):
                 self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> Operation cooling down, please try again later.'})
                 return True
@@ -321,7 +323,7 @@ class CommandHandler:
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'Enter'], check=False)
             self.notifier.notify(msg.source, 'custom', {'content': f'🎨 Assigned <b>[{target_agent}]</b> to update Avatar...'})
             return True
-        elif cmd_content.startswith('/inspect'):
+        elif is_cmd(cmd_content, '/inspect'):
             parts = content.split()
             if len(parts) > 1:
                 target = parts[1]
@@ -347,7 +349,7 @@ Message from {MATRIX_USERNAME}:
                 self.injector.inject(prompt, target_agent)
                 self.notifier.notify(msg.source, 'custom', {'content': f'🔍 Assigned {target_agent} to inspect {target}...'})
             return True
-        elif cmd_content.startswith('/fix'):
+        elif is_cmd(cmd_content, '/fix'):
             parts = content.split()
             if len(parts) > 1:
                 target_name = parts[1]
@@ -366,7 +368,7 @@ Message from {MATRIX_USERNAME}:
                 else:
                     self.notifier.notify(msg.source, 'custom', {'content': f'❌ Cannot find Agent in config: {target_name}'})
             return True
-        elif cmd_content.startswith('/capture'):
+        elif is_cmd(cmd_content, '/capture'):
             parts = content.split()
             if len(parts) > 1:
                 cap_target = parts[1]
