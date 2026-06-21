@@ -360,7 +360,7 @@ class CommandHandler:
                     try:
                         subprocess.run(['tmux', 'kill-window', '-t', f'{TMUX_SESSION_NAME}:{target_name}'], check=False)
                         time.sleep(1)
-                        subprocess.Popen(['python3', os.path.join(script_dir, 'agent_spawner.py'), '--agent', target_name])
+                        subprocess.Popen(['python3', os.path.join(script_dir, 'setup_agent_env.py'), '--agent', target_name])
                         self.notifier.notify(msg.source, 'custom', {'content': f'✅ <b>[{target_name}]</b> 重啟程序已執行，請等待 Agent 恢復連線。'})
                     except Exception as e:
                         self.notifier.notify(msg.source, 'custom', {'content': f'❌ 修復 {target_name} 失敗: {e}'})
