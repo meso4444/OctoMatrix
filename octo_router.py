@@ -325,6 +325,8 @@ class CommandHandler:
             parts = content.split()
             if len(parts) > 1:
                 target = parts[1]
+                res = subprocess.run(['tmux', 'capture-pane', '-t', f'{TMUX_SESSION_NAME}:{target}', '-p'], capture_output=True, text=True)
+                output = "\n".join(res.stdout.split('\n')[-50:])
                 prompt = f"""{SYS_PREFIX}
 執行以下 [SOP]:
 [Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖。
@@ -338,8 +340,10 @@ class CommandHandler:
 [Step 8 - 刻印]：執行 python3 octo_cyberbrain/octo_ghost_updater.py --outline "語義大綱" --keywords "關鍵字1,關鍵字2" --paths "/檔案路徑1,/檔案路徑2" 將本次任務狀態刻印到GHOST。
 
 來自 {MATRIX_USERNAME} 的訊息:
-請執行以下檢查任務：
-透過 tmux 進入 '{target}' 的視窗，查看其前 50 行狀態並分析。主動撰寫任務過程與成果紀錄的md。"""
+以下是目前 {target} 的狀態，請分析...
+{output}
+
+{SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
                 self.injector.inject(prompt, target_agent)
                 self.notifier.notify(msg.source, 'custom', {'content': f'🔍 已指派 {target_agent} 檢查 {target}...'})
             return True
@@ -350,48 +354,14 @@ class CommandHandler:
                 target_info = get_agent_info(target_name)
                 if target_info:
                     engine = target_info.get('engine', '').lower()
-                    model = target_info.get('model', '').strip()
-                    
-                    if 'gemini' in engine:
-                        start_cmd = f'gemini --yolo --model {model}' if model and model.lower() != 'auto' else 'gemini --yolo'
-                        resume_hint = "等待5秒啟動完成後，請輸入 `/resume` ,執行 Enter, 等待3秒後再輸入向下方向鍵 (Down), 等待1秒後再執行1次enter, 以恢復最近一次的對話紀錄。"
-                    elif 'codex' in engine:
-                        start_cmd = f'codex --yolo --model {model}' if model and model.lower() != 'auto' else 'codex --yolo'
-                        resume_hint = "等待5秒啟動完成後，請輸入 `/resume` ,執行 Enter, 等待3秒後再執行1次enter, 以恢復最近一次的對話紀錄。"
-                    elif 'agy' in engine:
-                        start_cmd = f'agy --dangerously-skip-permissions --model "{model}"' if model else 'agy --dangerously-skip-permissions'
-                        resume_hint = "等待5秒啟動完成後，請輸入 `/resume` ,執行 Enter, 等待3秒後再執行1次enter, 以恢復最近一次的對話紀錄。"
-                    else:
-                        start_cmd = f'claude --permission-mode bypassPermissions --model {model}' if model and model.lower() != 'auto' else 'claude --permission-mode bypassPermissions'
-                        resume_hint = "等待5秒啟動完成後，請輸入 `/resume` ,執行 Enter, 等待3秒後再執行1次enter, 以恢復最近一次的對話紀錄。"
-
-                    prompt = f"""{SYS_PREFIX}
-執行以下 [SOP]:
-[Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖。
-[Step 1 - 辨識]：辨識 {MATRIX_USERNAME} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，並自主思考合適的問候回覆}}' 回應，並且不執行後續Step。
-[Step 2 - 預告]：執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，並自主思考合適的初步預告}}' 預告任務進行初步方向。
-[Step 3 - 梳理]：若任務指示明確進入Step4; 若不明確，深潛shell紀錄後若有歷史脈絡進入Step4，否則先中止並執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，自主思考合適的詢問或澄清}}' 詢問具體方向，不執行後續Step。
-[Step 4 - 執行]：正式開始執行任務並撰寫md。小型任務完成後進入Step5; 大型任務中途執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，自主思考合適的進度回報}}' 進行中間進度回報，任務完成後再進入Step5。
-[Step 5 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖。
-[Step 6 - 回報]：執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，自主思考合適的任務完成報告}}' 彙總回報，只有當回報內容大於1000字時才搭配使用 --file 發送相關報告文檔給 {MATRIX_USERNAME}，否則直接以完整訊息彙報。
-[Step 7 - 收攝]：執行 python3 octo_cyberbrain/octo_ghost_reader.py --level current 收攝你的 GHOST 與記憶。
-[Step 8 - 刻印]：執行 python3 octo_cyberbrain/octo_ghost_updater.py --outline "語義大綱" --keywords "關鍵字1,關鍵字2" --paths "/檔案路徑1,/檔案路徑2" 將本次任務狀態刻印到GHOST。
-
-來自 {MATRIX_USERNAME} 的訊息:
-請幫我修復 '{target_name}'。
-透過 tmux 查找 session "{TMUX_SESSION_NAME}"，進入 "{target_name}" 的視窗，
-輸入 /quit 或 /exit 並執行 Enter，等待3秒後執行 pwd 指令確認回到 Linux Shell 後，再執行啟動指令：`{start_cmd}`。
-{resume_hint}
-
-【⚠️ 技術限制：Tmux Send-Keys 與 Enter 鍵處理 (嚴格執行)】
-必須採用 「文字 -> 延遲 -> Enter」 的三部曲寫法：
-tmux send-keys -t target 您的訊息內容 && sleep 1 && tmux send-keys -t target Enter
-
-主動撰寫修復過程紀錄的md。
-
-{SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
-                    self.injector.inject(prompt, target_agent)
-                    self.notifier.notify(msg.source, 'custom', {'content': f'🚑 已指派 <b>[{target_agent}]</b> 去修復 <b>[{target_name}]</b> (引擎: {engine})...'})
+                    self.notifier.notify(msg.source, 'custom', {'content': f'🚑 系統啟動 <b>[{target_name}]</b> 的硬重置修復 (引擎: {engine})...'})
+                    try:
+                        subprocess.run(['tmux', 'kill-window', '-t', f'{TMUX_SESSION_NAME}:{target_name}'], check=False)
+                        time.sleep(1)
+                        subprocess.Popen(['python3', os.path.join(script_dir, 'agent_spawner.py'), '--agent', target_name])
+                        self.notifier.notify(msg.source, 'custom', {'content': f'✅ <b>[{target_name}]</b> 重啟程序已執行，請等待 Agent 恢復連線。'})
+                    except Exception as e:
+                        self.notifier.notify(msg.source, 'custom', {'content': f'❌ 修復 {target_name} 失敗: {e}'})
                 else:
                     self.notifier.notify(msg.source, 'custom', {'content': f'❌ 找不到配置檔中的 Agent: {target_name}'})
             return True
