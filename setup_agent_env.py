@@ -72,13 +72,13 @@ def setup_agent_dirs(agent_config, script_dir):
     
     # 建立主目錄並賦權
     os.makedirs(home, exist_ok=True)
-    subprocess.run(['chmod', '777', home], check=False)
+    subprocess.run(['chmod', '1777', home], check=False)
     
     # 迴圈處理所有子目錄的創建與賦權
     for d in subdirs:
         path = os.path.join(home, d)
         os.makedirs(path, exist_ok=True)
-        subprocess.run(['chmod', '777', path], check=False)
+        subprocess.run(['chmod', '1777', path], check=False)
 
     cyber_tools_dir = os.path.join(script_dir, 'tools', 'cyberbrain')
     if os.path.exists(cyber_tools_dir):
