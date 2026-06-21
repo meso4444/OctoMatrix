@@ -204,7 +204,17 @@ class TelegramSender:
                 # Telegram specific keyboard support
                 if 'reply_markup' in kwargs: data["reply_markup"] = kwargs["reply_markup"]
                 resp = requests.post(f"{self.api_url}/sendMessage", json=data, timeout=5)
-                if resp.status_code != 200: success = False
+                if resp.status_code != 200:
+                    if parse_mode:
+                        logger.warning(f"[Notifier] Telegram parse error ({resp.status_code}), retrying with plain text. Error: {resp.text}")
+                        data['parse_mode'] = None
+                        resp = requests.post(f"{self.api_url}/sendMessage", json=data, timeout=5)
+                        if resp.status_code != 200:
+                            logger.error(f"[Notifier] Telegram plain text retry failed: {resp.text}")
+                            success = False
+                    else:
+                        logger.error(f"[Notifier] Telegram send failed: {resp.text}")
+                        success = False
             return success
         except: return False
 
