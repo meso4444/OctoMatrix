@@ -29,7 +29,7 @@ def wait_for_prompt(session_name, window_name, engine, max_wait=30):
     elif engine == 'codex':
         prompt_markers = ['OpenAI', '› ']
     elif engine == 'agy':
-        prompt_markers = ['Antigravity CLI']
+        prompt_markers = ['>']
     else:  # gemini
         prompt_markers = ['Gemini', 'YOLO']
 
@@ -221,6 +221,9 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
         time.sleep(0.5)
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
         time.sleep(1)
+        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'clear', 'Enter']), check=True)
+        time.sleep(0.5)
+        subprocess.run(['tmux'] + tmux_cmd(['clear-history', '-t', f'{session_name}:{name}']), check=True)
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', cmd]), check=True)
         time.sleep(0.5)
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
@@ -237,6 +240,9 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
         time.sleep(0.5)
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
         time.sleep(1) 
+        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'clear', 'Enter']), check=True)
+        time.sleep(0.5)
+        subprocess.run(['tmux'] + tmux_cmd(['clear-history', '-t', f'{session_name}:{name}']), check=True)
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', cmd]), check=True)
         time.sleep(0.5)
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
@@ -262,15 +268,14 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
         if engine == 'gemini':
             subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Down']), check=True)
             time.sleep(1)
-
-        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
-        time.sleep(1)
-        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '\x1b[200~']))
-        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '-l', '--', 'q']), check=True)
-        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '\x1b[201~']))
-        time.sleep(0.5)
-        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'C-c']), check=True)
-        time.sleep(1)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
+            time.sleep(1)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '\x1b[200~']))
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '-l', '--', 'q']), check=True)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '\x1b[201~']))
+            time.sleep(0.5)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'C-c']), check=True)
+            time.sleep(1)
 
         print(f"     ⏳ Waiting for prompt recovery…")
         wait_for_prompt(session_name, name, engine, max_wait=10)
