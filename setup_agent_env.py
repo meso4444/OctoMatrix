@@ -338,6 +338,15 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
     if is_first:
         subprocess.run(['tmux'] + tmux_cmd(['rename-window', '-t', f'{session_name}:0', name]), check=True)
     else:
+        # Clear existing window with the same name to prevent send-keys target resolution failure (Crash)
+        try:
+            result = subprocess.run(['tmux', 'list-windows', '-t', session_name, '-F', '#W:#I'], capture_output=True, text=True)
+            for line in result.stdout.splitlines():
+                if line.startswith(f"{name}:"):
+                    win_id = line.split(':')[1]
+                    subprocess.run(['tmux', 'kill-window', '-t', f'{session_name}:{win_id}'])
+        except Exception:
+            pass
         subprocess.run(['tmux'] + tmux_cmd(['new-window', '-t', session_name, '-n', name]), check=True)
 
     cyber_path = os.path.join(home_path, 'octo_cyberbrain')
