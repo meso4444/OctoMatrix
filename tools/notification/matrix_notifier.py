@@ -529,7 +529,7 @@ if __name__ == '__main__':
                 if target_id and str(target_id).lower() not in ['none', 'null', 'undefined']:
                     payload['target_id'] = target_id
                     
-                resp = requests.post(f"{router_url}/notify_file", files={'file': f}, data=payload, timeout=30)
+                resp = requests.post(f"{router_url}/notify_file", files={'file': (os.path.basename(f.name), f)}, data=payload, timeout=30)
                 if resp.status_code == 200: print(f"✅ File sent via Router to {platform}"); sys.exit(0)
                 else: print(f"❌ Router Error: {resp.status_code}"); sys.exit(1)
         except Exception as e: print(f"❌ Error: {e}"); sys.exit(1)
