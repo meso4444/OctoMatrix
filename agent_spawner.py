@@ -322,9 +322,19 @@ if __name__ == "__main__":
     if args.agent:
         agent_config = next((a for a in AGENTS if a['name'] == args.agent), None)
         if not agent_config:
-            print(f"❌ Agent {args.agent} not found in config")
+            print(f"❌ 找不到 Agent {args.agent} 於配置檔")
             sys.exit(1)
         spawn_agent(agent_config, script_dir, session_name, is_first=False)
+        
+        try:
+            from config import SYS_PREFIX, MATRIX_USERNAME
+            test_msg = f"{SYS_PREFIX}執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖，接著執行 python3 toolbox/matrix_notifier.py '{{向 {MATRIX_USERNAME} 問候，並說明你剛從修復程序中重啟}}'"
+            subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:{args.agent}', test_msg], check=True)
+            time.sleep(0.5)
+            subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:{args.agent}', 'Enter'], check=True)
+            print(f"   ✓ 已發送測試訊息至: {args.agent}")
+        except Exception as e:
+            print(f"   ⚠️ 發送測試訊息失敗: {e}")
     elif args.all:
         for i, agent_config in enumerate(AGENTS):
             spawn_agent(agent_config, script_dir, session_name, is_first=(i==0))
