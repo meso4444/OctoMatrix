@@ -208,12 +208,12 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
     for folder in ['octo_cyberbrain', 'toolbox', 'my_shared_space', 'knowledge', 'avatar']:
         folder_path = os.path.join(home_path, folder)
         if os.path.exists(folder_path):
-            subprocess.run(['chmod', '-R', 'o+rwX', folder_path], check=False, stderr=subprocess.DEVNULL)
+            subprocess.run(['chmod', '-R', 'o+rwX', folder_path], check=False)
             
     for file_name in ['agent_home_rules.md', 'AGENT_PROTOCOL.md', 'agent_rule_gen_template.txt']:
         file_path = os.path.join(home_path, file_name)
         if os.path.exists(file_path):
-            subprocess.run(['chmod', 'o+rw', file_path], check=False, stderr=subprocess.DEVNULL)
+            subprocess.run(['chmod', 'o+rw', file_path], check=False)
 
     if is_docker:
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', f'cd {home_path}']), check=True)
