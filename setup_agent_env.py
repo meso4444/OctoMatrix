@@ -492,7 +492,7 @@ def main():
     check_permissions()
     
     script_dir = os.environ.get('SCRIPT_DIR', BASE_DIR)
-    session_name = os.environ.get('TMUX_SESSION_NAME', load_config().get('TMUX_SESSION_NAME', 'octo_session'))
+    session_name = os.environ.get('TMUX_SESSION_NAME', load_config().get('tmux', {}).get('session_name', 'ai_octomatrix'))
     
     config = load_config()
     agents = config.get('agents', [])

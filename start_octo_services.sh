@@ -77,14 +77,15 @@ echo "🧬  Creating tmux session '$TMUX_SESSION_NAME'…"
 # Use explicitly specified socket file path to create session (not dependent on TMUX_TMPDIR environment variable)
 tmux new-session -d -s "$TMUX_SESSION_NAME" -n "init" -c "$SCRIPT_DIR"
 
+export SCRIPT_DIR
+export TMUX_SESSION_NAME
+
 # 1. Initialize Agent environment
 echo "🧬  Initializing Agent ecosystem environment…"
 python3 "$SCRIPT_DIR/setup_agent_env.py" --all
 
 # 2. Dynamically start AI Agent squad
 echo "🤖 Deploying AI Agent squad…"
-export SCRIPT_DIR
-export TMUX_SESSION_NAME
 
 
 echo "   ✅ All Agents ready"
