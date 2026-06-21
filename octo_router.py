@@ -325,6 +325,8 @@ class CommandHandler:
             parts = content.split()
             if len(parts) > 1:
                 target = parts[1]
+                res = subprocess.run(['tmux', 'capture-pane', '-t', f'{TMUX_SESSION_NAME}:{target}', '-p'], capture_output=True, text=True)
+                output = "\n".join(res.stdout.split('\n')[-50:])
                 prompt = f"""{SYS_PREFIX}
 Execute the following [SOP]:
 [Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
@@ -338,12 +340,12 @@ Execute the following [SOP]:
 [Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST.
 
 Message from {MATRIX_USERNAME}:
-Please execute the following inspection task:
-Enter the '{target}' window via tmux, view the first 50 lines of status and analyze. Proactively write an md recording the task process and results.
+以下是目前 {target} 的狀態，請分析...
+{output}
 
 {SYS_PREFIX} Please strictly follow the [SOP] above to reply."""
                 self.injector.inject(prompt, target_agent)
-                self.notifier.notify(msg.source, 'custom', {'content': f'🔍 Assigned {target_agent} to check {target}...'})
+                self.notifier.notify(msg.source, 'custom', {'content': f'🔍 Assigned {target_agent} to inspect {target}...'})
             return True
         elif cmd_content.startswith('/fix'):
             parts = content.split()
@@ -352,48 +354,15 @@ Enter the '{target}' window via tmux, view the first 50 lines of status and anal
                 target_info = get_agent_info(target_name)
                 if target_info:
                     engine = target_info.get('engine', '').lower()
-                    model = target_info.get('model', '').strip()
-
-                    if 'gemini' in engine:
-                        start_cmd = f'gemini --yolo --model {model}' if model and model.lower() != 'auto' else 'gemini --yolo'
-                        resume_hint = "After waiting 5 seconds for startup to complete, please enter `/resume`, press Enter, wait 3 seconds then press Down arrow, wait 1 second then press enter once more to restore the last conversation record."
-                    elif 'codex' in engine:
-                        start_cmd = f'codex --yolo --model {model}' if model and model.lower() != 'auto' else 'codex --yolo'
-                        resume_hint = "After waiting 5 seconds for startup to complete, please enter `/resume`, press Enter, wait 3 seconds then press enter once more to restore the last conversation record."
-                    elif 'agy' in engine:
-                        start_cmd = f'agy --dangerously-skip-permissions --model "{model}"' if model else 'agy --dangerously-skip-permissions'
-                        resume_hint = "After waiting 5 seconds for startup to complete, please enter `/resume`, press Enter, wait 3 seconds then press enter once more to restore the last conversation record."
-                    else:
-                        start_cmd = f'claude --permission-mode bypassPermissions --model {model}' if model and model.lower() != 'auto' else 'claude --permission-mode bypassPermissions'
-                        resume_hint = "After waiting 5 seconds for startup to complete, please enter `/resume`, press Enter, wait 3 seconds then press enter once more to restore the last conversation record."
-
-                    prompt = f"""{SYS_PREFIX}
-Execute the following [SOP]:
-[Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
-[Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If a task, proceed to Step2; if a greeting, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate greeting response}}'`, and do not execute subsequent Steps.
-[Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate initial preview}}'` to preview the task's initial direction.
-[Step 3 - Clarify]: If task is clear, proceed to Step4; if unclear, proactively dive into keywords. If clear history exists, proceed to Step4, otherwise suspend task and execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate clarification question}}'`, and do not execute subsequent Steps.
-[Step 4 - Execute]: Start task and write md. For large tasks, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate progress update}}'` midway, then proceed to Step5 after task completion.
-[Step 5 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
-[Step 6 - Report]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate task completion report}}'`. Only use --file to send related report documents to {MATRIX_USERNAME} if the report content exceeds 1000 words, otherwise report directly with a complete message.
-[Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
-[Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST.
-
-Message from {MATRIX_USERNAME}:
-Please fix '{target_name}'.
-Find session "{TMUX_SESSION_NAME}" via tmux, enter the window of "{target_name}",
-enter /quit or /exit and press Enter, wait 3 seconds then execute pwd command to confirm returning to Linux Shell, then execute startup command: `{start_cmd}`.
-{resume_hint}
-
-【⚠️ Technical Limitation: Tmux Send-Keys and Enter key handling (strictly execute)】
-Must use the "text -> delay -> Enter" trilogy:
-tmux send-keys -t target Your message content && sleep 1 && tmux send-keys -t target Enter
-
-Proactively write an md recording the fix process.
-
-{SYS_PREFIX} Please strictly follow the [SOP] above to reply."""
-                    self.injector.inject(prompt, target_agent)
-                    self.notifier.notify(msg.source, 'custom', {'content': f'🚑 Assigned <b>[{target_agent}]</b> to fix <b>[{target_name}]</b> (engine: {engine})...'})
+                    self.notifier.notify(msg.source, 'custom', {'content': f'🚑 System initiating Hard Reset for <b>[{target_name}]</b> (engine: {engine})...'})
+                    try:
+                        subprocess.run(['tmux', 'kill-window', '-t', f'{TMUX_SESSION_NAME}:{target_name}'], check=False)
+                        time.sleep(1)
+                        # Call agent_spawner.py directly to rebuild the agent window
+                        subprocess.Popen(['python3', os.path.join(script_dir, 'agent_spawner.py'), '--agent', target_name])
+                        self.notifier.notify(msg.source, 'custom', {'content': f'✅ <b>[{target_name}]</b> restart sequence initiated. Please wait for the agent to reconnect.'})
+                    except Exception as e:
+                        self.notifier.notify(msg.source, 'custom', {'content': f'❌ Failed to reset {target_name}: {e}'})
                 else:
                     self.notifier.notify(msg.source, 'custom', {'content': f'❌ Cannot find Agent in config: {target_name}'})
             return True
