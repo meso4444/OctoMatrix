@@ -188,10 +188,12 @@ class CommandHandler:
                     content = command # 物理替換內容，向下執行，不觸發遞迴
 
         cmd_content = content.lower().strip()
+
+        def is_cmd(c, name): return c == name or c.startswith(name + ' ')
         
         # 3. 核心指令處理分支
         interfering_cmds = ['/interrupt', '/clear', '/resume_latest', '/sys_refresh']
-        is_interfering = cmd_content in interfering_cmds or cmd_content.startswith('/inspect') or cmd_content.startswith('/fix') or cmd_content.startswith('/avatar_renew')
+        is_interfering = cmd_content in interfering_cmds or is_cmd(cmd_content, '/inspect') or is_cmd(cmd_content, '/fix') or is_cmd(cmd_content, '/avatar_renew')
 
         if is_interfering:
             flag_file = os.path.join(AGENT_HOME_BASE, target_agent, 'octo_cyberbrain', '.rotation_flag')
@@ -199,7 +201,7 @@ class CommandHandler:
                 self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> 系統正在進行 GHOST 深度重整，請待重置完畢後再執行視窗干涉指令。'})
                 return True
 
-        if cmd_content.startswith('/switch'):
+        if is_cmd(cmd_content, '/switch'):
             parts = content.split()
             if len(parts) > 1:
                 target = parts[1].lower()
@@ -305,7 +307,7 @@ class CommandHandler:
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'Enter'], check=False)
             self.notifier.notify(msg.source, 'custom', {'content': f'🔄 已向 <b>[{target_agent}]</b> 發送完整規範重建指令'})
             return True
-        elif cmd_content.startswith('/avatar_renew'):
+        elif is_cmd(cmd_content, '/avatar_renew'):
             if not check_cooldown(target_agent, 'avatar_renew'):
                 self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> 操作冷卻中，請稍後再試。'})
                 return True
@@ -321,7 +323,7 @@ class CommandHandler:
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'Enter'], check=False)
             self.notifier.notify(msg.source, 'custom', {'content': f'🎨 已指派 <b>[{target_agent}]</b> 進行 Avatar 更新任務...'})
             return True
-        elif cmd_content.startswith('/inspect'):
+        elif is_cmd(cmd_content, '/inspect'):
             parts = content.split()
             if len(parts) > 1:
                 target = parts[1]
@@ -347,7 +349,7 @@ class CommandHandler:
                 self.injector.inject(prompt, target_agent)
                 self.notifier.notify(msg.source, 'custom', {'content': f'🔍 已指派 {target_agent} 檢查 {target}...'})
             return True
-        elif cmd_content.startswith('/fix'):
+        elif is_cmd(cmd_content, '/fix'):
             parts = content.split()
             if len(parts) > 1:
                 target_name = parts[1]
@@ -365,7 +367,7 @@ class CommandHandler:
                 else:
                     self.notifier.notify(msg.source, 'custom', {'content': f'❌ 找不到配置檔中的 Agent: {target_name}'})
             return True
-        elif cmd_content.startswith('/capture'):
+        elif is_cmd(cmd_content, '/capture'):
             parts = content.split()
             if len(parts) > 1:
                 cap_target = parts[1]
