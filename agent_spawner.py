@@ -120,7 +120,7 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
     env_file = os.path.join(cyber_path, '.cyberbrain_env')
     with open(env_file, 'w') as ef:
         ef.write(f"AGENT_NAME={name}\nTMUX_SESSION_NAME={session_name}\nROUTER_PORT={os.environ.get('ROUTER_PORT', '12210')}\n")
-    subprocess.run(['chmod', 'o+rw', env_file], check=False)
+    subprocess.run(['chmod', 'o+r', env_file], check=False)
 
     cyber_tools_dir = os.path.join(script_dir, 'tools', 'cyberbrain')
     if os.path.exists(cyber_tools_dir):
