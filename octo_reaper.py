@@ -107,11 +107,11 @@ def main():
                     
                 if not flag_content:
                     try:
-                        if time.time() - os.path.getmtime(flag_file) > polling_interval + 240:
-                            print(f"[Reaper] 發現逾時 ({polling_interval + 240} 秒) 的空 Flag，強制接管寫入 READY_FOR_REAPER ({agent_name})")
-                            with open(flag_file, 'w') as f:
-                                f.write("READY_FOR_REAPER")
-                            flag_content = "READY_FOR_REAPER"
+                        elapsed = time.time() - os.path.getmtime(flag_file)
+                        # Check intervals: 180-245, 420-485, 660-725
+                        if (180 < elapsed <= 245) or (420 < elapsed <= 485) or (660 < elapsed <= 725):
+                            print(f"[Reaper] 發現逾時空 Flag (已存在 {int(elapsed)} 秒)，位於重試區間內，發送通知 ({agent_name})")
+                            notify_agent(agent_name)
                     except Exception as e:
                         print(f"[Reaper] 檢查逾時 Flag 失敗 ({agent_name}): {e}")
 
