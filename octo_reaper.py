@@ -105,13 +105,26 @@ def main():
                 except Exception:
                     pass
                     
-                if not flag_content:
+                if not flag_content or flag_content.startswith("RETRY_"):
                     try:
-                        if time.time() - os.path.getmtime(flag_file) > polling_interval + 240:
-                            print(f"[Reaper] 發現逾時 ({polling_interval + 240} 秒) 的空 Flag，強制接管寫入 READY_FOR_REAPER ({agent_name})")
-                            with open(flag_file, 'w') as f:
-                                f.write("READY_FOR_REAPER")
-                            flag_content = "READY_FOR_REAPER"
+                        mtime = os.path.getmtime(flag_file)
+                        elapsed = time.time() - mtime
+                        
+                        retry_count = 0
+                        if flag_content.startswith("RETRY_"):
+                            retry_count = int(flag_content.split("_")[1])
+                            
+                        next_threshold = polling_interval + 240 * (retry_count + 1)
+                        
+                        if elapsed > next_threshold:
+                            print(f"[Reaper] 發現逾時 ({next_threshold} 秒) 的 Flag，重新發送通知 (第 {retry_count + 1} 次重試) ({agent_name})")
+                            success = notify_agent(agent_name)
+                            if success:
+                                atime = os.path.getatime(flag_file)
+                                with open(flag_file, 'w') as f:
+                                    f.write(f"RETRY_{retry_count + 1}")
+                                os.utime(flag_file, (atime, mtime))
+                                flag_content = f"RETRY_{retry_count + 1}"
                     except Exception as e:
                         print(f"[Reaper] 檢查逾時 Flag 失敗 ({agent_name}): {e}")
 
