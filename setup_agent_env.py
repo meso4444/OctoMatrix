@@ -129,77 +129,52 @@ def setup_agent_dirs(agent_config, script_dir):
     return home
 
 def setup_collaboration_links(agents, groups):
-    """Establish collaboration group soft-links and cleanup stale links"""
+    """全域建立協作軟連結，不分群組，一律互相建立 _shared_space"""
     agent_names = [a['name'] for a in agents]
-
-    # 1. Calculate all "Expected Links"
-    # Format: {agent_home: set([partner_link_name, ...])}
+    
     expected_links = {name: set() for name in agent_names}
-
-    if groups:
-        for group in groups:
-            members = group.get('members', [])
-            valid_members = [m for m in members if m in agent_names]
-
-            if len(valid_members) < 2:
+    
+    print("🔗 處理全域協作連結 (Full Mesh)")
+    for me in agent_names:
+        my_home = os.path.join(AGENT_HOME_BASE, me)
+        for partner in agent_names:
+            if me == partner:
                 continue
+            
+            target_real_path = os.path.join(AGENT_HOME_BASE, partner, 'my_shared_space')
+            link_name = f"{partner}_shared_space"
+            full_link_path = os.path.join(my_home, link_name)
+            
+            expected_links[me].add(link_name)
+            rel_target = os.path.relpath(target_real_path, my_home)
+            
+            if os.path.islink(full_link_path):
+                try: os.unlink(full_link_path)
+                except OSError: pass
+                
+            try:
+                os.symlink(rel_target, full_link_path)
+                # print(f"   + 建立連結: {me} -> {partner}")
+            except OSError as e:
+                print(f"   ⚠️ 建立連結失敗: {e}")
 
-            print(f"🔗 Processing collaboration group: {group.get('name', 'unnamed')} ({', '.join(valid_members)})")
-
-            # Full Mesh Connection
-            for me in valid_members:
-                my_home = os.path.join(AGENT_HOME_BASE, me)
-                for partner in valid_members:
-                    if me == partner:
-                        continue
-
-                    # Target and link name
-                    target_real_path = os.path.join(AGENT_HOME_BASE, partner, 'my_shared_space')
-                    link_name = f"{partner}_shared_space"
-                    full_link_path = os.path.join(my_home, link_name)
-
-                    # Add to expected list
-                    expected_links[me].add(link_name)
-
-                    # Calculate relative path
-                    rel_target = os.path.relpath(target_real_path, my_home)
-
-                    # Delete old symbolic link if it exists
-                    if os.path.islink(full_link_path):
-                        try:
-                            os.unlink(full_link_path)
-                        except OSError as e:
-                            print(f"   ⚠️ Failed to delete old link: {e}")
-
-                    # Re-establish symbolic link
-                    try:
-                        os.symlink(rel_target, full_link_path)
-                        print(f"   + Created link: {me} -> {partner}")
-                    except OSError as e:
-                        print(f"   ⚠️ Failed to create link: {e}")
-
-    # 2. Cleanup Stale Links
-    print("🧹 Checking and cleaning up stale collaboration links...")
+    # 2. 清理過期或不屬於現在配置檔中的連結
+    print("🧹 檢查並清理過期協作連結...")
     for agent in agent_names:
         home = os.path.join(AGENT_HOME_BASE, agent)
         if not os.path.exists(home):
             continue
-
-        # Scan all files in Agent's home
+            
         for item in os.listdir(home):
-            # Only process symbolic links with this suffix
             if item.endswith("_shared_space"):
                 full_path = os.path.join(home, item)
-
-                # Check if it's a symbolic link
                 if os.path.islink(full_path):
-                    # If this link is not in the expected list, delete it
                     if item not in expected_links[agent]:
                         try:
                             os.unlink(full_path)
-                            print(f"   - Removed stale link: {agent}/{item}")
+                            print(f"   - 移除過期連結: {agent}/{item}")
                         except OSError as e:
-                            print(f"   ⚠️ Failed to remove: {e}")
+                            print(f"   ⚠️ 移除失敗: {e}")
 
 def deploy_skills(agents):
     """Deploy Skills and implement Immutable locking"""
