@@ -207,7 +207,8 @@ class TelegramSender:
                 if resp.status_code != 200:
                     if parse_mode:
                         logger.warning(f"[Notifier] Telegram 解析錯誤 ({resp.status_code})，正嘗試以純文字模式重發。錯誤: {resp.text}")
-                        data['parse_mode'] = None
+                        if 'parse_mode' in data:
+                            del data['parse_mode']
                         resp = requests.post(f"{self.api_url}/sendMessage", json=data, timeout=5)
                         if resp.status_code != 200:
                             logger.error(f"[Notifier] Telegram 純文字重發失敗: {resp.text}")
