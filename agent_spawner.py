@@ -202,7 +202,7 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
         
     subprocess.run(['chmod', 'o+rx', script_dir], check=False)
     subprocess.run(['chmod', 'o+rx', os.path.join(script_dir, 'agent_home')], check=False)
-    subprocess.run(['chmod', '-R', 'o+rwX', home_path], check=False)
+    subprocess.run(['chmod', '-R', 'o+rwX', home_path], check=False, stderr=subprocess.DEVNULL)
 
     if is_docker:
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', f'cd {home_path}']), check=True)
