@@ -113,7 +113,7 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
     shell_path = os.path.join(cyber_path, 'shell')
     os.makedirs(ghost_path, exist_ok=True)
     os.makedirs(shell_path, exist_ok=True)
-    subprocess.run(['chmod', 'o+rx', cyber_path], check=False)
+    subprocess.run(['chmod', 'o+rwX', cyber_path], check=False)
     subprocess.run(['chmod', 'o+rwX', ghost_path], check=False)
     subprocess.run(['chmod', 'o+rwX', shell_path], check=False)
 
@@ -139,7 +139,7 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
 
     toolbox_path = os.path.join(home_path, 'toolbox')
     os.makedirs(toolbox_path, exist_ok=True)
-    subprocess.run(['chmod', 'o+rx', toolbox_path], check=False)
+    subprocess.run(['chmod', 'o+rwX', toolbox_path], check=False)
     
     tools_to_copy = [
         ('tools/notification/matrix_notifier.py', 'matrix_notifier.py'),
@@ -159,7 +159,7 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
     
     knowledge_path = os.path.join(home_path, 'knowledge')
     os.makedirs(knowledge_path, exist_ok=True)
-    subprocess.run(['chmod', 'o+rx', knowledge_path], check=False)
+    subprocess.run(['chmod', 'o+rwX', knowledge_path], check=False)
 
     rule_files_to_copy = ['agent_home_rules.md', 'AGENT_PROTOCOL.md', 'agent_rule_gen_template.txt']
     for rule_file in rule_files_to_copy:
@@ -181,8 +181,8 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
     avatar_path = os.path.join(home_path, 'avatar')
     avatar_emojis_path = os.path.join(avatar_path, 'emojis')
     os.makedirs(avatar_emojis_path, exist_ok=True)
-    subprocess.run(['chmod', 'o+rx', avatar_path], check=False)
-    subprocess.run(['chmod', 'o+rx', avatar_emojis_path], check=False)
+    subprocess.run(['chmod', 'o+rwX', avatar_path], check=False)
+    subprocess.run(['chmod', 'o+rwX', avatar_emojis_path], check=False)
 
     model = agent_config.get('model', '').strip()
 
