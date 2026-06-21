@@ -129,71 +129,46 @@ def setup_agent_dirs(agent_config, script_dir):
     return home
 
 def setup_collaboration_links(agents, groups):
-    """建立協作羣組的軟連結，並清理不再協作的舊連結"""
+    """全域建立協作軟連結，不分群組，一律互相建立 _shared_space"""
     agent_names = [a['name'] for a in agents]
     
-    # 1. 計算所有「應該存在」的連結 (Expected Links)
-    # 格式: {agent_home: set([partner_link_name, ...])}
     expected_links = {name: set() for name in agent_names}
     
-    if groups:
-        for group in groups:
-            members = group.get('members', [])
-            valid_members = [m for m in members if m in agent_names]
-            
-            if len(valid_members) < 2:
+    print("🔗 處理全域協作連結 (Full Mesh)")
+    for me in agent_names:
+        my_home = os.path.join(AGENT_HOME_BASE, me)
+        for partner in agent_names:
+            if me == partner:
                 continue
-                
-            print(f"🔗 處理協作羣組: {group.get('name', 'unnamed')} ({', '.join(valid_members)})")
             
-            # 全連接 (Full Mesh)
-            for me in valid_members:
-                my_home = os.path.join(AGENT_HOME_BASE, me)
-                for partner in valid_members:
-                    if me == partner:
-                        continue
-                    
-                    # 連結目標與名稱
-                    target_real_path = os.path.join(AGENT_HOME_BASE, partner, 'my_shared_space')
-                    link_name = f"{partner}_shared_space" # 這裡只存檔名
-                    full_link_path = os.path.join(my_home, link_name)
-                    
-                    # 記錄到預期列表
-                    expected_links[me].add(link_name)
+            target_real_path = os.path.join(AGENT_HOME_BASE, partner, 'my_shared_space')
+            link_name = f"{partner}_shared_space"
+            full_link_path = os.path.join(my_home, link_name)
+            
+            expected_links[me].add(link_name)
+            rel_target = os.path.relpath(target_real_path, my_home)
+            
+            if os.path.islink(full_link_path):
+                try: os.unlink(full_link_path)
+                except OSError: pass
+                
+            try:
+                os.symlink(rel_target, full_link_path)
+                # print(f"   + 建立連結: {me} -> {partner}")
+            except OSError as e:
+                print(f"   ⚠️ 建立連結失敗: {e}")
 
-                    # 計算相對路徑
-                    rel_target = os.path.relpath(target_real_path, my_home)
-
-                    # 刪除舊的軟連結（如果存在）
-                    if os.path.islink(full_link_path):
-                        try:
-                            os.unlink(full_link_path)
-                        except OSError as e:
-                            print(f"   ⚠️ 刪除舊連結失敗: {e}")
-
-                    # 重新建立軟連結
-                    try:
-                        os.symlink(rel_target, full_link_path)
-                        print(f"   + 建立連結: {me} -> {partner}")
-                    except OSError as e:
-                        print(f"   ⚠️ 建立連結失敗: {e}")
-
-    # 2. 清理不再協作的舊連結 (Cleanup Stale Links)
+    # 2. 清理過期或不屬於現在配置檔中的連結
     print("🧹 檢查並清理過期協作連結...")
     for agent in agent_names:
         home = os.path.join(AGENT_HOME_BASE, agent)
         if not os.path.exists(home):
             continue
             
-        # 掃描該 Agent 家中所有檔案
         for item in os.listdir(home):
-            # 只處理以此後綴結尾的軟連結
             if item.endswith("_shared_space"):
                 full_path = os.path.join(home, item)
-                
-                # 檢查是否為軟連結
                 if os.path.islink(full_path):
-                    # 如果這個連結不在預期列表中，則刪除
                     if item not in expected_links[agent]:
                         try:
                             os.unlink(full_path)
