@@ -325,6 +325,16 @@ if __name__ == "__main__":
             print(f"❌ Agent {args.agent} not found in config")
             sys.exit(1)
         spawn_agent(agent_config, script_dir, session_name, is_first=False)
+        
+        try:
+            from config import SYS_PREFIX, MATRIX_USERNAME
+            test_msg = f"{SYS_PREFIX} Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood, then execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and announce you have just been restarted via fix}}'`"
+            subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:{args.agent}', test_msg], check=True)
+            time.sleep(0.5)
+            subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:{args.agent}', 'Enter'], check=True)
+            print(f"   ✓ Test message sent to: {args.agent}")
+        except Exception as e:
+            print(f"   ⚠️ Failed to send test message: {e}")
     elif args.all:
         for i, agent_config in enumerate(AGENTS):
             spawn_agent(agent_config, script_dir, session_name, is_first=(i==0))
