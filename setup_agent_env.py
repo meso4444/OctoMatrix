@@ -338,6 +338,15 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
     if is_first:
         subprocess.run(['tmux'] + tmux_cmd(['rename-window', '-t', f'{session_name}:0', name]), check=True)
     else:
+        # 清除既有同名視窗，避免 duplicate window 導致 send-keys 目標無法解析而觸發卡死(Crash)
+        try:
+            result = subprocess.run(['tmux', 'list-windows', '-t', session_name, '-F', '#W:#I'], capture_output=True, text=True)
+            for line in result.stdout.splitlines():
+                if line.startswith(f"{name}:"):
+                    win_id = line.split(':')[1]
+                    subprocess.run(['tmux', 'kill-window', '-t', f'{session_name}:{win_id}'])
+        except Exception:
+            pass
         subprocess.run(['tmux'] + tmux_cmd(['new-window', '-t', session_name, '-n', name]), check=True)
 
     cyber_path = os.path.join(home_path, 'octo_cyberbrain')
@@ -492,7 +501,7 @@ def main():
     check_permissions()
     
     script_dir = os.environ.get('SCRIPT_DIR', BASE_DIR)
-    session_name = os.environ.get('TMUX_SESSION_NAME', load_config().get('TMUX_SESSION_NAME', 'octo_session'))
+    session_name = os.environ.get('TMUX_SESSION_NAME', load_config().get('tmux', {}).get('session_name', 'ai_octomatrix'))
     
     config = load_config()
     agents = config.get('agents', [])

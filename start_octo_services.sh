@@ -77,14 +77,15 @@ echo "🧬  建立 tmux session '$TMUX_SESSION_NAME'…"
 # 使用明確指定的 socket 檔案路徑建立 session（不依賴 TMUX_TMPDIR 環境變數）
 tmux new-session -d -s "$TMUX_SESSION_NAME" -n "init" -c "$SCRIPT_DIR"
 
+export SCRIPT_DIR
+export TMUX_SESSION_NAME
+
 # 1. 初始化 Agent 環境
 echo "🧬  正在初始化 Agent 生態環境…"
 python3 "$SCRIPT_DIR/setup_agent_env.py" --all
 
 # 2. 動態啟動 AI Agent 軍團
 echo "🤖 正在部署 AI Agent 軍團…"
-export SCRIPT_DIR
-export TMUX_SESSION_NAME
 
 
 echo "   ✅ 所有 Agent 已就緒"
