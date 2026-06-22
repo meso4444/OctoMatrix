@@ -436,12 +436,9 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
         print(f"     ✅ {engine_doc_name} already exists, skip initialization injection (protect existing specification)")
         print(f"     🔄 Executing conversation recovery process…")
         
-        if engine == 'codex':
-            res = subprocess.run(['tmux'] + tmux_cmd(['capture-pane', '-t', f'{session_name}:{name}', '-p']), capture_output=True, text=True)
-            if 'esc to interrupt' in res.stdout or 'Booting' in res.stdout:
-                print(f"     ⚠️ Detected {name} (codex) is running a background task, sending ESC to interrupt…")
-                subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Escape']), check=True)
-                time.sleep(1.5)
+        # Unconditionally send ESC to interrupt any running background task (e.g. Codex MCP) or residual Auto-complete menus
+        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Escape']), check=True)
+        time.sleep(1)
 
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '\x1b[200~']))
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '-l', '--', '/resume']), check=True)
