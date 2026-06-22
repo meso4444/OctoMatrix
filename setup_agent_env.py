@@ -436,12 +436,9 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
         print(f"     ✅ {engine_doc_name} 已存在，跳過初始注入 (保護現有規格)")
         print(f"     🔄 執行對話復原流程…")
         
-        if engine == 'codex':
-            res = subprocess.run(['tmux'] + tmux_cmd(['capture-pane', '-t', f'{session_name}:{name}', '-p']), capture_output=True, text=True)
-            if 'esc to interrupt' in res.stdout or 'Booting' in res.stdout:
-                print(f"     ⚠️ 偵測到 {name} (codex) 正在執行背景程序，發送 ESC 中斷…")
-                subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Escape']), check=True)
-                time.sleep(1.5)
+        # 無條件發送 ESC 以中斷任何執行中的背景程序 (例如 Codex MCP) 或殘留的 Auto-complete 選單
+        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Escape']), check=True)
+        time.sleep(1)
 
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '\x1b[200~']))
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '-l', '--', '/resume']), check=True)
