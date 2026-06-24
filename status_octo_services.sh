@@ -61,7 +61,7 @@ echo "2️⃣  API server status:"
 API_DATA=$(curl -s "http://localhost:$ROUTER_PORT/status" || echo "failed")
 if [ "$API_DATA" != "failed" ]; then
     echo "   ✅ Router normal (Port $ROUTER_PORT)"
-    ACTIVE=$(echo "$API_DATA" | python3 -c "import sys, json; print(json.load(sys.stdin)['active_agent'])")
+    ACTIVE=$(echo "$API_DATA" | python3 -c "import sys, json; print(json.load(sys.stdin).get('current_agent', 'None'))")
     echo "   ⭐ Currently active Agent: $ACTIVE"
 else
     echo "   ❌ Cannot connect to API service"
