@@ -183,6 +183,17 @@ install_python_packages() {
     echo ""
     echo "🐍 Installing Python dependencies..."
 
+    # Ensure system supports venv and pip (Ubuntu/Debian removes ensurepip by default)
+    if ! python3 -c "import ensurepip" 2>/dev/null; then
+        echo "📦 Detected missing python3-venv (ensurepip), preparing to install..."
+        if command -v apt-get &> /dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y python3-venv python3-pip
+        elif command -v yum &> /dev/null; then
+            sudo yum install -y python3-pip
+        fi
+    fi
+
     # Check pip3
     if ! command -v pip3 &> /dev/null; then
         echo "📦 Installing pip3..."
@@ -190,7 +201,7 @@ install_python_packages() {
             python3 -m ensurepip --upgrade
         else
             if command -v apt-get &> /dev/null; then
-                sudo apt-get install -y python3-pip
+                sudo apt-get update && sudo apt-get install -y python3-pip
             elif command -v yum &> /dev/null; then
                 sudo yum install -y python3-pip
             fi
