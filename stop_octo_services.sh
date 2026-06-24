@@ -15,6 +15,40 @@
 
 # stop_octo_services.sh (OctoMatrix 版)
 
+# ==============================================================================
+
+# 環境初始化：動態定位專案根目錄並掛載虛擬環境 (冪等且相容任意子目錄)
+
+# ==============================================================================
+
+if [ -z "$VIRTUAL_ENV" ]; then
+
+    find_project_root() {
+
+        local dir="$1"
+
+        while [ "$dir" != "/" ]; do
+
+            if [ -f "$dir/install_dependencies.sh" ]; then echo "$dir"; return 0; fi
+
+            dir=$(dirname "$dir")
+
+        done
+
+        return 1
+
+    }
+
+    PROJECT_ROOT=$(find_project_root "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")
+
+    if [ -n "$PROJECT_ROOT" ] && [ -f "$PROJECT_ROOT/.venv/bin/activate" ]; then
+
+        source "$PROJECT_ROOT/.venv/bin/activate"
+
+    fi
+
+fi
+
 SCRIPT_DIR="$(dirname "$0")"
 TMUX_SESSION_NAME=$(python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import TMUX_SESSION_NAME; print(TMUX_SESSION_NAME)")
 

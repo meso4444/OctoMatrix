@@ -16,6 +16,40 @@
 # start_ngrok.sh (Precise Process Management Version)
 # 啟動 ngrok 並自動配置 Telegram Webhook (使用動態密鑰 + PID 精確管理)
 
+# ==============================================================================
+
+# 環境初始化：動態定位專案根目錄並掛載虛擬環境 (冪等且相容任意子目錄)
+
+# ==============================================================================
+
+if [ -z "$VIRTUAL_ENV" ]; then
+
+    find_project_root() {
+
+        local dir="$1"
+
+        while [ "$dir" != "/" ]; do
+
+            if [ -f "$dir/install_dependencies.sh" ]; then echo "$dir"; return 0; fi
+
+            dir=$(dirname "$dir")
+
+        done
+
+        return 1
+
+    }
+
+    PROJECT_ROOT=$(find_project_root "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")
+
+    if [ -n "$PROJECT_ROOT" ] && [ -f "$PROJECT_ROOT/.venv/bin/activate" ]; then
+
+        source "$PROJECT_ROOT/.venv/bin/activate"
+
+    fi
+
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 CONFIG_FILE="$SCRIPT_DIR/config.py"
 ENV_FILE="$SCRIPT_DIR/.env"

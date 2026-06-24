@@ -18,6 +18,24 @@
 
 set -e
 
+# ==============================================================================
+# 環境初始化：動態定位專案根目錄並掛載虛擬環境 (冪等且相容任意子目錄)
+# ==============================================================================
+if [ -z "$VIRTUAL_ENV" ]; then
+    find_project_root() {
+        local dir="$1"
+        while [ "$dir" != "/" ]; do
+            if [ -f "$dir/install_dependencies.sh" ]; then echo "$dir"; return 0; fi
+            dir=$(dirname "$dir")
+        done
+        return 1
+    }
+    PROJECT_ROOT=$(find_project_root "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")
+    if [ -n "$PROJECT_ROOT" ] && [ -f "$PROJECT_ROOT/.venv/bin/activate" ]; then
+        source "$PROJECT_ROOT/.venv/bin/activate"
+    fi
+fi
+
 echo "🔧 正在檢查系統環境..."
 
 # ============================================================================
@@ -153,7 +171,7 @@ install_python3_if_needed() {
     elif [[ "$ENVIRONMENT" == "Linux" || "$ENVIRONMENT" == "WSL2" ]]; then
         echo "📦 正在安裝 Python 3..."
         if command -v apt-get &> /dev/null; then
-            sudo apt-get install -y python3 python3-pip
+            sudo apt-get install -y python3 python3-pip python3-venv
         elif command -v yum &> /dev/null; then
             sudo yum install -y python3 python3-pip
         fi
@@ -189,17 +207,19 @@ install_python_packages() {
     # 合併所有套件
     ALL_PACKAGES="$PACKAGES $MC_PACKAGES"
 
-    local pip_cmd="sudo pip3 install --upgrade"
-    if [[ "$ENVIRONMENT" == "macOS" ]]; then
-        pip_cmd="pip3 install --upgrade"
-    fi
+    echo "📦 正在建立 Python 虛擬環境..."
+    # 確保虛擬環境在安裝腳本所在目錄 (專案根目錄) 建立
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    python3 -m venv "$SCRIPT_DIR/.venv"
+    source "$SCRIPT_DIR/.venv/bin/activate"
 
-    echo "📦 正在全域安裝 Python 套件: $ALL_PACKAGES"
-    if $pip_cmd $ALL_PACKAGES --break-system-packages 2>/dev/null || $pip_cmd $ALL_PACKAGES; then
-        echo "✅ Python 套件全域安裝成功"
+    local pip_cmd="pip3 install --upgrade"
+
+    echo "📦 正在虛擬環境內安裝 Python 套件: $ALL_PACKAGES"
+    if $pip_cmd $ALL_PACKAGES; then
+        echo "✅ Python 套件安裝成功"
     else
-        echo "❌ Python 套件全域安裝失敗！"
-        echo "💡 提示: 請嘗試手動執行: $pip_cmd $ALL_PACKAGES --break-system-packages"
+        echo "❌ Python 套件安裝失敗！"
     fi
 }
 

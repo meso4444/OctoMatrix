@@ -17,6 +17,24 @@
 
 set -e
 
+# ==============================================================================
+# 環境初始化：動態定位專案根目錄並掛載虛擬環境 (冪等且相容任意子目錄)
+# ==============================================================================
+if [ -z "$VIRTUAL_ENV" ]; then
+    find_project_root() {
+        local dir="$1"
+        while [ "$dir" != "/" ]; do
+            if [ -f "$dir/install_dependencies.sh" ]; then echo "$dir"; return 0; fi
+            dir=$(dirname "$dir")
+        done
+        return 1
+    }
+    PROJECT_ROOT=$(find_project_root "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")
+    if [ -n "$PROJECT_ROOT" ] && [ -f "$PROJECT_ROOT/.venv/bin/activate" ]; then
+        source "$PROJECT_ROOT/.venv/bin/activate"
+    fi
+fi
+
 # 解析為絕對路徑
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
@@ -82,7 +100,7 @@ export TMUX_SESSION_NAME
 
 # 1. 初始化 Agent 環境
 echo "🧬  正在初始化 Agent 生態環境…"
-python3 "$SCRIPT_DIR/setup_agent_env.py" --all
+"$PROJECT_ROOT/.venv/bin/python3" "$SCRIPT_DIR/setup_agent_env.py" --all
 
 # 2. 動態啟動 AI Agent 軍團
 echo "🤖 正在部署 AI Agent 軍團…"
@@ -93,7 +111,7 @@ echo "   ✅ 所有 Agent 已就緒"
 # Window: MC Router API
 echo "🔀 啟動 MC Router (消息路由中樞)…"
 tmux new-window -t "$TMUX_SESSION_NAME" -n "router" -c "$SCRIPT_DIR"
-tmux send-keys -t "$TMUX_SESSION_NAME:router" "python3 $SCRIPT_DIR/octo_router.py"
+tmux send-keys -t "$TMUX_SESSION_NAME:router" "$PROJECT_ROOT/.venv/bin/python3 $SCRIPT_DIR/octo_router.py" C-m
 sleep 1
 tmux send-keys -t "$TMUX_SESSION_NAME:router" Enter
 
@@ -101,7 +119,7 @@ tmux send-keys -t "$TMUX_SESSION_NAME:router" Enter
 sleep 2
 
 # 檢查平臺啟用狀態並啟動網關
-python3 << 'EOF'
+"$PROJECT_ROOT/.venv/bin/python3" << 'EOF'
 import sys
 import os
 import subprocess
@@ -109,6 +127,7 @@ import time
 
 script_dir = os.environ['SCRIPT_DIR']
 session_name = os.environ['TMUX_SESSION_NAME']
+python_exe = os.path.join(os.environ['PROJECT_ROOT'], '.venv', 'bin', 'python3')
 sys.path.append(script_dir)
 
 try:
@@ -118,7 +137,7 @@ try:
     if PLATFORMS_ENABLED.get('telegram', True):
         print("   📱 啟動 Telegram Gateway (Router 轉發)…")
         subprocess.run(['tmux', 'new-window', '-t', session_name, '-n', 'telegram', '-c', script_dir], check=True)
-        subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:telegram', f'python3 {script_dir}/telegram_gateway.py', 'Enter'], check=True)
+        subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:telegram', f'{python_exe} {script_dir}/telegram_gateway.py', 'Enter'], check=True)
         time.sleep(2)
     else:
         print("   ⚪️ Telegram 已禁用，跳過啟動")
@@ -127,7 +146,7 @@ try:
     if PLATFORMS_ENABLED.get('discord', True):
         print("   💻 啟動 Discord Gateway (WebSocket 模式)…")
         subprocess.run(['tmux', 'new-window', '-t', session_name, '-n', 'discord', '-c', script_dir], check=True)
-        subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:discord', f'python3 {script_dir}/discord_gateway.py', 'Enter'], check=True)
+        subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:discord', f'{python_exe} {script_dir}/discord_gateway.py', 'Enter'], check=True)
         time.sleep(2)
     else:
         print("   ⚪️ Discord 已禁用，跳過啟動")
@@ -136,7 +155,7 @@ try:
     if PLATFORMS_ENABLED.get('slack', True):
         print("   ⚡ 啟動 Slack Gateway (Socket Mode)…")
         subprocess.run(['tmux', 'new-window', '-t', session_name, '-n', 'slack', '-c', script_dir], check=True)
-        subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:slack', f'python3 {script_dir}/slack_socket_gateway.py', 'Enter'], check=True)
+        subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:slack', f'{python_exe} {script_dir}/slack_socket_gateway.py', 'Enter'], check=True)
         time.sleep(2)
     else:
         print("   ⚪️ Slack 已禁用，跳過啟動")
@@ -151,11 +170,11 @@ sleep 2
 # Window: Octo Reaper (Cyberbrain GHOST 收割者)
 echo "🧠 啟動 Cyberbrain GHOST 收割者 (octo_reaper.py)…"
 tmux new-window -t "$TMUX_SESSION_NAME" -n "reaper" -c "$SCRIPT_DIR"
-tmux send-keys -t "$TMUX_SESSION_NAME:reaper" "python3 $SCRIPT_DIR/octo_reaper.py"
+tmux send-keys -t "$TMUX_SESSION_NAME:reaper" "$PROJECT_ROOT/.venv/bin/python3 $SCRIPT_DIR/octo_reaper.py" C-m
 sleep 1
 tmux send-keys -t "$TMUX_SESSION_NAME:reaper" Enter
 
-if python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import PLATFORMS_ENABLED; print(PLATFORMS_ENABLED.get('telegram', True))" | grep -q "True"; then
+if "$PROJECT_ROOT/.venv/bin/python3" -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import PLATFORMS_ENABLED; print(PLATFORMS_ENABLED.get('telegram', True))" | grep -q "True"; then
     # Window: ngrok Tunnel
     echo "☁️  建立安全連線隧道 (ngrok)…"
     tmux new-window -t "$TMUX_SESSION_NAME" -n "ngrok" -c "$SCRIPT_DIR"
