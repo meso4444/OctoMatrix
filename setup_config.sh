@@ -50,9 +50,9 @@ CUR_NGROK_PORT=4040
 CUR_ROUTER_PORT=12210
 
 if [ -f "$CONFIG_YAML" ]; then
-    CUR_TELEGRAM_GATEWAY_PORT=$(python3 -c "import yaml; print(yaml.safe_load(open('$CONFIG_YAML'))['server'].get('telegram_gateway_port', 11440))" 2>/dev/null || echo 11440)
-    CUR_NGROK_PORT=$(python3 -c "import yaml; print(yaml.safe_load(open('$CONFIG_YAML'))['server']['ngrok_api_port'])" 2>/dev/null || echo 4040)
-    CUR_ROUTER_PORT=$(python3 -c "import yaml; print(yaml.safe_load(open('$CONFIG_YAML'))['router']['port'])" 2>/dev/null || echo 12210)
+    CUR_TELEGRAM_GATEWAY_PORT=$("$PROJECT_ROOT/.venv/bin/python3" -c "import yaml; print(yaml.safe_load(open('$CONFIG_YAML'))['server'].get('telegram_gateway_port', 11440))" 2>/dev/null || echo 11440)
+    CUR_NGROK_PORT=$("$PROJECT_ROOT/.venv/bin/python3" -c "import yaml; print(yaml.safe_load(open('$CONFIG_YAML'))['server']['ngrok_api_port'])" 2>/dev/null || echo 4040)
+    CUR_ROUTER_PORT=$("$PROJECT_ROOT/.venv/bin/python3" -c "import yaml; print(yaml.safe_load(open('$CONFIG_YAML'))['router']['port'])" 2>/dev/null || echo 12210)
 fi
 
 # 建立還原快照 (用於 Q 操作)
@@ -102,7 +102,7 @@ ROUTER_PORT="$ORIG_ROUTER_PORT"
 # --- 自動獲取 Chat ID 函數 ---
 get_chat_id_from_api() {
     export PY_BOT_TOKEN="$1"
-    python3 -c "
+    "$PROJECT_ROOT/.venv/bin/python3" -c "
 import requests, sys, time, os
 try:
     token = os.environ['PY_BOT_TOKEN']
@@ -168,7 +168,7 @@ EOF
 update_config_yaml() {
     export TELEGRAM_GATEWAY_PORT NGROK_API_PORT ROUTER_PORT
     export TELEGRAM_ENABLED DISCORD_ENABLED SLACK_ENABLED
-    python3 << 'PYTHON_EOF'
+    "$PROJECT_ROOT/.venv/bin/python3" << 'PYTHON_EOF'
 import os
 import yaml
 
@@ -313,7 +313,7 @@ while true; do
             echo ""
             echo "🤖 啟動設定精靈配置 Agent 與進階參數..."
             update_config_yaml
-            python3 "$SCRIPT_DIR/config_wizard.py" "$CONFIG_YAML"
+            "$PROJECT_ROOT/.venv/bin/python3" "$SCRIPT_DIR/config_wizard.py" "$CONFIG_YAML"
             ;;
         7)
             echo ""

@@ -56,7 +56,7 @@ run_local_auth() {
         return
     fi
     
-    AGENT_LIST=$(python3 -c "import yaml; [print(a.get('name', '')) for a in yaml.safe_load(open('$CONFIG_YAML')).get('agents', [])]" 2>/dev/null)
+    AGENT_LIST=$("$PROJECT_ROOT/.venv/bin/python3" -c "import yaml; [print(a.get('name', '')) for a in yaml.safe_load(open('$CONFIG_YAML')).get('agents', [])]" 2>/dev/null)
     if [ -z "$AGENT_LIST" ]; then
         echo "❌ 目前沒有建立任何 Agent，請先至系統設定新增 Agent。"
         return
@@ -96,7 +96,7 @@ run_local_auth() {
     fi
 
     # 自動判斷引擎
-    AGENT_ENGINE=$(python3 -c "import yaml; print(next((a.get('engine', 'gemini') for a in yaml.safe_load(open('$CONFIG_YAML')).get('agents', []) if a.get('name', '') == '$AGENT_NAME'), 'gemini'))" 2>/dev/null)
+    AGENT_ENGINE=$("$PROJECT_ROOT/.venv/bin/python3" -c "import yaml; print(next((a.get('engine', 'gemini') for a in yaml.safe_load(open('$CONFIG_YAML')).get('agents', []) if a.get('name', '') == '$AGENT_NAME'), 'gemini'))" 2>/dev/null)
     
     echo ""
     echo "⚙️  自動偵測引擎: $AGENT_ENGINE"

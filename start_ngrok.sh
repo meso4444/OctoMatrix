@@ -77,8 +77,8 @@ fi
 WEBHOOK_SECRET=$(cat "$SECRET_FILE")
 
 # 讀取 Port
-TELEGRAM_GATEWAY_PORT=$(python3 -c "import sys; sys.path.append('.'); from config import TELEGRAM_GATEWAY_PORT; print(TELEGRAM_GATEWAY_PORT)")
-NGROK_API_PORT=$(python3 -c "import sys; sys.path.append('.'); from config import NGROK_API_PORT; print(NGROK_API_PORT)" 2>/dev/null || echo "4040")
+TELEGRAM_GATEWAY_PORT=$("$PROJECT_ROOT/.venv/bin/python3" -c "import sys; sys.path.append('.'); from config import TELEGRAM_GATEWAY_PORT; print(TELEGRAM_GATEWAY_PORT)")
+NGROK_API_PORT=$("$PROJECT_ROOT/.venv/bin/python3" -c "import sys; sys.path.append('.'); from config import NGROK_API_PORT; print(NGROK_API_PORT)" 2>/dev/null || echo "4040")
 WEBHOOK_PATH="/telegram_webhook"
 
 # ============================================================================
