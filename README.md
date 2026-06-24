@@ -264,9 +264,9 @@ In addition to natural language conversation, you can send system commands throu
 * **`/switch [Agent Name]`**: Switch the target Agent you are currently talking to in the channel.
 * **`/clear`**: Clear the communication window and completely reset the Agent's conversation context and short-term memory, without affecting the imprinted GHOST memory.
 * **`/interrupt`**: Send a Ctrl+C to the active Agent to forcefully interrupt processes that might be stuck or in an infinite loop.
-* **`/fix [Agent Name]`**: Execute a restart sequence (quit and restart the Agent process) to attempt to recover a crashed Agent.
+* **`/fix [Agent Name]`**: Execute a hard reset and prompt recovery (Kill Window & Resume) to fix a stuck or crashed Agent window.
 * **`/capture [Agent Name]`**: Capture the last 50 lines of terminal output from the specified Agent's running window, useful for checking underlying execution errors.
-* **`/inspect [Agent Name]`**: Assign the current active Agent to deep dive into the target Agent's terminal window for diagnostics and inspection.
+* **`/inspect [Agent Name]`**: Assign the current active Agent to deep dive into the target Agent's terminal window for diagnostics and inspection (including log capture and SOP analysis).
 * **`/resume_latest`**: In the event of an unexpected interruption, attempt to restore the most recent conversation record from the CLI's local cache.
 * **`/sys_refresh`**: Check and forcefully update the system protocols and behavioral rules that the Agent must follow.
 * **`/avatar_renew [Requirements]`**: Dynamically generate and update the Agent's exclusive Avatar sticker set based on the given requirements.
