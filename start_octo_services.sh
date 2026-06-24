@@ -35,6 +35,13 @@ if [ -z "$VIRTUAL_ENV" ]; then
     fi
 fi
 
+# 動態判定 Python 執行檔路徑 (支援 Docker 的全域環境與 Local 的虛擬環境)
+if [ -n "$PROJECT_ROOT" ] && [ -d "$PROJECT_ROOT/.venv" ]; then
+    export PYTHON_CMD="$PROJECT_ROOT/.venv/bin/python3"
+else
+    export PYTHON_CMD="python3"
+fi
+
 # 解析為絕對路徑
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
@@ -111,7 +118,7 @@ echo "   ✅ 所有 Agent 已就緒"
 # Window: MC Router API
 echo "🔀 啟動 MC Router (消息路由中樞)…"
 tmux new-window -t "$TMUX_SESSION_NAME" -n "router" -c "$SCRIPT_DIR"
-tmux send-keys -t "$TMUX_SESSION_NAME:router" "$PROJECT_ROOT/.venv/bin/python3 $SCRIPT_DIR/octo_router.py" C-m
+tmux send-keys -t "$TMUX_SESSION_NAME:router" "$PYTHON_CMD $SCRIPT_DIR/octo_router.py" C-m
 sleep 1
 tmux send-keys -t "$TMUX_SESSION_NAME:router" Enter
 
@@ -127,7 +134,7 @@ import time
 
 script_dir = os.environ['SCRIPT_DIR']
 session_name = os.environ['TMUX_SESSION_NAME']
-python_exe = os.path.join(os.environ['PROJECT_ROOT'], '.venv', 'bin', 'python3')
+python_exe = os.environ.get('PYTHON_CMD', 'python3')
 sys.path.append(script_dir)
 
 try:
@@ -170,7 +177,7 @@ sleep 2
 # Window: Octo Reaper (Cyberbrain GHOST 收割者)
 echo "🧠 啟動 Cyberbrain GHOST 收割者 (octo_reaper.py)…"
 tmux new-window -t "$TMUX_SESSION_NAME" -n "reaper" -c "$SCRIPT_DIR"
-tmux send-keys -t "$TMUX_SESSION_NAME:reaper" "$PROJECT_ROOT/.venv/bin/python3 $SCRIPT_DIR/octo_reaper.py" C-m
+tmux send-keys -t "$TMUX_SESSION_NAME:reaper" "$PYTHON_CMD $SCRIPT_DIR/octo_reaper.py" C-m
 sleep 1
 tmux send-keys -t "$TMUX_SESSION_NAME:reaper" Enter
 
