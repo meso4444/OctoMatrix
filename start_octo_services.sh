@@ -47,7 +47,7 @@ trap 'echo "Received OS stop signal (SIGTERM/SIGINT), stopping services..."; "$S
 # Wait for network Ping loop (wait indefinitely to ensure offline boot support)
 # ----------------------------------------------------
 echo "Checking network connection..."
-while ! python3 -c "import socket; socket.create_connection(('8.8.8.8', 53), timeout=2)" &>/dev/null; do
+while ! "$PROJECT_ROOT/.venv/bin/python3" -c "import socket; socket.create_connection(('8.8.8.8', 53), timeout=2)" &>/dev/null; do
   # Use wait with sleep in the loop so trap can immediately respond to signals
   sleep 5 &
   wait $!
@@ -73,7 +73,7 @@ else
 fi
 
 # Read configuration
-TMUX_SESSION_NAME=$(python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import TMUX_SESSION_NAME; print(TMUX_SESSION_NAME)")
+TMUX_SESSION_NAME=$("$PROJECT_ROOT/.venv/bin/python3" -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import TMUX_SESSION_NAME; print(TMUX_SESSION_NAME)")
 
 echo "🚀 Starting OctoMatrix"
 echo "==========================================="
