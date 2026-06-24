@@ -37,9 +37,9 @@ CONFIG_FILE="$SCRIPT_DIR/config.py"
 
 # 讀取配置
 # 讀取配置
-TMUX_SESSION_NAME=$("$PROJECT_ROOT/.venv/bin/python3" -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import TMUX_SESSION_NAME; print(TMUX_SESSION_NAME)")
-ROUTER_PORT=$("$PROJECT_ROOT/.venv/bin/python3" -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import ROUTER_PORT; print(ROUTER_PORT)")
-TELEGRAM_GATEWAY_PORT=$("$PROJECT_ROOT/.venv/bin/python3" -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import TELEGRAM_GATEWAY_PORT; print(TELEGRAM_GATEWAY_PORT)")
+TMUX_SESSION_NAME=$(python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import TMUX_SESSION_NAME; print(TMUX_SESSION_NAME)")
+ROUTER_PORT=$(python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import ROUTER_PORT; print(ROUTER_PORT)")
+TELEGRAM_GATEWAY_PORT=$(python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import TELEGRAM_GATEWAY_PORT; print(TELEGRAM_GATEWAY_PORT)")
 
 echo "📊 OctoMatrix 系統狀態 (Multi-Agent)"
 echo "⏰ 檢查時間: $(date '+%Y-%m-%d %H:%M:%S')"
@@ -60,7 +60,7 @@ echo "2️⃣  API 伺服器狀態:"
 API_DATA=$(curl -s "http://localhost:$ROUTER_PORT/status" || echo "failed")
 if [ "$API_DATA" != "failed" ]; then
     echo "   ✅ Router 正常 (Port $ROUTER_PORT)"
-    ACTIVE=$(echo "$API_DATA" | "$PROJECT_ROOT/.venv/bin/python3" -c "import sys, json; print(json.load(sys.stdin)['active_agent'])")
+    ACTIVE=$(echo "$API_DATA" | python3 -c "import sys, json; print(json.load(sys.stdin)['active_agent'])")
     echo "   ⭐ 當前活躍 Agent: $ACTIVE"
 else
     echo "   ❌ 無法連接 API 服務"
@@ -71,7 +71,7 @@ echo ""
 echo "3️⃣  隧道狀態 (ngrok):"
 if pgrep -f "ngrok http $TELEGRAM_GATEWAY_PORT" > /dev/null; then
     echo "   ✅ 運行中"
-    PUBLIC_URL=$(curl -s http://localhost:4040/api/tunnels | "$PROJECT_ROOT/.venv/bin/python3" -c "import sys, json; data=json.load(sys.stdin); print(data['tunnels'][0]['public_url'] if data['tunnels'] else 'N/A')" 2>/dev/null)
+    PUBLIC_URL=$(curl -s http://localhost:4040/api/tunnels | python3 -c "import sys, json; data=json.load(sys.stdin); print(data['tunnels'][0]['public_url'] if data['tunnels'] else 'N/A')" 2>/dev/null)
     echo "   🌍 公網位址: $PUBLIC_URL"
 else
     echo "   ❌ 未啟動"

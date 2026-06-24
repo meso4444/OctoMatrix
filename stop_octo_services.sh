@@ -33,7 +33,7 @@ if [ -z "$VIRTUAL_ENV" ]; then
     fi
 fi
 SCRIPT_DIR="$(dirname "$0")"
-TMUX_SESSION_NAME=$("$PROJECT_ROOT/.venv/bin/python3" -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import TMUX_SESSION_NAME; print(TMUX_SESSION_NAME)")
+TMUX_SESSION_NAME=$(python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import TMUX_SESSION_NAME; print(TMUX_SESSION_NAME)")
 
 echo "==========================================="
 echo "🛑 正在停止 OctoMatrix 系統"
