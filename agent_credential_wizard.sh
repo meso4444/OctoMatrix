@@ -18,6 +18,24 @@
 
 set -e
 
+# ==============================================================================
+# Environment Initialization: Dynamically locate project root and mount virtual environment
+# ==============================================================================
+if [ -z "$VIRTUAL_ENV" ]; then
+    find_project_root() {
+        local dir="$1"
+        while [ "$dir" != "/" ]; do
+            if [ -f "$dir/install_dependencies.sh" ]; then echo "$dir"; return 0; fi
+            dir=$(dirname "$dir")
+        done
+        return 1
+    }
+    PROJECT_ROOT=$(find_project_root "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")
+    if [ -n "$PROJECT_ROOT" ] && [ -f "$PROJECT_ROOT/.venv/bin/activate" ]; then
+        source "$PROJECT_ROOT/.venv/bin/activate"
+    fi
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 echo "=========================================="

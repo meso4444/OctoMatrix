@@ -17,6 +17,24 @@
 
 set -e
 
+# ==============================================================================
+# Environment Initialization: Dynamically locate project root and mount virtual environment
+# ==============================================================================
+if [ -z "$VIRTUAL_ENV" ]; then
+    find_project_root() {
+        local dir="$1"
+        while [ "$dir" != "/" ]; do
+            if [ -f "$dir/install_dependencies.sh" ]; then echo "$dir"; return 0; fi
+            dir=$(dirname "$dir")
+        done
+        return 1
+    }
+    PROJECT_ROOT=$(find_project_root "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")
+    if [ -n "$PROJECT_ROOT" ] && [ -f "$PROJECT_ROOT/.venv/bin/activate" ]; then
+        source "$PROJECT_ROOT/.venv/bin/activate"
+    fi
+fi
+
 # Parse as absolute path
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
@@ -82,7 +100,7 @@ export TMUX_SESSION_NAME
 
 # 1. Initialize Agent environment
 echo "🧬  Initializing Agent ecosystem environment…"
-python3 "$SCRIPT_DIR/setup_agent_env.py" --all
+"$PROJECT_ROOT/.venv/bin/python3" "$SCRIPT_DIR/setup_agent_env.py" --all
 
 # 2. Dynamically start AI Agent squad
 echo "🤖 Deploying AI Agent squad…"
@@ -93,7 +111,7 @@ echo "   ✅ All Agents ready"
 # Window: MC Router API
 echo "🔀 Starting MC Router (message routing hub)…"
 tmux new-window -t "$TMUX_SESSION_NAME" -n "router" -c "$SCRIPT_DIR"
-tmux send-keys -t "$TMUX_SESSION_NAME:router" "python3 $SCRIPT_DIR/octo_router.py"
+tmux send-keys -t "$TMUX_SESSION_NAME:router" "$PROJECT_ROOT/.venv/bin/python3 $SCRIPT_DIR/octo_router.py" C-m
 sleep 1
 tmux send-keys -t "$TMUX_SESSION_NAME:router" Enter
 
@@ -101,7 +119,7 @@ tmux send-keys -t "$TMUX_SESSION_NAME:router" Enter
 sleep 2
 
 # Check platform enabled status and start gateways
-python3 << 'EOF'
+"$PROJECT_ROOT/.venv/bin/python3" << 'EOF'
 import sys
 import os
 import subprocess
@@ -109,6 +127,7 @@ import time
 
 script_dir = os.environ['SCRIPT_DIR']
 session_name = os.environ['TMUX_SESSION_NAME']
+python_exe = os.path.join(os.environ['PROJECT_ROOT'], '.venv', 'bin', 'python3')
 sys.path.append(script_dir)
 
 try:
@@ -118,7 +137,7 @@ try:
     if PLATFORMS_ENABLED.get('telegram', True):
         print("   📱 Starting Telegram Gateway (Router forwarding)…")
         subprocess.run(['tmux', 'new-window', '-t', session_name, '-n', 'telegram', '-c', script_dir], check=True)
-        subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:telegram', f'python3 {script_dir}/telegram_gateway.py', 'Enter'], check=True)
+        subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:telegram', f'{python_exe} {script_dir}/telegram_gateway.py', 'Enter'], check=True)
         time.sleep(2)
     else:
         print("   ⚪️ Telegram disabled, skipping startup")
@@ -127,7 +146,7 @@ try:
     if PLATFORMS_ENABLED.get('discord', True):
         print("   💻 Starting Discord Gateway (WebSocket mode)…")
         subprocess.run(['tmux', 'new-window', '-t', session_name, '-n', 'discord', '-c', script_dir], check=True)
-        subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:discord', f'python3 {script_dir}/discord_gateway.py', 'Enter'], check=True)
+        subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:discord', f'{python_exe} {script_dir}/discord_gateway.py', 'Enter'], check=True)
         time.sleep(2)
     else:
         print("   ⚪️ Discord disabled, skipping startup")
@@ -136,7 +155,7 @@ try:
     if PLATFORMS_ENABLED.get('slack', True):
         print("   ⚡ Starting Slack Gateway (Socket Mode)…")
         subprocess.run(['tmux', 'new-window', '-t', session_name, '-n', 'slack', '-c', script_dir], check=True)
-        subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:slack', f'python3 {script_dir}/slack_socket_gateway.py', 'Enter'], check=True)
+        subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:slack', f'{python_exe} {script_dir}/slack_socket_gateway.py', 'Enter'], check=True)
         time.sleep(2)
     else:
         print("   ⚪️ Slack disabled, skipping startup")
@@ -151,11 +170,11 @@ sleep 2
 # Window: Octo Reaper (Cyberbrain GHOST reaper)
 echo "🧠 Starting Cyberbrain GHOST reaper (octo_reaper.py)…"
 tmux new-window -t "$TMUX_SESSION_NAME" -n "reaper" -c "$SCRIPT_DIR"
-tmux send-keys -t "$TMUX_SESSION_NAME:reaper" "python3 $SCRIPT_DIR/octo_reaper.py"
+tmux send-keys -t "$TMUX_SESSION_NAME:reaper" "$PROJECT_ROOT/.venv/bin/python3 $SCRIPT_DIR/octo_reaper.py" C-m
 sleep 1
 tmux send-keys -t "$TMUX_SESSION_NAME:reaper" Enter
 
-if python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import PLATFORMS_ENABLED; print(PLATFORMS_ENABLED.get('telegram', True))" | grep -q "True"; then
+if "$PROJECT_ROOT/.venv/bin/python3" -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import PLATFORMS_ENABLED; print(PLATFORMS_ENABLED.get('telegram', True))" | grep -q "True"; then
     # Window: ngrok Tunnel
     echo "☁️  Establishing secure connection tunnel (ngrok)…"
     tmux new-window -t "$TMUX_SESSION_NAME" -n "ngrok" -c "$SCRIPT_DIR"
@@ -174,7 +193,7 @@ tmux select-window -t "$TMUX_SESSION_NAME:0"
 
 # Send test message
 echo "📨 Sending test message to all Agents and requesting identification..."
-python3 << 'EOF'
+"$PROJECT_ROOT/.venv/bin/python3" << 'EOF'
 import os
 import sys
 import subprocess
@@ -211,7 +230,7 @@ echo ""
 echo "📋 Execution summary:"
 echo "   Session: $TMUX_SESSION_NAME"
 echo "   Communication gateways started:"
-python3 << 'EOF'
+"$PROJECT_ROOT/.venv/bin/python3" << 'EOF'
 import os
 import sys
 sys.path.append(os.environ['SCRIPT_DIR'])
@@ -226,7 +245,7 @@ EOF
 echo "   Hub services started:"
 echo "      🔀 MC Router (message normalization + atomic injection)"
 echo "      🧠 Octo Reaper (Cyberbrain GHOST reaper)"
-if python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import PLATFORMS_ENABLED; print(PLATFORMS_ENABLED.get('telegram', True))" | grep -q "True"; then
+if "$PROJECT_ROOT/.venv/bin/python3" -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import PLATFORMS_ENABLED; print(PLATFORMS_ENABLED.get('telegram', True))" | grep -q "True"; then
     echo "      ☁️  ngrok (Webhook secure tunnel)"
 fi
 echo ""

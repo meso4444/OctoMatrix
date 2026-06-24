@@ -18,6 +18,24 @@
 
 set -e
 
+# ==============================================================================
+# Environment Initialization: Dynamically locate project root and mount virtual environment
+# ==============================================================================
+if [ -z "$VIRTUAL_ENV" ]; then
+    find_project_root() {
+        local dir="$1"
+        while [ "$dir" != "/" ]; do
+            if [ -f "$dir/install_dependencies.sh" ]; then echo "$dir"; return 0; fi
+            dir=$(dirname "$dir")
+        done
+        return 1
+    }
+    PROJECT_ROOT=$(find_project_root "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")
+    if [ -n "$PROJECT_ROOT" ] && [ -f "$PROJECT_ROOT/.venv/bin/activate" ]; then
+        source "$PROJECT_ROOT/.venv/bin/activate"
+    fi
+fi
+
 echo "🔧 Checking system environment..."
 
 # ============================================================================
@@ -153,7 +171,7 @@ install_python3_if_needed() {
     elif [[ "$ENVIRONMENT" == "Linux" || "$ENVIRONMENT" == "WSL2" ]]; then
         echo "📦 Installing Python 3..."
         if command -v apt-get &> /dev/null; then
-            sudo apt-get install -y python3 python3-pip
+            sudo apt-get install -y python3 python3-pip python3-venv
         elif command -v yum &> /dev/null; then
             sudo yum install -y python3 python3-pip
         fi
@@ -189,17 +207,19 @@ install_python_packages() {
     # Merge all packages
     ALL_PACKAGES="$PACKAGES $MC_PACKAGES"
 
-    local pip_cmd="sudo pip3 install --upgrade"
-    if [[ "$ENVIRONMENT" == "macOS" ]]; then
-        pip_cmd="pip3 install --upgrade"
-    fi
+    echo "📦 Creating Python virtual environment..."
+    # Ensure virtual environment is created in the script directory (project root)
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    python3 -m venv "$SCRIPT_DIR/.venv"
+    source "$SCRIPT_DIR/.venv/bin/activate"
 
-    echo "📦 Installing Python packages globally: $ALL_PACKAGES"
-    if $pip_cmd $ALL_PACKAGES --break-system-packages 2>/dev/null || $pip_cmd $ALL_PACKAGES; then
-        echo "✅ Python packages installed globally successfully"
+    local pip_cmd="pip3 install --upgrade"
+
+    echo "📦 Installing Python packages in virtual environment: $ALL_PACKAGES"
+    if $pip_cmd $ALL_PACKAGES; then
+        echo "✅ Python packages installed successfully"
     else
-        echo "❌ Global Python package installation failed!"
-        echo "💡 Tip: Try running manually: $pip_cmd $ALL_PACKAGES --break-system-packages"
+        echo "❌ Python package installation failed!"
     fi
     }
 
