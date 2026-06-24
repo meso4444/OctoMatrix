@@ -17,39 +17,22 @@
 # OctoMatrix 互動式設定精靈
 
 # ==============================================================================
-
 # 環境初始化：動態定位專案根目錄並掛載虛擬環境 (冪等且相容任意子目錄)
-
 # ==============================================================================
-
 if [ -z "$VIRTUAL_ENV" ]; then
-
     find_project_root() {
-
         local dir="$1"
-
         while [ "$dir" != "/" ]; do
-
             if [ -f "$dir/install_dependencies.sh" ]; then echo "$dir"; return 0; fi
-
             dir=$(dirname "$dir")
-
         done
-
         return 1
-
     }
-
     PROJECT_ROOT=$(find_project_root "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")
-
     if [ -n "$PROJECT_ROOT" ] && [ -f "$PROJECT_ROOT/.venv/bin/activate" ]; then
-
         source "$PROJECT_ROOT/.venv/bin/activate"
-
     fi
-
 fi
-
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ENV_FILE="$SCRIPT_DIR/.env"
 CONFIG_YAML="$SCRIPT_DIR/config.yaml"
