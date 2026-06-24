@@ -28,7 +28,7 @@ if [ -z "$VIRTUAL_ENV" ]; then
         done
         return 1
     }
-    PROJECT_ROOT=$(find_project_root "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")
+    export PROJECT_ROOT=$(find_project_root "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")
     if [ -n "$PROJECT_ROOT" ] && [ -f "$PROJECT_ROOT/.venv/bin/activate" ]; then
         source "$PROJECT_ROOT/.venv/bin/activate"
     fi
