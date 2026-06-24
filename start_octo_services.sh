@@ -47,7 +47,7 @@ trap 'echo "Received OS stop signal (SIGTERM/SIGINT), stopping services..."; "$S
 # Wait for network Ping loop (wait indefinitely to ensure offline boot support)
 # ----------------------------------------------------
 echo "Checking network connection..."
-while ! "$PROJECT_ROOT/.venv/bin/python3" -c "import socket; socket.create_connection(('8.8.8.8', 53), timeout=2)" &>/dev/null; do
+while ! python3 -c "import socket; socket.create_connection(('8.8.8.8', 53), timeout=2)" &>/dev/null; do
   # Use wait with sleep in the loop so trap can immediately respond to signals
   sleep 5 &
   wait $!
@@ -73,7 +73,7 @@ else
 fi
 
 # Read configuration
-TMUX_SESSION_NAME=$("$PROJECT_ROOT/.venv/bin/python3" -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import TMUX_SESSION_NAME; print(TMUX_SESSION_NAME)")
+TMUX_SESSION_NAME=$(python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import TMUX_SESSION_NAME; print(TMUX_SESSION_NAME)")
 
 echo "🚀 Starting OctoMatrix"
 echo "==========================================="
@@ -100,7 +100,7 @@ export TMUX_SESSION_NAME
 
 # 1. Initialize Agent environment
 echo "🧬  Initializing Agent ecosystem environment…"
-"$PROJECT_ROOT/.venv/bin/python3" "$SCRIPT_DIR/setup_agent_env.py" --all
+python3 "$SCRIPT_DIR/setup_agent_env.py" --all
 
 # 2. Dynamically start AI Agent squad
 echo "🤖 Deploying AI Agent squad…"
@@ -119,7 +119,7 @@ tmux send-keys -t "$TMUX_SESSION_NAME:router" Enter
 sleep 2
 
 # Check platform enabled status and start gateways
-"$PROJECT_ROOT/.venv/bin/python3" << 'EOF'
+python3 << 'EOF'
 import sys
 import os
 import subprocess
@@ -174,7 +174,7 @@ tmux send-keys -t "$TMUX_SESSION_NAME:reaper" "$PROJECT_ROOT/.venv/bin/python3 $
 sleep 1
 tmux send-keys -t "$TMUX_SESSION_NAME:reaper" Enter
 
-if "$PROJECT_ROOT/.venv/bin/python3" -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import PLATFORMS_ENABLED; print(PLATFORMS_ENABLED.get('telegram', True))" | grep -q "True"; then
+if python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import PLATFORMS_ENABLED; print(PLATFORMS_ENABLED.get('telegram', True))" | grep -q "True"; then
     # Window: ngrok Tunnel
     echo "☁️  Establishing secure connection tunnel (ngrok)…"
     tmux new-window -t "$TMUX_SESSION_NAME" -n "ngrok" -c "$SCRIPT_DIR"
@@ -193,7 +193,7 @@ tmux select-window -t "$TMUX_SESSION_NAME:0"
 
 # Send test message
 echo "📨 Sending test message to all Agents and requesting identification..."
-"$PROJECT_ROOT/.venv/bin/python3" << 'EOF'
+python3 << 'EOF'
 import os
 import sys
 import subprocess
@@ -230,7 +230,7 @@ echo ""
 echo "📋 Execution summary:"
 echo "   Session: $TMUX_SESSION_NAME"
 echo "   Communication gateways started:"
-"$PROJECT_ROOT/.venv/bin/python3" << 'EOF'
+python3 << 'EOF'
 import os
 import sys
 sys.path.append(os.environ['SCRIPT_DIR'])
@@ -245,7 +245,7 @@ EOF
 echo "   Hub services started:"
 echo "      🔀 MC Router (message normalization + atomic injection)"
 echo "      🧠 Octo Reaper (Cyberbrain GHOST reaper)"
-if "$PROJECT_ROOT/.venv/bin/python3" -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import PLATFORMS_ENABLED; print(PLATFORMS_ENABLED.get('telegram', True))" | grep -q "True"; then
+if python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import PLATFORMS_ENABLED; print(PLATFORMS_ENABLED.get('telegram', True))" | grep -q "True"; then
     echo "      ☁️  ngrok (Webhook secure tunnel)"
 fi
 echo ""
