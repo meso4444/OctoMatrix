@@ -193,7 +193,7 @@ tmux select-window -t "$TMUX_SESSION_NAME:0"
 
 # 測試發送訊息
 echo "📨 向所有 Agent 發送測試訊息並報上名字..."
-python3 << 'EOF'
+"$PROJECT_ROOT/.venv/bin/python3" << 'EOF'
 import os
 import sys
 import subprocess
@@ -230,7 +230,7 @@ echo ""
 echo "📋 運行摘要:"
 echo "   Session: $TMUX_SESSION_NAME"
 echo "   已啟動通訊網關:"
-python3 << 'EOF'
+"$PROJECT_ROOT/.venv/bin/python3" << 'EOF'
 import os
 import sys
 sys.path.append(os.environ['SCRIPT_DIR'])
@@ -245,7 +245,7 @@ EOF
 echo "   已啟動中樞服務:"
 echo "      🔀 MC Router (消息標準化 + 原子注入)"
 echo "      🧠 Octo Reaper (電子腦 GHOST 收割者)"
-if python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import PLATFORMS_ENABLED; print(PLATFORMS_ENABLED.get('telegram', True))" | grep -q "True"; then
+if "$PROJECT_ROOT/.venv/bin/python3" -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import PLATFORMS_ENABLED; print(PLATFORMS_ENABLED.get('telegram', True))" | grep -q "True"; then
     echo "      ☁️  ngrok (Webhook 安全隧道)"
 fi
 echo ""
