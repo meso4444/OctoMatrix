@@ -18,9 +18,24 @@ import yaml
 import shutil
 from datetime import datetime
 
+try:
+    import readline
+except ImportError:
+    pass
+
 CONFIG = {}
 CONFIG_PATH = ""
 ORIGINAL_CONFIG = {}
+
+def sanitize_dict(d):
+    """Recursively clean strings to drop invalid characters like lone surrogates."""
+    if isinstance(d, dict):
+        return {k: sanitize_dict(v) for k, v in d.items()}
+    elif isinstance(d, list):
+        return [sanitize_dict(v) for v in d]
+    elif isinstance(d, str):
+        return d.encode('utf-16', 'surrogatepass').decode('utf-16', 'ignore')
+    return d
 
 def prompt_bool(prompt_str, default=True):
     default_str = "Y/n" if default else "y/N"
@@ -62,6 +77,7 @@ def save_config():
             if k not in ordered_config:
                 ordered_config[k] = v
                 
+        ordered_config = sanitize_dict(ordered_config)
         with open(CONFIG_PATH, 'w', encoding='utf-8') as f:
             yaml.dump(ordered_config, f, allow_unicode=True, sort_keys=False)
         print("✅ Configuration saved successfully.")
