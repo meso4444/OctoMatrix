@@ -487,7 +487,7 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
         avatar_instruction = "\n\n=== Visual Identity Construction Task ===\nAfter completing the customized self-awareness writing, follow the guidance in ./knowledge/AGENT_AVATAR_GUIDE.md to generate your avatar."
         prompt += avatar_instruction
 
-        prompt = prompt.encode('utf-16', 'surrogatepass').decode('utf-16')
+        prompt = prompt.encode('utf-16', 'surrogatepass').decode('utf-16', 'ignore')
         prompt_file = os.path.join(script_dir, f".prompt_temp_{name}")
         with open(prompt_file, 'w', encoding='utf-8') as f: f.write(prompt)
         with open(prompt_file, 'r', encoding='utf-8') as pf: prompt_content = pf.read()
