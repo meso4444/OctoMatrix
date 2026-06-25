@@ -40,7 +40,7 @@ def safe_copy(src, dst, script_dir):
             subprocess.run(['chmod', '644', dst], check=False)
         # 記錄系統派發的檔案路徑
         list_path = os.path.join(script_dir, 'agent_home', '.system_distributed_files.txt')
-        with open(list_path, 'a', encoding='utf-8') as list_file:
+        with open(list_path, 'a') as list_file:
             list_file.write(dst + '\n')
 
 def load_config():
@@ -239,7 +239,7 @@ def check_permissions():
     test_file = os.path.join(home_dir, '.gemini', 'tmp', 'test_write.tmp')
     try:
         os.makedirs(os.path.dirname(test_file), exist_ok=True)
-        with open(test_file, 'w', encoding='utf-8') as f:
+        with open(test_file, 'w') as f:
             f.write('test')
         os.remove(test_file)
     except PermissionError:
@@ -317,7 +317,7 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
 
     rules_path = os.path.join(script_dir, 'agent_home_rules.md')
     template_path = os.path.join(script_dir, 'agent_rule_gen_template.txt')
-    with open(template_path, 'r', encoding='utf-8') as f:
+    with open(template_path, 'r') as f:
         gen_template = f.read()
 
     collab_context_lines = []
@@ -353,7 +353,7 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
     shell_path = os.path.join(cyber_path, 'shell')
 
     env_file = os.path.join(cyber_path, '.cyberbrain_env')
-    with open(env_file, 'w', encoding='utf-8') as ef:
+    with open(env_file, 'w') as ef:
         ef.write(f"AGENT_NAME={name}\nTMUX_SESSION_NAME={session_name}\nROUTER_PORT={os.environ.get('ROUTER_PORT', '12210')}\n")
     subprocess.run(['chmod', '644', env_file], check=False)
 
@@ -487,10 +487,9 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
         avatar_instruction = "\n\n=== Visual Identity Construction Task ===\nAfter completing the customized self-awareness writing, follow the guidance in ./knowledge/AGENT_AVATAR_GUIDE.md to generate your avatar."
         prompt += avatar_instruction
 
-        prompt = prompt.encode('utf-16', 'surrogatepass').decode('utf-16')
         prompt_file = os.path.join(script_dir, f".prompt_temp_{name}")
-        with open(prompt_file, 'w', encoding='utf-8') as f: f.write(prompt)
-        with open(prompt_file, 'r', encoding='utf-8') as pf: prompt_content = pf.read()
+        with open(prompt_file, 'w') as f: f.write(prompt)
+        with open(prompt_file, 'r') as pf: prompt_content = pf.read()
 
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '\x1b[200~']))
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '-l', '--', prompt_content]), check=True)
