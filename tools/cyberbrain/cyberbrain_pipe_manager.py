@@ -111,7 +111,10 @@ last_sync_time = 0
 
 try:
     with open(LOG_PATH, 'a', encoding='utf-8') as log_file:
-        for raw_line in sys.stdin:
+        while True:
+            chunk = os.read(sys.stdin.fileno(), 1024)
+            if not chunk:
+                break
             # 💡 Pure log recording, removed keyword detection and auto-send Enter logic
             # (independently handled by auto_permission_responder.py)
 
