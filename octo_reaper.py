@@ -49,10 +49,10 @@ def notify_agent(agent_name):
             res = subprocess.run(["tmux", "capture-pane", "-p", "-t", target], capture_output=True, text=True)
             lines = [line for line in res.stdout.split('\n') if line.strip()]
             if 'Working (' in '\n'.join(lines[-20:]):
-                subprocess.run(["tmux", "send-keys", "-t", target, "C-c"])
+                subprocess.run(["tmux", "send-keys", "-t", target, "C-c", "Escape"])
                 time.sleep(6)
         else:
-            subprocess.run(["tmux", "send-keys", "-t", target, "C-c"])
+            subprocess.run(["tmux", "send-keys", "-t", target, "C-c", "Escape"])
             time.sleep(6)
     except Exception as e:
         print(f"[Reaper] Failed to execute pre-wake Ctrl+C: {e}")
