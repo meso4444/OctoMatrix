@@ -451,7 +451,7 @@ Task Resumption Message:
 {memo_content}
 
 {SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
-                    # 直接覆寫以保留原檔案 Inode 與 Owner (Agent 寫入時已賦予 666 權限)
+                    # Overwrite directly to keep the original file Inode and Owner (Agent grants 666 permission upon creation)
                     # os.remove(TASK_MEMO)
                     with open(TASK_MEMO, 'w', encoding='utf-8') as f:
                         f.write(memo_prompt)
