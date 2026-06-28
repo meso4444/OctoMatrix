@@ -451,8 +451,8 @@ Task Resumption Message:
 {memo_content}
 
 {SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
-                    # 先刪除舊檔以避開跨用戶擁有者覆寫的 PermissionError
-                    os.remove(TASK_MEMO)
+                    # 直接覆寫以保留原檔案 Inode 與 Owner (Agent 寫入時已賦予 666 權限)
+                    # os.remove(TASK_MEMO)
                     with open(TASK_MEMO, 'w', encoding='utf-8') as f:
                         f.write(memo_prompt)
                     task_memo_prompt = " Next, verify if octo_cyberbrain/task_memo.txt exists; if so, read it to resume the task and then execute rm -f octo_cyberbrain/task_memo.txt."
