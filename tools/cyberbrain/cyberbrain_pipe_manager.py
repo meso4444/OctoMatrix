@@ -111,7 +111,10 @@ last_sync_time = 0
 
 try:
     with open(LOG_PATH, 'a', encoding='utf-8') as log_file:
-        for raw_line in sys.stdin:
+        while True:
+            chunk = os.read(sys.stdin.fileno(), 1024)
+            if not chunk:
+                break
             # 💡 純粹記錄日誌，移除關鍵字偵測與自動發送 Enter 邏輯
             # (由 auto_permission_responder.py 獨立負責)
             
