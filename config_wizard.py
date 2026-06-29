@@ -222,6 +222,7 @@ def manage_agents():
         print(" [E] 修改 Agent (Edit)")
         print(" [D] 刪除 Agent")
         print(" [S] 設定預設活躍 Agent")
+        print(" [O] 調整順序 (Reorder)")
         print(" [R] 返回主選單")
         
         choice = input("請選擇操作: ").strip().lower()
@@ -297,6 +298,22 @@ def manage_agents():
                 if 0 <= idx < len(agents):
                     CONFIG["default_active_agent"] = agents[idx].get("name")
                     print(f"✅ 預設 Agent 已更新為 {CONFIG['default_active_agent']}")
+        elif choice == 'o':
+            idx = input("請輸入要移動的 Agent 數字: ").strip()
+            if idx.isdigit():
+                idx = int(idx) - 1
+                if 0 <= idx < len(CONFIG["agents"]):
+                    print("  [U] 往上移 (Up)")
+                    print("  [D] 往下移 (Down)")
+                    dir_choice = input("請選擇方向 [U/D]: ").strip().upper()
+                    if dir_choice == 'U' and idx > 0:
+                        CONFIG["agents"][idx], CONFIG["agents"][idx-1] = CONFIG["agents"][idx-1], CONFIG["agents"][idx]
+                        print("✅ 已往上移！")
+                    elif dir_choice == 'D' and idx < len(CONFIG["agents"]) - 1:
+                        CONFIG["agents"][idx], CONFIG["agents"][idx+1] = CONFIG["agents"][idx+1], CONFIG["agents"][idx]
+                        print("✅ 已往下移！")
+                    else:
+                        print("❌ 無法移動 (已到頂或到底，或是無效輸入)。")
         elif choice == 'r':
             break
 
@@ -489,7 +506,8 @@ def manage_menu():
         print(" [A] 新增功能鍵 (Add Item)")
         print(" [G] 自動生成內建功能鍵 (Auto-generate)")
         print(" [E] 修改功能鍵 (Edit Item)")
-        print(" [M] 移動功能鍵 (Move Item)")
+        print(" [M] 移動單鍵 (Move Item)")
+        print(" [O] 上下移動整排 (Move Row Up/Down)")
         print(" [D] 刪除 (Delete Row/Item/All)")
         print(" [R] 返回主選單")
         
@@ -633,6 +651,23 @@ def manage_menu():
                     else:
                         CONFIG["menu"].append([item])
                     print("✅ 移動完成！")
+
+        elif choice == 'o':
+            r_idx = input("請輸入要移動的 Row 數字: ").strip()
+            if r_idx.isdigit():
+                r = int(r_idx) - 1
+                if 0 <= r < len(CONFIG["menu"]):
+                    print("  [U] 往上移 (Up)")
+                    print("  [D] 往下移 (Down)")
+                    dir_choice = input("請選擇方向 [U/D]: ").strip().upper()
+                    if dir_choice == 'U' and r > 0:
+                        CONFIG["menu"][r], CONFIG["menu"][r-1] = CONFIG["menu"][r-1], CONFIG["menu"][r]
+                        print("✅ 整排已往上移！")
+                    elif dir_choice == 'D' and r < len(CONFIG["menu"]) - 1:
+                        CONFIG["menu"][r], CONFIG["menu"][r+1] = CONFIG["menu"][r+1], CONFIG["menu"][r]
+                        print("✅ 整排已往下移！")
+                    else:
+                        print("❌ 無法移動 (已到頂或到底，或是無效輸入)。")
 
         elif choice == 'd':
             print(" [1] 刪除整列 (Row)")
