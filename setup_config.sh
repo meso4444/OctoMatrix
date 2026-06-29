@@ -316,7 +316,8 @@ while true; do
             update_config_yaml
             if ! python3 "$SCRIPT_DIR/config_wizard.py" "$CONFIG_YAML"; then
                 echo -e "\n⚠️ Agent Configuration Wizard encountered an error (possible missing dependency or corrupted environment)"
-                read -p "Press Enter to return to menu..." dummy_key
+                echo "Script aborted. Please scroll up to see the Python error traceback."
+                exit 1
             fi
             ;;
         7)
