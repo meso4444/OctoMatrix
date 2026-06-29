@@ -230,7 +230,8 @@ install_python_packages() {
     if $pip_cmd $ALL_PACKAGES; then
         echo "✅ Python 套件安裝成功"
     else
-        echo "❌ Python 套件安裝失敗！"
+        echo "❌ Python 套件安裝失敗！請檢查錯誤訊息以排除網路或系統依賴問題。"
+        exit 1
     fi
 }
 

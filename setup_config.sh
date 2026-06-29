@@ -313,7 +313,10 @@ while true; do
             echo ""
             echo "🤖 啟動設定精靈配置 Agent 與進階參數..."
             update_config_yaml
-            python3 "$SCRIPT_DIR/config_wizard.py" "$CONFIG_YAML"
+            if ! python3 "$SCRIPT_DIR/config_wizard.py" "$CONFIG_YAML"; then
+                echo -e "\n⚠️ Agent 配置精靈發生錯誤 (可能是依賴套件缺失或環境損毀)"
+                read -p "請按 Enter 鍵返回選單..." dummy_key
+            fi
             ;;
         7)
             echo ""
