@@ -230,7 +230,8 @@ install_python_packages() {
     if $pip_cmd $ALL_PACKAGES; then
         echo "✅ Python packages installed successfully"
     else
-        echo "❌ Python package installation failed!"
+        echo "❌ Python package installation failed! Please check error messages to resolve network or system dependency issues."
+        exit 1
     fi
     }
 
