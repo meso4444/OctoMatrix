@@ -466,11 +466,11 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'q']), check=True)
         time.sleep(0.5)
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'BSpace']), check=True)
-        time.sleep(1)
+        time.sleep(0.5)
 
         print(f"     ⏳ 等待提示符復原…")
         wait_for_prompt(session_name, name, engine, max_wait=10)
-        time.sleep(3)
+        time.sleep(1)
     else:
         print(f"     ✨ 觸發 {name} 規格檔案的自我建構…")
         rules_path = os.path.join(home_path, 'agent_home_rules.md')
