@@ -27,7 +27,7 @@ CONFIG_PATH = ""
 ORIGINAL_CONFIG = {}
 
 def sanitize_dict(d):
-    """Recursively clean abnormal characters (e.g., \\uDCE3 Surrogates) in dictionaries or lists."""
+    # Recursively filter Surrogate abnormal characters in dictionaries or lists
     if isinstance(d, dict):
         return {k: sanitize_dict(v) for k, v in d.items()}
     elif isinstance(d, list):
