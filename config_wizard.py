@@ -222,6 +222,7 @@ def manage_agents():
         print(" [E] Edit Agent")
         print(" [D] Delete Agent")
         print(" [S] Set Default Active Agent")
+        print(" [O] Reorder Agents")
         print(" [R] Return to Main Menu")
         
         choice = input("Select operation: ").strip().lower()
@@ -297,6 +298,22 @@ def manage_agents():
                 if 0 <= idx < len(agents):
                     CONFIG["default_active_agent"] = agents[idx].get("name")
                     print(f"✅ Default Agent updated to {CONFIG['default_active_agent']}")
+        elif choice == 'o':
+            idx = input("Enter Agent number to move: ").strip()
+            if idx.isdigit():
+                idx = int(idx) - 1
+                if 0 <= idx < len(CONFIG["agents"]):
+                    print("  [U] Move Up")
+                    print("  [D] Move Down")
+                    dir_choice = input("Select direction [U/D]: ").strip().upper()
+                    if dir_choice == 'U' and idx > 0:
+                        CONFIG["agents"][idx], CONFIG["agents"][idx-1] = CONFIG["agents"][idx-1], CONFIG["agents"][idx]
+                        print("✅ Agent moved up!")
+                    elif dir_choice == 'D' and idx < len(CONFIG["agents"]) - 1:
+                        CONFIG["agents"][idx], CONFIG["agents"][idx+1] = CONFIG["agents"][idx+1], CONFIG["agents"][idx]
+                        print("✅ Agent moved down!")
+                    else:
+                        print("❌ Cannot move (already at top/bottom, or invalid input).")
         elif choice == 'r':
             break
 
@@ -489,7 +506,8 @@ def manage_menu():
         print(" [A] Add Menu Item")
         print(" [G] Auto-generate Built-in Menu Items")
         print(" [E] Edit Menu Item")
-        print(" [M] Move Menu Item")
+        print(" [M] Move Menu Item (Single)")
+        print(" [O] Move Menu Row (Up/Down)")
         print(" [D] Delete (Row/Item/All)")
         print(" [R] Return to Main Menu")
         
@@ -632,6 +650,23 @@ def manage_menu():
                     else:
                         CONFIG["menu"].append([item])
                     print("✅ Move completed!")
+
+        elif choice == 'o':
+            r_idx = input("Enter Row number to move: ").strip()
+            if r_idx.isdigit():
+                r = int(r_idx) - 1
+                if 0 <= r < len(CONFIG["menu"]):
+                    print("  [U] Move Up")
+                    print("  [D] Move Down")
+                    dir_choice = input("Select direction [U/D]: ").strip().upper()
+                    if dir_choice == 'U' and r > 0:
+                        CONFIG["menu"][r], CONFIG["menu"][r-1] = CONFIG["menu"][r-1], CONFIG["menu"][r]
+                        print("✅ Row moved up!")
+                    elif dir_choice == 'D' and r < len(CONFIG["menu"]) - 1:
+                        CONFIG["menu"][r], CONFIG["menu"][r+1] = CONFIG["menu"][r+1], CONFIG["menu"][r]
+                        print("✅ Row moved down!")
+                    else:
+                        print("❌ Cannot move (already at top/bottom, or invalid input).")
 
         elif choice == 'd':
             print(" [1] Delete entire Row")
