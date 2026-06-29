@@ -171,9 +171,10 @@ install_python3_if_needed() {
     elif [[ "$ENVIRONMENT" == "Linux" || "$ENVIRONMENT" == "WSL2" ]]; then
         echo "📦 正在安裝 Python 3..."
         if command -v apt-get &> /dev/null; then
-            sudo apt-get install -y python3 python3-pip python3-venv
+            sudo apt-get install -y python3 python3-pip python3-venv python3-dev build-essential
         elif command -v yum &> /dev/null; then
-            sudo yum install -y python3 python3-pip
+            sudo yum groupinstall -y "Development Tools"
+            sudo yum install -y python3 python3-pip python3-devel
         fi
     fi
 }

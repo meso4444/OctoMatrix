@@ -315,7 +315,8 @@ while true; do
             update_config_yaml
             if ! python3 "$SCRIPT_DIR/config_wizard.py" "$CONFIG_YAML"; then
                 echo -e "\n⚠️ Agent 配置精靈發生錯誤 (可能是依賴套件缺失或環境損毀)"
-                read -p "請按 Enter 鍵返回選單..." dummy_key
+                echo "腳本已中斷，請往上捲動查看 Python 報錯資訊。"
+                exit 1
             fi
             ;;
         7)
