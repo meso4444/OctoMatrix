@@ -607,12 +607,14 @@ class CommandHandler:
                 if os.path.exists(temp_preview_path):
                     caption = f"🖼️ <b>[{target_agent}] 歷史備份 #{idx} 預覽</b>\n檔案：<code>{filename}</code>\n時間：{mtime}\n大小：{size_kb:.1f} KB"
                     self.notifier.notify_file(msg.source, temp_preview_path, file_type='photo', caption=caption)
+            except Exception as e:
+                logger.error(f"❌ [Router] 提取備份 #{idx} 預覽圖失敗: {e}")
+            finally:
+                if os.path.exists(temp_preview_path):
                     try:
                         os.remove(temp_preview_path)
                     except:
                         pass
-            except Exception as e:
-                logger.error(f"❌ [Router] 提取備份 #{idx} 預覽圖失敗: {e}")
 
     def _restore_avatar_backup(self, msg, target_agent, restore_target):
         import glob
