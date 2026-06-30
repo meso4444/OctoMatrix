@@ -78,7 +78,10 @@ def setup_agent_dirs(agent_config, script_dir):
     for d in subdirs:
         path = os.path.join(home, d)
         os.makedirs(path, exist_ok=True)
-        subprocess.run(['chmod', '1777', path], check=False)
+        if d in ['avatar', 'avatar/emojis']:
+            subprocess.run(['chmod', '755', path], check=False)
+        else:
+            subprocess.run(['chmod', '1777', path], check=False)
 
     cyber_tools_dir = os.path.join(script_dir, 'tools', 'cyberbrain')
     if os.path.exists(cyber_tools_dir):

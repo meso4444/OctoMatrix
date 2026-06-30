@@ -26,7 +26,8 @@ import logging
 import subprocess
 import time
 import requests
-from datetime import datetime
+import uuid
+from datetime import datetime, timedelta
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, asdict
 
@@ -54,6 +55,9 @@ ROUTER_PORT = int(os.getenv('ROUTER_PORT', 12210))
 ROUTER_HOST = '0.0.0.0'
 script_dir = os.path.dirname(os.path.abspath(__file__))
 AGENT_HOME_BASE = os.path.join(script_dir, 'agent_home')
+
+# 暫存的 Avatar 更新 Token，格式： { agent_name: {"token": "...", "expires_at": datetime} }
+avatar_tokens = {}
 
 # 固化端口訊息
 try:
@@ -314,8 +318,39 @@ class CommandHandler:
             parts = content.split(' ', 1)
             requirement = parts[1].strip() if len(parts) > 1 else "無特定需求"
             
-            prompt = f"{SYS_PREFIX}\n依照 ./knowledge/AGENT_AVATAR_GUIDE.md 的指引及「{requirement}」的需求，將你的舊avatar組圖備份打包為zip後,生成你的新 avatar，完成後執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖，接著執行 python3 toolbox/matrix_notifier.py '{{向 {MATRIX_USERNAME} 問候}}'".replace("{mood}", "{mood}")
+            # 產生 5 分鐘後過期的 Token
+            token = str(uuid.uuid4())
+            avatar_tokens[target_agent] = {
+                "token": token,
+                "expires_at": datetime.now() + timedelta(minutes=5)
+            }
             
+            prompt = f"""【系統安全授權指令：Avatar 形象更新程序】
+用戶已正式發起 /avatar_renew 請求。
+授權解鎖金鑰：--token {token}
+用戶具體需求：{requirement}
+
+在執行任何產圖動作之前，你必須嚴格遵守以下 [安全與防護 SOP]：
+
+[Step 1 - 需求合規性檢驗]：
+仔細審視用戶提出的形象或配件需求。將其與 `AGENT_AVATAR_GUIDE.md` 及 `octo_generator.py` 目前所支援的能力邊界進行比對。
+- 若用戶要求了不支援的畫風、配件、或任何違反 OctoMatrix 形象規範的元素（例如：寫實人類相片、血腥、或是生成器不支援的特定裝備），進入 [Step 1-Reject]。
+- 若需求完全合規，進入 [Step 2]。
+
+[Step 1-Reject - 溫和拒絕與替代方案]：
+向用戶明確說明目前生成系統無法支援該需求（請保持你的角色性格），並主動提供 1 到 2 個「目前系統可支援的相近替代方案」供用戶選擇。在用戶同意替代方案前，絕對禁止執行任何產圖指令。
+
+[Step 2 - 嚴格腳本執行限制]：
+確認需求後，開始執行產圖。
+⚠️ 【最高紅色警戒】：
+1. 你僅能且必須使用原生的 `toolbox/octo_generator.py` 來進行生成。
+2. 絕對禁止使用任何其他腳本，絕對禁止撰寫新的 Python/Shell 腳本來產圖。
+3. 絕對禁止對 `octo_generator.py` 進行任何形式的複製 (Clone)、修改 (Modify) 或覆寫 (Overwrite)。
+4. 呼叫腳本時，必須嚴格附上授權參數：`--token {token}`。
+
+[Step 3 - 結果回報]：
+生成完畢並自動打包上傳後，向用戶回報形象更新結果，並附上最新生成的心情貼圖展示。"""
+
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '\x1b[200~'])
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '-l', '--', prompt], check=False)
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '\x1b[201~'])
@@ -623,6 +658,64 @@ def inject():
         
     success = handler.handle(msg)
     return jsonify({"status": "success" if success else "failed"}), 200
+
+@app.route('/api/internal/avatar/update', methods=['POST'])
+def update_avatar():
+    try:
+        agent_name = request.form.get('agent_name')
+        token = request.form.get('token', '')
+        archive = request.files.get('archive')
+        
+        if not agent_name or not archive:
+            return jsonify({"status": "failed", "error": "Missing agent_name or archive"}), 400
+            
+        avatar_dir = os.path.join(AGENT_HOME_BASE, agent_name, "avatar")
+        base_png_file = os.path.join(avatar_dir, "base.png")
+        
+        # [機制判斷] 檢查是否為「首刷無頭像」狀態
+        is_first_blood = not os.path.exists(base_png_file)
+        
+        if is_first_blood:
+            # [豁免放行] 首刷期間不強制要求 Token
+            logger.info(f"✨ [Router] Agent '{agent_name}' 處於首刷無頭像狀態，豁免 Token 校驗。")
+        else:
+            # [嚴格審核] 已有頭像，啟動嚴格驗證
+            token_data = avatar_tokens.get(agent_name)
+            if not token_data or token_data["token"] != token:
+                logger.warning(f"❌ [Router] Agent '{agent_name}' 更新 Avatar 失敗：Token 無效或缺失。")
+                return jsonify({"status": "failed", "error": "Unauthorized: Invalid or missing token"}), 401
+            if datetime.now() > token_data["expires_at"]:
+                logger.warning(f"❌ [Router] Agent '{agent_name}' 更新 Avatar 失敗：Token 已過期。")
+                return jsonify({"status": "failed", "error": "Unauthorized: Token expired"}), 401
+                
+            # 驗證成功，立刻銷毀 Token (Burn)
+            del avatar_tokens[agent_name]
+            logger.info(f"🔥 [Router] Agent '{agent_name}' Token 校驗通過，已立刻銷毀 Token。")
+            
+        # [高權解包代寫] 讀取 ZIP 並覆蓋解壓縮至 avatar/ 目錄
+        import zipfile
+        import io
+        zip_bytes = archive.read()
+        with zipfile.ZipFile(io.BytesIO(zip_bytes)) as z:
+            os.makedirs(avatar_dir, exist_ok=True)
+            # 安全性檢查：防止 Zip Slip 漏洞
+            for member in z.namelist():
+                filename = os.path.basename(member)
+                if not filename:
+                    continue  # 忽略目錄項
+                # 限制解壓出來的檔案只能寫在 avatar_dir 之下，不允許相對路徑逃逸
+                target_path = os.path.abspath(os.path.join(avatar_dir, member))
+                if not target_path.startswith(os.path.abspath(avatar_dir)):
+                    logger.warning(f"⚠️ [Router] 偵測到潛在的 Zip Slip 攻擊，拒絕解壓外部路徑: {member}")
+                    return jsonify({"status": "failed", "error": "Invalid zip entry path"}), 400
+            z.extractall(avatar_dir)
+            
+        logger.info(f"✅ [Router] Agent '{agent_name}' Avatar 檔案成功解包並寫入目錄。")
+        return jsonify({"status": "success"}), 200
+        
+    except Exception as e:
+        logger.error(f"❌ [Router] 更新 Avatar 過程中發生異常: {e}")
+        return jsonify({"status": "failed", "error": str(e)}), 500
 
 if __name__ == '__main__':
     awake.start()
