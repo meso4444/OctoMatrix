@@ -20,6 +20,7 @@ import subprocess
 import sys
 import time
 import requests
+from datetime import datetime
 
 # Now in the same directory as config.py
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -76,6 +77,51 @@ def notify_agent(agent_name):
         print(f"[Reaper] Failed to notify Agent {agent_name}: {e}")
         return False
 
+def is_in_dnd(dnd_str):
+    if not dnd_str or '-' not in dnd_str:
+        return False
+    try:
+        start_str, end_str = dnd_str.split('-')
+        start_min = int(start_str[:2]) * 60 + int(start_str[2:])
+        end_min = int(end_str[:2]) * 60 + int(end_str[2:])
+        
+        now = datetime.now()
+        now_min = now.hour * 60 + now.minute
+        
+        if start_min <= end_min:
+            return start_min <= now_min <= end_min
+        else:
+            return now_min >= start_min or now_min <= end_min
+    except Exception as e:
+        print(f"[Reaper] Failed to parse DND range: {e}")
+        return False
+
+def trigger_inactivity_greeting(agent_name):
+    router_host = getattr(config, 'ROUTER_HOST', '127.0.0.1')
+    router_port = getattr(config, 'ROUTER_PORT', 12210)
+    inactivity_hours = getattr(config, 'CYBERBRAIN_INACTIVITY_CHECK_HOURS', 12)
+    
+    inject_url = f"http://{router_host}:{router_port}/inject"
+    payload = {
+        "source": "awake",
+        "user_id": "system",
+        "content": f"(System Prompt) You have not interacted with a real user for more than {inactivity_hours} hours. Please proactively send a warm greeting to the user that perfectly matches your personal personality traits and speaking style, asking about their recent situation or offering assistance.",
+        "metadata": {
+            "target_agent": agent_name
+        }
+    }
+    try:
+        res = requests.post(inject_url, json=payload, timeout=15)
+        if res.status_code == 200:
+            print(f"[Reaper] Successfully triggered idle greeting injection for Agent {agent_name}")
+            return True
+        else:
+            print(f"[Reaper] Failed to trigger idle greeting injection for Agent {agent_name}: HTTP {res.status_code}")
+            return False
+    except Exception as e:
+        print(f"[Reaper] Connection failed when injecting idle greeting to Router: {e}")
+        return False
+
 def main():
     print("🐙 Global Reaper Daemon Started")
     while True:
@@ -129,6 +175,24 @@ def main():
                     continue
 
             if os.path.exists(shell_log):
+                # --- Idle Inactivity Greeting Check ---
+                try:
+                    inactivity_hours = getattr(config, 'CYBERBRAIN_INACTIVITY_CHECK_HOURS', 12)
+                    dnd_range = getattr(config, 'CYBERBRAIN_DND_RANGE', "2200-0700")
+                    mtime = os.path.getmtime(shell_log)
+                    
+                    if time.time() - mtime > inactivity_hours * 3600:
+                        if not is_in_dnd(dnd_range):
+                            if trigger_inactivity_greeting(agent_name):
+                                try:
+                                    os.utime(shell_log, None)
+                                    print(f"[Reaper] Updated mtime of {agent_name} log to prevent duplicate greetings.")
+                                except Exception as e:
+                                    print(f"[Reaper] Failed to touch log file: {e}")
+                except Exception as e:
+                    print(f"[Reaper] Failed to check idle state for Agent {agent_name}: {e}")
+                # --------------------------------------
+
                 size = os.path.getsize(shell_log)
                 if size >= threshold_bytes:
                     if not os.path.exists(flag_file):
