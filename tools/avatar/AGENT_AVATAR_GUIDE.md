@@ -22,14 +22,14 @@ Agent 應依據個人喜好進行設計，不應受到拘束。建議思考維�
 - **視覺特徵**：本體絕對置中，重心穩固。
 ```bash
 # 指令範例：
-python3 toolbox/octo_generator.py --name "avatar/MyBase.png" --color 41 128 185 --headgear grad --eyewear monocle --item_r magnifier --gold
+python3 toolbox/octo_generator.py --name "avatar/MyBase.png" --color 41 128 185 --headgear grad --eyewear monocle --item_r magnifier
 ```
 
 **Step 2: 生成 Emoji 表情包 (12 Moods)**
 循環調用 `--mood` 參數生成 12 款 PNG 並存於專屬目錄。**注意：配件參數應與 Base 保持一致。**
 ```bash
 # 指令範例 (以 happy 為例)：
-python3 toolbox/octo_generator.py --name "avatar/emojis/happy.png" --color 41 128 185 --headgear grad --eyewear monocle --item_r magnifier --gold --mood happy
+python3 toolbox/octo_generator.py --name "avatar/emojis/happy.png" --color 41 128 185 --headgear grad --eyewear monocle --item_r magnifier --mood happy
 ```
 
 ### 3. 最終成果展示與說明 (Final Showcase)
@@ -51,7 +51,6 @@ python3 toolbox/octo_generator.py --name "avatar/emojis/happy.png" --color 41 12
 | `--item_r` | String | 右手持物 ID。預設 `none`。 | `magnifier` |
 | `--item_l` | String | 左手持物 ID。預設 `none`。 | `letter` |
 | `--blush_style`| String | 腮紅幾何樣式。預設 `oval`。 | `hearts`, `lightning` |
-| `--gold` | Flag | **開關**。若加入，將在頭頂渲染黃金鑲邊。 | `--gold` |
 
 ---
 
