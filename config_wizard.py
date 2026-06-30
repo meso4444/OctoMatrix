@@ -597,7 +597,7 @@ def manage_menu():
 
             avatar_items = []
             if prompt_bool("Add visual avatar reconstruction function (/avatar_renew)?", True):
-                avatar_items.append({"label": "🎭 Renew Avatar", "command": "/avatar_renew {input}", "prompt": "Please describe the desired visual avatar and persona traits:"})
+                avatar_items.append({"label": "🎭 Renew Avatar", "command": "/avatar_renew {input}", "prompt": "Please describe the desired visual avatar and persona traits\n(You may also type list to view backup history, or restore <index> to restore a previous avatar):"})
                 append_to_menu(avatar_items)
 
             print("✅ Built-in menu items have been auto-generated!")            
