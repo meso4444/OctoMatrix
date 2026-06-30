@@ -35,7 +35,7 @@ if [ "$(id -u)" = "0" ]; then
 
     # 修復 agent_home 目錄
     if [ -d "$SCRIPT_DIR/agent_home" ]; then
-        chown -R $APP_UID:$APP_GID "$SCRIPT_DIR/agent_home" 2>/dev/null || true
+        chown $APP_UID:$APP_GID "$SCRIPT_DIR/agent_home" 2>/dev/null || true
     fi
 
     # 確保動態用戶的主目錄與 tmux 目錄存在且可寫
