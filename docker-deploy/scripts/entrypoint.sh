@@ -35,7 +35,7 @@ if [ "$(id -u)" = "0" ]; then
 
     # Fix agent_home directory
     if [ -d "$SCRIPT_DIR/agent_home" ]; then
-        chown -R $APP_UID:$APP_GID "$SCRIPT_DIR/agent_home" 2>/dev/null || true
+        chown $APP_UID:$APP_GID "$SCRIPT_DIR/agent_home" 2>/dev/null || true
     fi
 
     # Ensure dynamic user home and tmux directory exist and are writable
