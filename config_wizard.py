@@ -447,7 +447,9 @@ def manage_cyberbrain():
             "ghost_check_interval_sec": 60,
             "ghost_compression_threshold_kb": 150,
             "ghost_long_term_compression_limit": 12,
-            "ghost_awake_context_depth": 50
+            "ghost_awake_context_depth": 50,
+            "inactivity_check_hours": 12,
+            "dnd_range": "2200-0700"
         }
 
     while True:
@@ -456,6 +458,8 @@ def manage_cyberbrain():
         print(f" [2] 淺層 GHOST 壓縮閾值: {CONFIG.get('octo_cyberbrain', {}).get('ghost_compression_threshold_kb', 150)} KB")
         print(f" [3] 長期 GHOST 壓縮閥值: {CONFIG.get('octo_cyberbrain', {}).get('ghost_long_term_compression_limit', 12)} 個淺層壓縮GHOST")
         print(f" [4] GHOST 喚醒上下文深度: {CONFIG.get('octo_cyberbrain', {}).get('ghost_awake_context_depth', 50)} 行")
+        print(f" [5] 空閒無互動問候超時: {CONFIG.get('octo_cyberbrain', {}).get('inactivity_check_hours', 12)} 小時")
+        print(f" [6] 免打擾區間 (DND): {CONFIG.get('octo_cyberbrain', {}).get('dnd_range', '2200-0700')}")
         print(" [R] 返回主選單")
         
         choice = input("請選擇要修改的參數: ").strip().lower()
@@ -482,6 +486,18 @@ def manage_cyberbrain():
             if val.isdigit():
                 if "octo_cyberbrain" not in CONFIG: CONFIG["octo_cyberbrain"] = {}
                 CONFIG["octo_cyberbrain"]["ghost_awake_context_depth"] = int(val)
+                print("✅ 參數已更新")
+        elif choice == '5':
+            val = input("請輸入空閒無互動問候超時 (小時): ").strip()
+            if val.isdigit():
+                if "octo_cyberbrain" not in CONFIG: CONFIG["octo_cyberbrain"] = {}
+                CONFIG["octo_cyberbrain"]["inactivity_check_hours"] = int(val)
+                print("✅ 參數已更新")
+        elif choice == '6':
+            val = input("請輸入免打擾區間 (例如 2200-0700): ").strip()
+            if val and '-' in val:
+                if "octo_cyberbrain" not in CONFIG: CONFIG["octo_cyberbrain"] = {}
+                CONFIG["octo_cyberbrain"]["dnd_range"] = val
                 print("✅ 參數已更新")
         elif choice == 'r':
             # Clean up old deprecated keys if they exist
@@ -720,7 +736,9 @@ def main():
                         "ghost_check_interval_sec": 60,
                         "ghost_compression_threshold_kb": 70,
                         "ghost_long_term_compression_limit": 12,
-                        "ghost_awake_context_depth": 50
+                        "ghost_awake_context_depth": 50,
+                        "inactivity_check_hours": 12,
+                        "dnd_range": "2200-0700"
                     }
                 if "collaboration_groups" not in CONFIG:
                     CONFIG["collaboration_groups"] = []
