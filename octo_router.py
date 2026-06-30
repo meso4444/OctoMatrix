@@ -607,12 +607,14 @@ Message from {MATRIX_USERNAME}:
                 if os.path.exists(temp_preview_path):
                     caption = f"🖼️ <b>[{target_agent}] History Backup #{idx} Preview</b>\nFile: <code>{filename}</code>\nTime: {mtime}\nSize: {size_kb:.1f} KB"
                     self.notifier.notify_file(msg.source, temp_preview_path, file_type='photo', caption=caption)
+            except Exception as e:
+                logger.error(f"❌ [Router] Failed to extract backup #{idx} preview: {e}")
+            finally:
+                if os.path.exists(temp_preview_path):
                     try:
                         os.remove(temp_preview_path)
                     except:
                         pass
-            except Exception as e:
-                logger.error(f"❌ [Router] Failed to extract backup #{idx} preview: {e}")
 
     def _restore_avatar_backup(self, msg, target_agent, restore_target):
         import glob
