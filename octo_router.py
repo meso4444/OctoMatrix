@@ -357,8 +357,7 @@ Once the requirement is confirmed, begin generating.
 1. You can ONLY and MUST use the native `toolbox/octo_generator.py` script to generate.
 2. Writing or using custom Python/Shell scripts to generate images is STRICTLY PROHIBITED.
 3. Modifying, copying (cloning), or overwriting `octo_generator.py` is STRICTLY PROHIBITED.
-4. When executing the script, please use the new one-click generation command (the script will automatically output base.png and all emojis at once, and automatically upload the ZIP pack to the Router, no --name or mood loops needed):
-   `python3 toolbox/octo_generator.py --color R G B --headgear HeadgearID --eyewear EyewearID --item_r RightItemID --item_l LeftItemID --blush_style BlushID --token {token}`
+4. When executing the script, please refer to `knowledge/AGENT_AVATAR_GUIDE.md` for the command example to configure all parameters, and make sure to append the authorization key `--token {token}`.
 
 [Step 3 - Reporting Results]:
 Once generation and automatic upload package are complete, report the result to the user and present the newly generated emoji sticker."""
@@ -368,7 +367,7 @@ Once generation and automatic upload package are complete, report the result to 
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '\x1b[201~'])
             time.sleep(0.5)
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'Enter'], check=False)
-            self.notifier.notify(msg.source, 'custom', {'content': f'🎨 Assigned <b>[{target_agent}]</b> to one-click update Avatar...'})
+            self.notifier.notify(msg.source, 'custom', {'content': f'🎨 Assigned <b>[{target_agent}]</b> to update Avatar...'})
             return True
         elif is_cmd(cmd_content, '/inspect'):
             parts = content.split()
