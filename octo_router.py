@@ -566,6 +566,7 @@ class CommandHandler:
 
     def _list_avatar_backups(self, msg, target_agent):
         import glob
+        import zipfile
         avatar_dir = os.path.join(AGENT_HOME_BASE, target_agent, "avatar")
         history_zips = sorted(
             glob.glob(os.path.join(avatar_dir, "history_*.zip")),
@@ -582,8 +583,36 @@ class CommandHandler:
             size_kb = os.path.getsize(path) / 1024.0
             mtime = datetime.fromtimestamp(os.path.getmtime(path)).strftime("%Y-%m-%d %H:%M:%S")
             content_text += f"{idx}. <code>{filename}</code> ({size_kb:.1f} KB) - {mtime}\n"
-        content_text += "\n💡 提示：使用 <code>/avatar_renew restore &lt;編號&gt;</code> (例如 <code>/avatar_renew restore 1</code>) 即可進行還原。"
+        content_text += "\n💡 提示：使用 <code>/avatar_renew restore &lt;編號&gt;</code> (例如 <code>/avatar_renew restore 1</code>) 即可進行還原。\n⏳ 正在背景解壓並傳送各備份的 `base.png` 預覽圖..."
         self.notifier.notify(msg.source, 'custom', {'content': content_text})
+
+        # 遞迴解壓並傳送 preview 圖
+        for idx, path in enumerate(history_zips, 1):
+            filename = os.path.basename(path)
+            size_kb = os.path.getsize(path) / 1024.0
+            mtime = datetime.fromtimestamp(os.path.getmtime(path)).strftime("%Y-%m-%d %H:%M:%S")
+            
+            temp_preview_path = os.path.join("/tmp", f"preview_{target_agent}_{idx}_{int(time.time())}.png")
+            try:
+                with zipfile.ZipFile(path, 'r') as z:
+                    target_entry = None
+                    for entry in z.namelist():
+                        if entry == "base.png" or entry.endswith("/base.png"):
+                            target_entry = entry
+                            break
+                    if target_entry:
+                        with open(temp_preview_path, 'wb') as out_f:
+                            out_f.write(z.read(target_entry))
+                
+                if os.path.exists(temp_preview_path):
+                    caption = f"🖼️ <b>[{target_agent}] 歷史備份 #{idx} 預覽</b>\n檔案：<code>{filename}</code>\n時間：{mtime}\n大小：{size_kb:.1f} KB"
+                    self.notifier.notify_file(msg.source, temp_preview_path, file_type='photo', caption=caption)
+                    try:
+                        os.remove(temp_preview_path)
+                    except:
+                        pass
+            except Exception as e:
+                logger.error(f"❌ [Router] 提取備份 #{idx} 預覽圖失敗: {e}")
 
     def _restore_avatar_backup(self, msg, target_agent, restore_target):
         import glob
