@@ -46,11 +46,31 @@ if [ "$(id -u)" = "0" ]; then
             AGENT_DIR=$(echo "$PURE_NAME" | awk '{print toupper(substr($0,1,1))tolower(substr($0,2))}')
         fi
 
-        # 進行匹配與遞迴修復
+        # 進行精準匹配與修復 (避免遞迴污染 toolbox、knowledge、avatar、skillbox 及歷史歸檔)
         for NAME in "$AGENT_DIR" "$INSTANCE_NAME" "${APP_USER#agent_}"; do
-            if [ ! -z "$NAME" ] && [ -d "$SCRIPT_DIR/agent_home/$NAME" ]; then
-                echo "🔐 [Root] 修復特定實例目錄權限: agent_home/$NAME"
-                chown -R $APP_UID:$APP_GID "$SCRIPT_DIR/agent_home/$NAME" 2>/dev/null || true
+            TARGET_PATH="$SCRIPT_DIR/agent_home/$NAME"
+            if [ ! -z "$NAME" ] && [ -d "$TARGET_PATH" ]; then
+                echo "🔐 [Root] 精準修復實例目錄權限: agent_home/$NAME"
+                # 僅非遞迴 chown 實例主目錄
+                chown $APP_UID:$APP_GID "$TARGET_PATH" 2>/dev/null || true
+                
+                # 僅遞迴修復 Agent 專屬的可寫數據目錄
+                for sub in "my_shared_space" "downloads_temp" "project"; do
+                    if [ -d "$TARGET_PATH/$sub" ]; then
+                        chown -R $APP_UID:$APP_GID "$TARGET_PATH/$sub" 2>/dev/null || true
+                    fi
+                done
+                
+                # 對 octo_cyberbrain 直屬目錄與日誌/快照目錄本身進行非遞迴 chown
+                for sub in "octo_cyberbrain" "octo_cyberbrain/ghost" "octo_cyberbrain/shell"; do
+                    if [ -d "$TARGET_PATH/$sub" ]; then
+                        chown $APP_UID:$APP_GID "$TARGET_PATH/$sub" 2>/dev/null || true
+                    fi
+                done
+                
+                # 僅對活動日誌與活動狀態檔案變更擁有者，以利 Agent 追加寫入
+                [ -f "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" ] && chown $APP_UID:$APP_GID "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" 2>/dev/null || true
+                [ -f "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" ] && chown $APP_UID:$APP_GID "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" 2>/dev/null || true
             fi
         done
     fi
