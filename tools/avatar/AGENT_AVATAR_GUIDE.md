@@ -14,22 +14,12 @@ Agent 應依據個人喜好進行設計，不應受到拘束。建議思考維�
 - **職能與愛好 (Items)**：選取 1-2 件體現你職能或個人興趣的持物。
 - **靈魂特徵 (Blush)**：選取符合氣質的腮紅樣式。**（腮紅為靈魂組件，為強制必備項）**
 
-### 2. 技術執行階段
-環境路徑：`toolbox/octo_generator.py`
-
-**Step 1: 生成基礎 Character (Base)**
-- 預設 `--mood` 為 `base` (標準圓眼)。
-- **視覺特徵**：本體絕對置中，重心穩固。
+**一鍵生成基礎形象與表情包**
+- 不需要手動指定 `--name` 或逐個對應 `--mood` 生成。
+- 直接使用一鍵生成命令，腳本會自動在記憶體中一次性產出 `base.png` 與所有固定的 12 款表情包 PNG，並自動封裝為 ZIP 發送給 Router API 進行高權覆寫更新。
 ```bash
-# 指令範例：
-python3 toolbox/octo_generator.py --name "avatar/MyBase.png" --color 41 128 185 --headgear grad --eyewear monocle --item_r magnifier
-```
-
-**Step 2: 生成 Emoji 表情包 (12 Moods)**
-循環調用 `--mood` 參數生成 12 款 PNG 並存於專屬目錄。**注意：配件參數應與 Base 保持一致。**
-```bash
-# 指令範例 (以 happy 為例)：
-python3 toolbox/octo_generator.py --name "avatar/emojis/happy.png" --color 41 128 185 --headgear grad --eyewear monocle --item_r magnifier --mood happy
+# 一鍵生成指令範例：
+python3 toolbox/octo_generator.py --color 41 128 185 --headgear grad --eyewear monocle --item_r magnifier --blush_style oval --token <YourToken>
 ```
 
 ### 3. 最終成果展示與說明 (Final Showcase)
