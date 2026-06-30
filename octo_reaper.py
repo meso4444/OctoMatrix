@@ -20,6 +20,7 @@ import subprocess
 import sys
 import time
 import requests
+from datetime import datetime
 
 # Now in the same directory as config.py
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -76,6 +77,51 @@ def notify_agent(agent_name):
         print(f"[Reaper] 通知 Agent {agent_name} 失敗: {e}")
         return False
 
+def is_in_dnd(dnd_str):
+    if not dnd_str or '-' not in dnd_str:
+        return False
+    try:
+        start_str, end_str = dnd_str.split('-')
+        start_min = int(start_str[:2]) * 60 + int(start_str[2:])
+        end_min = int(end_str[:2]) * 60 + int(end_str[2:])
+        
+        now = datetime.now()
+        now_min = now.hour * 60 + now.minute
+        
+        if start_min <= end_min:
+            return start_min <= now_min <= end_min
+        else:
+            return now_min >= start_min or now_min <= end_min
+    except Exception as e:
+        print(f"[Reaper] 解析 DND 區間失敗: {e}")
+        return False
+
+def trigger_inactivity_greeting(agent_name):
+    router_host = getattr(config, 'ROUTER_HOST', '127.0.0.1')
+    router_port = getattr(config, 'ROUTER_PORT', 12210)
+    inactivity_hours = getattr(config, 'CYBERBRAIN_INACTIVITY_CHECK_HOURS', 12)
+    
+    inject_url = f"http://{router_host}:{router_port}/inject"
+    payload = {
+        "source": "awake",
+        "user_id": "system",
+        "content": f"(系統提示) 您已超過 {inactivity_hours} 小時未與真實用戶進行互動。請主動發送一條完全符合您個人性格特質與說話風格的溫和問候給用戶，詢問其近況或提供協助。",
+        "metadata": {
+            "target_agent": agent_name
+        }
+    }
+    try:
+        res = requests.post(inject_url, json=payload, timeout=15)
+        if res.status_code == 200:
+            print(f"[Reaper] 成功觸發 Agent {agent_name} 的空閒問候注入")
+            return True
+        else:
+            print(f"[Reaper] 觸發 Agent {agent_name} 空閒問候注入失敗: HTTP {res.status_code}")
+            return False
+    except Exception as e:
+        print(f"[Reaper] 連線 Router 注入空閒問候失敗: {e}")
+        return False
+
 def main():
     print("🐙 Global Reaper Daemon Started")
     while True:
@@ -128,6 +174,24 @@ def main():
                     continue
 
             if os.path.exists(shell_log):
+                # --- 空閒問候檢測 ---
+                try:
+                    inactivity_hours = getattr(config, 'CYBERBRAIN_INACTIVITY_CHECK_HOURS', 12)
+                    dnd_range = getattr(config, 'CYBERBRAIN_DND_RANGE', "2200-0700")
+                    mtime = os.path.getmtime(shell_log)
+                    
+                    if time.time() - mtime > inactivity_hours * 3600:
+                        if not is_in_dnd(dnd_range):
+                            if trigger_inactivity_greeting(agent_name):
+                                try:
+                                    os.utime(shell_log, None)
+                                    print(f"[Reaper] 已更新 {agent_name} 日誌時間戳，防止重複發送。")
+                                except Exception as e:
+                                    print(f"[Reaper] touch 日誌失敗: {e}")
+                except Exception as e:
+                    print(f"[Reaper] 檢查 Agent {agent_name} 空閒狀態失敗: {e}")
+                # -------------------
+
                 size = os.path.getsize(shell_log)
                 if size >= threshold_bytes:
                     if not os.path.exists(flag_file):

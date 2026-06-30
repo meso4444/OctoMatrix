@@ -149,6 +149,8 @@ CYBERBRAIN_REAPER_POLLING_INTERVAL = int(_octo_config.get("ghost_check_interval_
 CYBERBRAIN_ROTATION_THRESHOLD_KB = int(_octo_config.get("ghost_compression_threshold_kb", 70))
 CYBERBRAIN_ROLLING_MERGE_LIMIT = int(_octo_config.get("ghost_long_term_compression_limit", 12))
 CYBERBRAIN_DIVE_CONTEXT_SIZE = int(_octo_config.get("ghost_awake_context_depth", 50))
+CYBERBRAIN_INACTIVITY_CHECK_HOURS = int(_octo_config.get("inactivity_check_hours", 12))
+CYBERBRAIN_DND_RANGE = str(_octo_config.get("dnd_range", "2200-0700"))
 
 # ==========================================
 # 消息模板加載 (新增)
