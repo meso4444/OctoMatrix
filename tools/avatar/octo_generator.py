@@ -14,12 +14,40 @@
 
 import argparse
 import os
+import sys
+import io
+import tempfile
+import shutil
+import zipfile
+import requests
 from PIL import Image, ImageDraw
+
+def get_agent_name_and_home(filename):
+    abs_path = os.path.abspath(filename)
+    parts = abs_path.split(os.sep)
+    for i in range(len(parts) - 1, -1, -1):
+        if parts[i] == 'avatar':
+            if i > 0:
+                agent_name = parts[i - 1]
+                agent_home = os.sep.join(parts[:i])
+                return agent_name, agent_home
+    return os.path.basename(os.getcwd()), os.getcwd()
+
+def get_router_port(agent_home):
+    project_root = os.path.dirname(os.path.dirname(agent_home))
+    port_file = os.path.join(project_root, '.router_port')
+    if os.path.exists(port_file):
+        try:
+            with open(port_file, 'r') as f:
+                return int(f.read().strip())
+        except:
+            pass
+    return 12210
 
 def generate_octopus_final(filename, body_rgb=(150, 150, 150), 
                             mood="base", eyewear="none",
                             headgear="none", item_r="none", item_l="none", 
-                            blush_style="oval", has_gold=False, size=64, scale=8):
+                            blush_style="oval", has_gold=False, size=64, scale=8, token=""):
     img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
     px = img.load(); draw = ImageDraw.Draw(img)
     B = (44, 44, 44, 255); GOLD = (255, 215, 0, 255); W = (255, 255, 255, 255)
@@ -192,12 +220,71 @@ def generate_octopus_final(filename, body_rgb=(150, 150, 150),
             draw.ellipse([cx-2, cy-8, cx+2, cy+8], fill=TAN); draw.line([cx-1, cy-4, cx+1, cy-2], fill=BROWN); draw.line([cx-1, cy+2, cx+1, cy+4], fill=BROWN)
 
     draw_handheld(item_r, 'r'); draw_handheld(item_l, 'l')
-    final_img = img.resize((size * scale, size * scale), Image.NEAREST); final_img.save(filename)
-    return filename
+
+    # 判斷是否為已有頭像狀態
+    agent_name, agent_home = get_agent_name_and_home(filename)
+    avatar_dir = os.path.join(agent_home, "avatar")
+    base_png_file = os.path.join(avatar_dir, "base.png")
+    
+    is_first_blood = not os.path.exists(base_png_file)
+    
+    if is_first_blood:
+        # 首刷無頭像，直接寫入本地
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        final_img = img.resize((size * scale, size * scale), Image.NEAREST)
+        final_img.save(filename)
+        print("✨ [Generator] First-blood state (no base avatar), directly writing locally.")
+        return filename
+    else:
+        # 已有頭像，走 Token 物理上傳機制
+        abs_filename = os.path.abspath(filename)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_avatar_dir = os.path.join(temp_dir, "avatar")
+            if os.path.exists(avatar_dir):
+                shutil.copytree(avatar_dir, temp_avatar_dir, symlinks=True)
+            else:
+                os.makedirs(temp_avatar_dir, exist_ok=True)
+                
+            rel_path = os.path.relpath(abs_filename, avatar_dir)
+            target_temp_file = os.path.join(temp_avatar_dir, rel_path)
+            os.makedirs(os.path.dirname(target_temp_file), exist_ok=True)
+            
+            final_img = img.resize((size * scale, size * scale), Image.NEAREST)
+            final_img.save(target_temp_file)
+            
+            zip_io = io.BytesIO()
+            with zipfile.ZipFile(zip_io, 'w', zipfile.ZIP_DEFLATED) as z:
+                for root, dirs, files in os.walk(temp_avatar_dir):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        arcname = os.path.relpath(file_path, temp_avatar_dir)
+                        z.write(file_path, arcname)
+            
+            zip_io.seek(0)
+            
+            router_port = get_router_port(agent_home)
+            url = f"http://127.0.0.1:{router_port}/api/internal/avatar/update"
+            
+            files = {'archive': ('avatar.zip', zip_io.getvalue(), 'application/zip')}
+            data = {'agent_name': agent_name, 'token': token}
+            
+            try:
+                response = requests.post(url, files=files, data=data, timeout=10)
+                if response.status_code == 200:
+                    print("✅ [Generator] Avatar updated and synced successfully.")
+                else:
+                    print(f"❌ [Generator] Router rejected update: {response.status_code} - {response.text}")
+                    sys.exit(1)
+            except Exception as e:
+                print(f"❌ [Generator] Failed to connect to Router: {e}")
+                sys.exit(1)
+                
+        return filename
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(); parser.add_argument("--name", required=True); parser.add_argument("--color", nargs=3, type=int, default=[150, 150, 150])
     parser.add_argument("--mood", default="base"); parser.add_argument("--eyewear", default="none"); parser.add_argument("--headgear", default="none")
     parser.add_argument("--item_r", default="none"); parser.add_argument("--item_l", default="none"); parser.add_argument("--gold", action="store_true")
-    parser.add_argument("--blush_style", default="oval"); args = parser.parse_args()
-    generate_octopus_final(args.name, tuple(args.color), args.mood, args.eyewear, args.headgear, args.item_r, args.item_l, args.blush_style, args.gold)
+    parser.add_argument("--blush_style", default="oval"); parser.add_argument("--token", default="")
+    args = parser.parse_args()
+    generate_octopus_final(args.name, tuple(args.color), args.mood, args.eyewear, args.headgear, args.item_r, args.item_l, args.blush_style, args.gold, token=args.token)

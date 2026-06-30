@@ -26,7 +26,8 @@ import logging
 import subprocess
 import time
 import requests
-from datetime import datetime
+import uuid
+from datetime import datetime, timedelta
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, asdict
 
@@ -54,6 +55,9 @@ ROUTER_PORT = int(os.getenv('ROUTER_PORT', 12210))
 ROUTER_HOST = '0.0.0.0'
 script_dir = os.path.dirname(os.path.abspath(__file__))
 AGENT_HOME_BASE = os.path.join(script_dir, 'agent_home')
+
+# 暫存的 Avatar 更新 Token，格式： { agent_name: {"token": "...", "expires_at": datetime} }
+avatar_tokens = {}
 
 # Solidify port information
 try:
@@ -314,8 +318,39 @@ class CommandHandler:
             parts = content.split(' ', 1)
             requirement = parts[1].strip() if len(parts) > 1 else "No specific requirement"
             
-            prompt = f"{SYS_PREFIX}\nBased on the guidance in ./knowledge/AGENT_AVATAR_GUIDE.md and the '{requirement}' request, backup your old avatar set to a zip file, generate your new avatar, and once complete, execute python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png to send a sticker matching your current mood, then execute python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME}}}'".replace("{mood}", "{mood}")
+            # Generate Token expiring in 5 minutes
+            token = str(uuid.uuid4())
+            avatar_tokens[target_agent] = {
+                "token": token,
+                "expires_at": datetime.now() + timedelta(minutes=5)
+            }
             
+            prompt = f"""[System Security Authorization Command: Avatar Renewal Procedure]
+The user has officially initiated a `/avatar_renew` request.
+Authorization Unlock Key: --token {token}
+User Specific Requirements: {requirement}
+
+Before executing any image generation actions, you MUST strictly adhere to the following [Security and Protection SOP]:
+
+[Step 1 - Requirement Compliance Validation]:
+Carefully review the user's requested character image or accessory requirements. Compare them with the capabilities defined in `AGENT_AVATAR_GUIDE.md` and supported by `octo_generator.py`.
+- If the user requests an unsupported art style, accessory, or any element violating the OctoMatrix character standards (e.g., realistic human photos, gore, or custom gear not supported by the generator), enter [Step 1-Reject].
+- If the requirements are fully compliant, proceed to [Step 2].
+
+[Step 1-Reject - Polite Rejection and Alternatives]:
+Clearly state to the user that the current generation system cannot support the request (maintaining your character personality) and proactively suggest 1 or 2 compliant alternatives supported by the system. Do NOT run any generation commands until the user agrees to an alternative.
+
+[Step 2 - Strict Script Execution Policy]:
+Once the requirement is confirmed, begin generating.
+⚠️ [CRITICAL WARNING]:
+1. You can ONLY and MUST use the native `toolbox/octo_generator.py` script to generate.
+2. Writing or using custom Python/Shell scripts to generate images is STRICTLY PROHIBITED.
+3. Modifying, copying (cloning), or overwriting `octo_generator.py` is STRICTLY PROHIBITED.
+4. When executing the script, you MUST append the authorization parameter: `--token {token}`.
+
+[Step 3 - Reporting Results]:
+Once generation and automatic upload package are complete, report the result to the user and present the newly generated emoji sticker."""
+
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '\x1b[200~'])
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '-l', '--', prompt], check=False)
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '\x1b[201~'])
@@ -623,6 +658,64 @@ def inject():
 
     success = handler.handle(msg)
     return jsonify({"status": "success" if success else "failed"}), 200
+
+@app.route('/api/internal/avatar/update', methods=['POST'])
+def update_avatar():
+    try:
+        agent_name = request.form.get('agent_name')
+        token = request.form.get('token', '')
+        archive = request.files.get('archive')
+        
+        if not agent_name or not archive:
+            return jsonify({"status": "failed", "error": "Missing agent_name or archive"}), 400
+            
+        avatar_dir = os.path.join(AGENT_HOME_BASE, agent_name, "avatar")
+        base_png_file = os.path.join(avatar_dir, "base.png")
+        
+        # [Mechanics Check] Check if agent is in "First-Blood" (no base avatar) state
+        is_first_blood = not os.path.exists(base_png_file)
+        
+        if is_first_blood:
+            # [Exempt Pass] Bypass Token validation during First-Blood phase
+            logger.info(f"✨ [Router] Agent '{agent_name}' is in First-Blood state. Bypassing Token validation.")
+        else:
+            # [Strict Check] Verification is required once base avatar exists
+            token_data = avatar_tokens.get(agent_name)
+            if not token_data or token_data["token"] != token:
+                logger.warning(f"❌ [Router] Agent '{agent_name}' failed to update Avatar: Invalid or missing token.")
+                return jsonify({"status": "failed", "error": "Unauthorized: Invalid or missing token"}), 401
+            if datetime.now() > token_data["expires_at"]:
+                logger.warning(f"❌ [Router] Agent '{agent_name}' failed to update Avatar: Token expired.")
+                return jsonify({"status": "failed", "error": "Unauthorized: Token expired"}), 401
+                
+            # Burn Token immediately upon success
+            del avatar_tokens[agent_name]
+            logger.info(f"🔥 [Router] Agent '{agent_name}' Token validation passed. Token has been burned.")
+            
+        # [High-Privilege Archive Unpacking] Read ZIP and extract with overwrite to avatar/ directory
+        import zipfile
+        import io
+        zip_bytes = archive.read()
+        with zipfile.ZipFile(io.BytesIO(zip_bytes)) as z:
+            os.makedirs(avatar_dir, exist_ok=True)
+            # Security Check: Prevent Zip Slip Vulnerability
+            for member in z.namelist():
+                filename = os.path.basename(member)
+                if not filename:
+                    continue  # Ignore directories
+                # Limit extraction strictly under avatar_dir
+                target_path = os.path.abspath(os.path.join(avatar_dir, member))
+                if not target_path.startswith(os.path.abspath(avatar_dir)):
+                    logger.warning(f"⚠️ [Router] Potential Zip Slip attack detected. Refusing to extract entry: {member}")
+                    return jsonify({"status": "failed", "error": "Invalid zip entry path"}), 400
+            z.extractall(avatar_dir)
+            
+        logger.info(f"✅ [Router] Agent '{agent_name}' Avatar archive unpacked and written successfully.")
+        return jsonify({"status": "success"}), 200
+        
+    except Exception as e:
+        logger.error(f"❌ [Router] Exception occurred during Avatar update: {e}")
+        return jsonify({"status": "failed", "error": str(e)}), 500
 
 if __name__ == '__main__':
     awake.start()
