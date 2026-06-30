@@ -566,6 +566,7 @@ Message from {MATRIX_USERNAME}:
 
     def _list_avatar_backups(self, msg, target_agent):
         import glob
+        import zipfile
         avatar_dir = os.path.join(AGENT_HOME_BASE, target_agent, "avatar")
         history_zips = sorted(
             glob.glob(os.path.join(avatar_dir, "history_*.zip")),
@@ -582,8 +583,36 @@ Message from {MATRIX_USERNAME}:
             size_kb = os.path.getsize(path) / 1024.0
             mtime = datetime.fromtimestamp(os.path.getmtime(path)).strftime("%Y-%m-%d %H:%M:%S")
             content_text += f"{idx}. <code>{filename}</code> ({size_kb:.1f} KB) - {mtime}\n"
-        content_text += "\n💡 Tips: Use <code>/avatar_renew restore &lt;index&gt;</code> (e.g., <code>/avatar_renew restore 1</code>) to restore."
+        content_text += "\n💡 Tips: Use <code>/avatar_renew restore &lt;index&gt;</code> (e.g., <code>/avatar_renew restore 1</code>) to restore.\n⏳ Extracting and sending `base.png` previews for each backup in the background..."
         self.notifier.notify(msg.source, 'custom', {'content': content_text})
+
+        # Extract and send preview images sequentially
+        for idx, path in enumerate(history_zips, 1):
+            filename = os.path.basename(path)
+            size_kb = os.path.getsize(path) / 1024.0
+            mtime = datetime.fromtimestamp(os.path.getmtime(path)).strftime("%Y-%m-%d %H:%M:%S")
+            
+            temp_preview_path = os.path.join("/tmp", f"preview_{target_agent}_{idx}_{int(time.time())}.png")
+            try:
+                with zipfile.ZipFile(path, 'r') as z:
+                    target_entry = None
+                    for entry in z.namelist():
+                        if entry == "base.png" or entry.endswith("/base.png"):
+                            target_entry = entry
+                            break
+                    if target_entry:
+                        with open(temp_preview_path, 'wb') as out_f:
+                            out_f.write(z.read(target_entry))
+                
+                if os.path.exists(temp_preview_path):
+                    caption = f"🖼️ <b>[{target_agent}] History Backup #{idx} Preview</b>\nFile: <code>{filename}</code>\nTime: {mtime}\nSize: {size_kb:.1f} KB"
+                    self.notifier.notify_file(msg.source, temp_preview_path, file_type='photo', caption=caption)
+                    try:
+                        os.remove(temp_preview_path)
+                    except:
+                        pass
+            except Exception as e:
+                logger.error(f"❌ [Router] Failed to extract backup #{idx} preview: {e}")
 
     def _restore_avatar_backup(self, msg, target_agent, restore_target):
         import glob
