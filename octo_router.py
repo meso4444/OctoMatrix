@@ -318,6 +318,17 @@ class CommandHandler:
             parts = content.split(' ', 1)
             requirement = parts[1].strip() if len(parts) > 1 else "No specific requirement"
             
+            # [Command Intercept] Check if it is a history management command
+            req_lower = requirement.lower()
+            if req_lower == 'list':
+                self._list_avatar_backups(msg, target_agent)
+                return True
+            elif req_lower.startswith('restore'):
+                restore_parts = requirement.split(None, 1)
+                restore_target = restore_parts[1].strip() if len(restore_parts) > 1 else ""
+                self._restore_avatar_backup(msg, target_agent, restore_target)
+                return True
+                
             # Generate Token expiring in 5 minutes
             token = str(uuid.uuid4())
             avatar_tokens[target_agent] = {
@@ -553,6 +564,108 @@ Message from {MATRIX_USERNAME}:
         else:
             self.notifier.notify(msg.source, 'custom', {'content': "🎮 Please send <code>/help</code> to see available commands."})
 
+    def _list_avatar_backups(self, msg, target_agent):
+        import glob
+        avatar_dir = os.path.join(AGENT_HOME_BASE, target_agent, "avatar")
+        history_zips = sorted(
+            glob.glob(os.path.join(avatar_dir, "history_*.zip")),
+            key=os.path.getmtime,
+            reverse=True
+        )
+        if not history_zips:
+            self.notifier.notify(msg.source, 'custom', {'content': f'📂 <b>[{target_agent}]</b> Currently has no historical avatar backups.'})
+            return
+            
+        content_text = f"📂 <b>[{target_agent}] Historical Avatar Backups:</b>\n\n"
+        for idx, path in enumerate(history_zips, 1):
+            filename = os.path.basename(path)
+            size_kb = os.path.getsize(path) / 1024.0
+            mtime = datetime.fromtimestamp(os.path.getmtime(path)).strftime("%Y-%m-%d %H:%M:%S")
+            content_text += f"{idx}. <code>{filename}</code> ({size_kb:.1f} KB) - {mtime}\n"
+        content_text += "\n💡 Tips: Use <code>/avatar_renew restore &lt;index&gt;</code> (e.g., <code>/avatar_renew restore 1</code>) to restore."
+        self.notifier.notify(msg.source, 'custom', {'content': content_text})
+
+    def _restore_avatar_backup(self, msg, target_agent, restore_target):
+        import glob
+        import zipfile
+        if not restore_target:
+            self.notifier.notify(msg.source, 'custom', {'content': f'⚠️ Please specify the backup index or filename to restore, e.g., <code>/avatar_renew restore 1</code>'})
+            return
+            
+        avatar_dir = os.path.join(AGENT_HOME_BASE, target_agent, "avatar")
+        history_zips = sorted(
+            glob.glob(os.path.join(avatar_dir, "history_*.zip")),
+            key=os.path.getmtime,
+            reverse=True
+        )
+        
+        target_zip = None
+        try:
+            idx = int(restore_target)
+            if 1 <= idx <= len(history_zips):
+                target_zip = history_zips[idx - 1]
+        except ValueError:
+            pass
+            
+        if not target_zip:
+            for path in history_zips:
+                if os.path.basename(path) == restore_target or os.path.basename(path).replace(".zip", "") == restore_target:
+                    target_zip = path
+                    break
+                    
+        if not target_zip:
+            self.notifier.notify(msg.source, 'custom', {'content': f'❌ Cannot find specified backup: <code>{restore_target}</code>. Use <code>/avatar_renew list</code> to see available backups.'})
+            return
+            
+        try:
+            base_png_file = os.path.join(avatar_dir, "base.png")
+            if os.path.exists(base_png_file):
+                timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+                current_backup = os.path.join(avatar_dir, f"history_{timestamp_str}.zip")
+                
+                import tempfile
+                with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmp_zip_file:
+                    tmp_zip_name = tmp_zip_file.name
+                with zipfile.ZipFile(tmp_zip_name, 'w', zipfile.ZIP_DEFLATED) as hz:
+                    for root, dirs, files in os.walk(avatar_dir):
+                        for file in files:
+                            if file.startswith("history_") and file.endswith(".zip"):
+                                continue
+                            file_path = os.path.join(root, file)
+                            arcname = os.path.relpath(file_path, avatar_dir)
+                            hz.write(file_path, arcname)
+                import shutil
+                shutil.move(tmp_zip_name, current_backup)
+                
+            for root, dirs, files in os.walk(avatar_dir, topdown=False):
+                for file in files:
+                    if file.startswith("history_") and file.endswith(".zip"):
+                        continue
+                    os.remove(os.path.join(root, file))
+                for d in dirs:
+                    dir_path = os.path.join(root, d)
+                    try:
+                        os.rmdir(dir_path)
+                    except:
+                        pass
+                        
+            with zipfile.ZipFile(target_zip, 'r') as z:
+                z.extractall(avatar_dir)
+                
+            history_zips = sorted(
+                glob.glob(os.path.join(avatar_dir, "history_*.zip")),
+                key=os.path.getmtime
+            )
+            while len(history_zips) > 5:
+                oldest = history_zips.pop(0)
+                os.remove(oldest)
+                
+            self.notifier.notify(msg.source, 'custom', {'content': f'✅ <b>[{target_agent}]</b> Avatar has been successfully restored from <code>{os.path.basename(target_zip)}</code>!'})
+            
+        except Exception as e:
+            logger.error(f"❌ [Router] Failed to restore avatar: {e}")
+            self.notifier.notify(msg.source, 'custom', {'content': f'❌ <b>[{target_agent}]</b> Failed to restore avatar: {str(e)}'})
+
 app = Flask(__name__)
 notifier = MatrixNotifier()
 awake = AwakeManager()
@@ -692,6 +805,42 @@ def update_avatar():
             del avatar_tokens[agent_name]
             logger.info(f"🔥 [Router] Agent '{agent_name}' Token validation passed. Token has been burned.")
             
+        # [備份舊有 Avatar - 保留 5 代]
+        if os.path.exists(avatar_dir) and not is_first_blood:
+            try:
+                import glob
+                import shutil
+                import zipfile
+                timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+                history_zip_path = os.path.join(avatar_dir, f"history_{timestamp_str}.zip")
+                
+                import tempfile
+                with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmp_zip_file:
+                    tmp_zip_name = tmp_zip_file.name
+                
+                with zipfile.ZipFile(tmp_zip_name, 'w', zipfile.ZIP_DEFLATED) as hz:
+                    for root, dirs, files in os.walk(avatar_dir):
+                        for file in files:
+                            if file.startswith("history_") and file.endswith(".zip"):
+                                continue
+                            file_path = os.path.join(root, file)
+                            arcname = os.path.relpath(file_path, avatar_dir)
+                            hz.write(file_path, arcname)
+                
+                shutil.move(tmp_zip_name, history_zip_path)
+                logger.info(f"💾 [Router] 已備份舊頭像至 {history_zip_path}")
+                
+                history_zips = sorted(
+                    glob.glob(os.path.join(avatar_dir, "history_*.zip")),
+                    key=os.path.getmtime
+                )
+                while len(history_zips) > 5:
+                    oldest = history_zips.pop(0)
+                    os.remove(oldest)
+                    logger.info(f"🗑️ [Router] 清理最舊的備份檔: {oldest}")
+            except Exception as e:
+                logger.error(f"⚠️ [Router] 備份舊 Avatar 失敗: {e}")
+
         # [High-Privilege Archive Unpacking] Read ZIP and extract with overwrite to avatar/ directory
         import zipfile
         import io
