@@ -33,9 +33,26 @@ export APP_GID=$(id -g $APP_USER 2>/dev/null || echo 1000)
 if [ "$(id -u)" = "0" ]; then
     echo "🔐 [Root] 修復掛載卷的所有權和權限..."
 
-    # 修復 agent_home 目錄
+    # 修復當前實例專屬的 agent_home 子目錄權限（避免干涉其他實例的權限）
     if [ -d "$SCRIPT_DIR/agent_home" ]; then
         chown $APP_UID:$APP_GID "$SCRIPT_DIR/agent_home" 2>/dev/null || true
+
+        # 智慧識別當前 Agent 的目錄名 (首字母大寫)
+        AGENT_DIR=""
+        if [ ! -z "$INSTANCE_NAME" ]; then
+            AGENT_DIR=$(echo "$INSTANCE_NAME" | awk '{print toupper(substr($0,1,1))tolower(substr($0,2))}')
+        elif [ ! -z "$APP_USER" ]; then
+            PURE_NAME=${APP_USER#agent_}
+            AGENT_DIR=$(echo "$PURE_NAME" | awk '{print toupper(substr($0,1,1))tolower(substr($0,2))}')
+        fi
+
+        # 進行匹配與遞迴修復
+        for NAME in "$AGENT_DIR" "$INSTANCE_NAME" "${APP_USER#agent_}"; do
+            if [ ! -z "$NAME" ] && [ -d "$SCRIPT_DIR/agent_home/$NAME" ]; then
+                echo "🔐 [Root] 修復特定實例目錄權限: agent_home/$NAME"
+                chown -R $APP_UID:$APP_GID "$SCRIPT_DIR/agent_home/$NAME" 2>/dev/null || true
+            fi
+        done
     fi
 
     # 確保動態用戶的主目錄與 tmux 目錄存在且可寫
