@@ -35,7 +35,8 @@ def generate_octopus_final(filename, body_rgb=(150, 150, 150),
             dist_sq = (x - 32)**2 + (y - 32)**2
             if dist_sq < 14**2:
                 px[x, y] = body_color
-                if has_gold and y < 26 and dist_sq > 12**2: px[x, y] = GOLD
+                # Note: Gold border feature is disabled to keep avatars clean, but argument is kept in parser for compatibility.
+                # if has_gold and y < 26 and dist_sq > 12**2: px[x, y] = GOLD
 
     lx, ly = 24, 30; rx, ry = 40, 30
     blush_y = ly + 6; cur_blush_color = (255, 100, 150, 220); cur_blush_style = blush_style

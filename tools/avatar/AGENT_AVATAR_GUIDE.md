@@ -22,14 +22,14 @@ Environment path: `toolbox/octo_generator.py`
 - **Visual characteristics**: Body absolutely centered, stable center of gravity.
 ```bash
 # Command example:
-python3 toolbox/octo_generator.py --name "avatar/MyBase.png" --color 41 128 185 --headgear grad --eyewear monocle --item_r magnifier --gold
+python3 toolbox/octo_generator.py --name "avatar/MyBase.png" --color 41 128 185 --headgear grad --eyewear monocle --item_r magnifier
 ```
 
 **Step 2: Generate emoji pack (12 moods)**
 Iteratively call `--mood` parameter to generate 12 PNGs and store in dedicated directory. **Note: Accessory parameters should remain consistent with Base.**
 ```bash
 # Command example (using happy as example):
-python3 toolbox/octo_generator.py --name "avatar/emojis/happy.png" --color 41 128 185 --headgear grad --eyewear monocle --item_r magnifier --gold --mood happy
+python3 toolbox/octo_generator.py --name "avatar/emojis/happy.png" --color 41 128 185 --headgear grad --eyewear monocle --item_r magnifier --mood happy
 ```
 
 ### 3. Final showcase and explanation
@@ -51,7 +51,6 @@ After generation, **must send message to users showcasing results**, content sho
 | `--item_r` | String | Right hand item ID. Default `none`. | `magnifier` |
 | `--item_l` | String | Left hand item ID. Default `none`. | `letter` |
 | `--blush_style`| String | Blush geometric style. Default `oval`. | `hearts`, `lightning` |
-| `--gold` | Flag | **Toggle**. If included, render gold trim on top of head. | `--gold` |
 
 ---
 
