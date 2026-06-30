@@ -1,0 +1,15 @@
+# 🚀 OctoMatrix Docker Build Context Exclusion Policy
+# Exclude git, local environments, and agent home directories from the build context.
+
+.git
+.gitignore
+.venv
+agent_home
+docker-deploy/container_home
+
+# Temp and Cache files
+**/*.log
+**/*.tmp
+**/*.bak
+**/__pycache__
+**/.env*
