@@ -46,11 +46,31 @@ if [ "$(id -u)" = "0" ]; then
             AGENT_DIR=$(echo "$PURE_NAME" | awk '{print toupper(substr($0,1,1))tolower(substr($0,2))}')
         fi
 
-        # Iterate and recursively fix specific agent subdirectories if they exist
+        # Iterate and precisely fix specific agent subdirectories (avoid recursive pollution on toolbox, knowledge, avatar, skillbox, and logs)
         for NAME in "$AGENT_DIR" "$INSTANCE_NAME" "${APP_USER#agent_}"; do
-            if [ ! -z "$NAME" ] && [ -d "$SCRIPT_DIR/agent_home/$NAME" ]; then
-                echo "🔐 [Root] Fixing permissions for specific instance directory: agent_home/$NAME"
-                chown -R $APP_UID:$APP_GID "$SCRIPT_DIR/agent_home/$NAME" 2>/dev/null || true
+            TARGET_PATH="$SCRIPT_DIR/agent_home/$NAME"
+            if [ ! -z "$NAME" ] && [ -d "$TARGET_PATH" ]; then
+                echo "🔐 [Root] Precisely fixing permissions for instance directory: agent_home/$NAME"
+                # Only chown the agent home directory itself non-recursively
+                chown $APP_UID:$APP_GID "$TARGET_PATH" 2>/dev/null || true
+                
+                # Only recursively chown specific agent-writable subdirectories
+                for sub in "my_shared_space" "downloads_temp" "project"; do
+                    if [ -d "$TARGET_PATH/$sub" ]; then
+                        chown -R $APP_UID:$APP_GID "$TARGET_PATH/$sub" 2>/dev/null || true
+                    fi
+                done
+                
+                # Non-recursively chown octo_cyberbrain and its subdirectories itself
+                for sub in "octo_cyberbrain" "octo_cyberbrain/ghost" "octo_cyberbrain/shell"; do
+                    if [ -d "$TARGET_PATH/$sub" ]; then
+                        chown $APP_UID:$APP_GID "$TARGET_PATH/$sub" 2>/dev/null || true
+                    fi
+                done
+                
+                # Only chown active log and ghost files to allow Agent writes
+                [ -f "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" ] && chown $APP_UID:$APP_GID "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" 2>/dev/null || true
+                [ -f "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" ] && chown $APP_UID:$APP_GID "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" 2>/dev/null || true
             fi
         done
     fi
