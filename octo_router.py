@@ -357,8 +357,7 @@ class CommandHandler:
 1. 你僅能且必須使用原生的 `toolbox/octo_generator.py` 來進行生成。
 2. 絕對禁止使用任何其他腳本，絕對禁止撰寫新的 Python/Shell 腳本來產圖。
 3. 絕對禁止對 `octo_generator.py` 進行任何形式的複製 (Clone)、修改 (Modify) 或覆寫 (Overwrite)。
-4. 呼叫腳本時，請使用全新的一鍵生成命令（腳本會自動為你一次性產出 base.png 及所有 emojis，並自動打包 ZIP 代報上載 Router，不需使用 --name 或逐一生成）：
-   `python3 toolbox/octo_generator.py --color R G B --headgear 配件ID --eyewear 眼鏡ID --item_r 右手物ID --item_l 左手物ID --blush_style 腮紅ID --token {token}`
+4. 呼叫腳本時，請參照 `knowledge/AGENT_AVATAR_GUIDE.md` 中的指令範例來設定各項參數，並务必附上授權金鑰 `--token {token}`。
 
 [Step 3 - 結果回報]：
 生成完畢並自動打包上傳後，向用戶回報形象更新結果，並附上最新生成的心情貼圖展示。"""
@@ -368,7 +367,7 @@ class CommandHandler:
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '\x1b[201~'])
             time.sleep(0.5)
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'Enter'], check=False)
-            self.notifier.notify(msg.source, 'custom', {'content': f'🎨 已指派 <b>[{target_agent}]</b> 進行一鍵 Avatar 更新任務...'})
+            self.notifier.notify(msg.source, 'custom', {'content': f'🎨 已指派 <b>[{target_agent}]</b> 進行 Avatar 更新任務...'})
             return True
         elif is_cmd(cmd_content, '/inspect'):
             parts = content.split()

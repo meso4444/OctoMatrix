@@ -33,9 +33,7 @@ python3 toolbox/octo_generator.py --color 41 128 185 --headgear grad --eyewear m
 
 | 參數 | 類型 | 說明與預設值 | 範例 |
 | :--- | :--- | :--- | :--- |
-| `--name` | String | **必填**。產出圖檔的完整路徑與檔名。 | `avatar/base.png` |
 | `--color` | Int x3 | 本體顏色 (R G B)，預設 `150 150 150`。 | `41 128 185` |
-| `--mood` | String | 心情表情。預設 `base` (圓眼)。 | `smart`, `happy` |
 | `--headgear` | String | 頭部配件 ID。預設 `none`。 | `grad`, `crown` |
 | `--eyewear` | String | 眼部配件 ID。預設 `none`。 | `half_rim_glasses` |
 | `--item_r` | String | 右手持物 ID。預設 `none`。 | `magnifier` |
@@ -68,34 +66,5 @@ python3 toolbox/octo_generator.py --color 41 128 185 --headgear grad --eyewear m
 3. **強制腮紅 (Blush Mandatory)**：腮紅位置鎖定於眼睛中心點下方 6 像素處 (`ly+6`)。
 4. **畫布規格 (64x64 Canvas)**：維持 64 像素規格，為頂部與側邊資產保留 18 像素的「呼吸空間」。
 5. **眼部高光**：眼睛為半徑 2 像素圓形，高光點鎖定於 `(ex-1, ey-1)`。
-
-
-## 🔒 五、 絕對鎖定、安全防護與備份機制 (Absolute Lock & History Backup)
-
-為了防止 Agent 被越權篡改形象或被注入惡意產圖代碼，系統實施了絕對的安全鎖定機制：
-
-### 1. 檔案系統權限鎖定 (Filesystem Lockdown)
-- `setup_agent_env.py` 在初始化環境時，會強制將 Agent 目錄下的 `avatar/` 及 `avatar/emojis/` 設定為 `755` 權限。
-- 這意味著除了高權限的系統管理者（如宿主）及 Router 外，Agent 本身及其所屬的 CLI 進程對此目錄**僅有唯讀 (Read-Only) 權限**，無法直接透過程式碼或 Shell 指令寫入或覆蓋檔案。
-
-### 2. 安全授權與 Token 校驗 (--token)
-- 在執行 `/avatar_renew` 指令更新形象時，Router 會動態生成一組具有 5 分鐘有效期的 UUID Token，並作為安全 Prompt 的 `--token` 參數注入給 Agent。
-- Agent 在生成新頭像時，**必須**將此 Token 傳遞給 `octo_generator.py`（即 `python3 toolbox/octo_generator.py --token <YourToken> ...`）。
-- `octo_generator.py` 會自動將新圖片打包為 ZIP 位元組流，發送給 Router API。Router 驗證 Token 成功後，會**立即銷毀該 Token**，並代為解壓寫入 `avatar/` 目錄。
-- **冷啟動豁免 (Cold Bootstrap)**：若 `avatar/base.png` 檔案不存在（即首次生成頭像時），系統允許直接寫入本地目錄，不強制要求 Token 校驗。
-
-### 3. 五代歷史備份與還原 (History Backup & Restore)
-- **自動備份**：當 Router 執行代寫更新前，會自動將現有的頭像（排除舊有 `history_*.zip` 檔案）封裝為 `history_YYYYMMDD_HHMMSS.zip` 儲存在 `avatar/` 下，並限制保留最新的 5 代。
-- **列出歷史備份**：用戶可在聊天中發送以下指令查看可用的歷史備份：
-  ```
-  /avatar_renew list
-  ```
-- **一鍵還原**：發送以下指令，由 Router 直接還原至指定歷史版本（此操作無需 Agent 介入，不需 Token）：
-  ```
-  /avatar_renew restore <編號或檔名>
-  # 範例：
-  /avatar_renew restore 1
-  /avatar_renew restore history_20260630_174700.zip
-  ```
 
 
