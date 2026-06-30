@@ -14,22 +14,12 @@ Agents should design based on personal preferences without constraints. Suggeste
 - **Function and interests (Items)**: Choose 1-2 items reflecting your function or personal interests.
 - **Soul characteristics (Blush)**: Choose a blush style matching your temperament. **(Blush is a mandatory soul component)**
 
-### 2. Technical execution phase
-Environment path: `toolbox/octo_generator.py`
-
-**Step 1: Generate base character (Base)**
-- Default `--mood` is `base` (standard round eyes).
-- **Visual characteristics**: Body absolutely centered, stable center of gravity.
+**One-Click Generate Base Image and Emoji Pack**
+- No need to manually specify `--name` or call `--mood` iteratively.
+- Directly run the one-click command, and the script will automatically generate `base.png` and all 12 fixed emoji PNGs in memory, bundle them into a ZIP, and send it to the Router API for overwrite update.
 ```bash
-# Command example:
-python3 toolbox/octo_generator.py --name "avatar/MyBase.png" --color 41 128 185 --headgear grad --eyewear monocle --item_r magnifier
-```
-
-**Step 2: Generate emoji pack (12 moods)**
-Iteratively call `--mood` parameter to generate 12 PNGs and store in dedicated directory. **Note: Accessory parameters should remain consistent with Base.**
-```bash
-# Command example (using happy as example):
-python3 toolbox/octo_generator.py --name "avatar/emojis/happy.png" --color 41 128 185 --headgear grad --eyewear monocle --item_r magnifier --mood happy
+# One-click generation command example:
+python3 toolbox/octo_generator.py --color 41 128 185 --headgear grad --eyewear monocle --item_r magnifier --blush_style oval --token <YourToken>
 ```
 
 ### 3. Final showcase and explanation

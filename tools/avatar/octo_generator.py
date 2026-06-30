@@ -22,16 +22,15 @@ import zipfile
 import requests
 from PIL import Image, ImageDraw
 
-def get_agent_name_and_home(filename):
-    abs_path = os.path.abspath(filename)
-    parts = abs_path.split(os.sep)
-    for i in range(len(parts) - 1, -1, -1):
-        if parts[i] == 'avatar':
-            if i > 0:
-                agent_name = parts[i - 1]
-                agent_home = os.sep.join(parts[:i])
-                return agent_name, agent_home
-    return os.path.basename(os.getcwd()), os.getcwd()
+def get_agent_info_cwd():
+    cwd = os.path.abspath(os.getcwd())
+    parts = cwd.split(os.sep)
+    for i in range(len(parts)):
+        if parts[i] == 'agent_home' and i < len(parts) - 1:
+            agent_name = parts[i + 1]
+            agent_home = os.sep.join(parts[:i + 2])
+            return agent_name, agent_home
+    return os.path.basename(cwd), cwd
 
 def get_router_port(agent_home):
     project_root = os.path.dirname(os.path.dirname(agent_home))
@@ -44,10 +43,10 @@ def get_router_port(agent_home):
             pass
     return 12210
 
-def generate_octopus_final(filename, body_rgb=(150, 150, 150), 
-                            mood="base", eyewear="none",
-                            headgear="none", item_r="none", item_l="none", 
-                            blush_style="oval", has_gold=False, size=64, scale=8, token=""):
+def generate_octopus_image(body_rgb=(150, 150, 150), 
+                           mood="base", eyewear="none",
+                           headgear="none", item_r="none", item_l="none", 
+                           blush_style="oval", has_gold=False, size=64, scale=8):
     img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
     px = img.load(); draw = ImageDraw.Draw(img)
     B = (44, 44, 44, 255); GOLD = (255, 215, 0, 255); W = (255, 255, 255, 255)
@@ -56,15 +55,13 @@ def generate_octopus_final(filename, body_rgb=(150, 150, 150),
     GREEN = (46, 204, 113, 255); BROWN = (121, 85, 72, 255); PURPLE = (155, 89, 182, 255)
     SILVER = (189, 195, 199, 255); TAN = (210, 180, 140, 255); ORANGE = (255, 127, 80, 255)
 
-    # Body Centered at (32, 32), logic
+    # Body Centered at (32, 32)
     body_color = (*body_rgb, 255)
     for y in range(size):
         for x in range(size):
             dist_sq = (x - 32)**2 + (y - 32)**2
             if dist_sq < 14**2:
                 px[x, y] = body_color
-                # Note: Gold border feature is disabled to keep avatars clean, but argument is kept in parser for compatibility.
-                # if has_gold and y < 26 and dist_sq > 12**2: px[x, y] = GOLD
 
     lx, ly = 24, 30; rx, ry = 40, 30
     blush_y = ly + 6; cur_blush_color = (255, 100, 150, 220); cur_blush_style = blush_style
@@ -91,10 +88,7 @@ def generate_octopus_final(filename, body_rgb=(150, 150, 150),
     elif mood == "sleepy": draw.line([lx-2, ly, lx+2, ly], fill=E); draw.line([rx-2, ry, rx+2, ry], fill=E); px[48,12]=BLUE; px[50,10]=BLUE; px[52,8]=BLUE
     elif mood == "smart": draw_eye(lx, ly, "smart"); draw_eye(rx, ry, "smart"); draw.line([50, 10, 50, 14], fill=YELLOW); px[50, 16]=YELLOW; px[20, 21]=GOLD
     elif mood == "shy":
-        # ABSOLUTELY SYMMETRIC > < (Height 7, Width 4)
-        # Left Eye (>)
         draw.line([(22, 27), (26, 30), (22, 33)], fill=E, width=2)
-        # Right Eye (<)
         draw.line([(42, 27), (38, 30), (42, 33)], fill=E, width=2)
         cur_blush_color=(255, 100, 150, 255); px[20, 24]=SKY
 
@@ -221,70 +215,86 @@ def generate_octopus_final(filename, body_rgb=(150, 150, 150),
 
     draw_handheld(item_r, 'r'); draw_handheld(item_l, 'l')
 
-    # 判斷是否為已有頭像狀態
-    agent_name, agent_home = get_agent_name_and_home(filename)
+    return img.resize((size * scale, size * scale), Image.NEAREST)
+
+def generate_all_avatars(body_rgb=(150, 150, 150),
+                         eyewear="none", headgear="none",
+                         item_r="none", item_l="none",
+                         blush_style="oval", has_gold=False, token=""):
+    agent_name, agent_home = get_agent_info_cwd()
     avatar_dir = os.path.join(agent_home, "avatar")
     base_png_file = os.path.join(avatar_dir, "base.png")
-    
     is_first_blood = not os.path.exists(base_png_file)
     
+    # 1. 一次性生成所有固定的頭像與 Emoji (13 款)
+    archive_files = {}
+    
+    # base
+    base_img = generate_octopus_image(body_rgb, "base", eyewear, headgear, item_r, item_l, blush_style, has_gold)
+    base_io = io.BytesIO()
+    base_img.save(base_io, format="PNG")
+    archive_files["base.png"] = base_io.getvalue()
+    
+    # emojis
+    ALL_MOODS = ['happy', 'love', 'wink', 'surprised', 'thinking', 'angry', 'sad', 'excited', 'cool', 'sleepy', 'smart', 'shy']
+    for mood in ALL_MOODS:
+        img = generate_octopus_image(body_rgb, mood, eyewear, headgear, item_r, item_l, blush_style, has_gold)
+        img_io = io.BytesIO()
+        img.save(img_io, format="PNG")
+        archive_files[f"emojis/{mood}.png"] = img_io.getvalue()
+        
+    # 2. 在記憶體中打包成 ZIP
+    zip_io = io.BytesIO()
+    with zipfile.ZipFile(zip_io, 'w', zipfile.ZIP_DEFLATED) as z:
+        for arcname, data in archive_files.items():
+            z.writestr(arcname, data)
+            
+    zip_bytes = zip_io.getvalue()
+    
     if is_first_blood:
-        # 首刷無頭像，直接寫入本地
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
-        final_img = img.resize((size * scale, size * scale), Image.NEAREST)
-        final_img.save(filename)
-        print("✨ [Generator] First-blood state (no base avatar), directly writing locally.")
-        return filename
+        # 首刷無頭像，直接解壓縮到本地 avatar 目錄
+        os.makedirs(avatar_dir, exist_ok=True)
+        with zipfile.ZipFile(io.BytesIO(zip_bytes)) as z:
+            z.extractall(avatar_dir)
+        print("✨ [Generator] 首刷無頭像狀態，已直接生成並解壓 ZIP 到本地。")
     else:
         # 已有頭像，走 Token 物理上傳機制
-        abs_filename = os.path.abspath(filename)
-        with tempfile.TemporaryDirectory() as temp_dir:
-            temp_avatar_dir = os.path.join(temp_dir, "avatar")
-            if os.path.exists(avatar_dir):
-                shutil.copytree(avatar_dir, temp_avatar_dir, symlinks=True)
+        router_port = get_router_port(agent_home)
+        url = f"http://127.0.0.1:{router_port}/api/internal/avatar/update"
+        
+        files = {'archive': ('avatar.zip', zip_bytes, 'application/zip')}
+        data = {'agent_name': agent_name, 'token': token}
+        
+        try:
+            response = requests.post(url, files=files, data=data, timeout=10)
+            if response.status_code == 200:
+                print("✅ [Generator] Avatar 更新成功並已同步。")
             else:
-                os.makedirs(temp_avatar_dir, exist_ok=True)
-                
-            rel_path = os.path.relpath(abs_filename, avatar_dir)
-            target_temp_file = os.path.join(temp_avatar_dir, rel_path)
-            os.makedirs(os.path.dirname(target_temp_file), exist_ok=True)
-            
-            final_img = img.resize((size * scale, size * scale), Image.NEAREST)
-            final_img.save(target_temp_file)
-            
-            zip_io = io.BytesIO()
-            with zipfile.ZipFile(zip_io, 'w', zipfile.ZIP_DEFLATED) as z:
-                for root, dirs, files in os.walk(temp_avatar_dir):
-                    for file in files:
-                        file_path = os.path.join(root, file)
-                        arcname = os.path.relpath(file_path, temp_avatar_dir)
-                        z.write(file_path, arcname)
-            
-            zip_io.seek(0)
-            
-            router_port = get_router_port(agent_home)
-            url = f"http://127.0.0.1:{router_port}/api/internal/avatar/update"
-            
-            files = {'archive': ('avatar.zip', zip_io.getvalue(), 'application/zip')}
-            data = {'agent_name': agent_name, 'token': token}
-            
-            try:
-                response = requests.post(url, files=files, data=data, timeout=10)
-                if response.status_code == 200:
-                    print("✅ [Generator] Avatar updated and synced successfully.")
-                else:
-                    print(f"❌ [Generator] Router rejected update: {response.status_code} - {response.text}")
-                    sys.exit(1)
-            except Exception as e:
-                print(f"❌ [Generator] Failed to connect to Router: {e}")
+                print(f"❌ [Generator] Router 拒絕更新：{response.status_code} - {response.text}")
                 sys.exit(1)
-                
-        return filename
+        except Exception as e:
+            print(f"❌ [Generator] 連線至 Router 失敗: {e}")
+            sys.exit(1)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(); parser.add_argument("--name", required=True); parser.add_argument("--color", nargs=3, type=int, default=[150, 150, 150])
-    parser.add_argument("--mood", default="base"); parser.add_argument("--eyewear", default="none"); parser.add_argument("--headgear", default="none")
-    parser.add_argument("--item_r", default="none"); parser.add_argument("--item_l", default="none"); parser.add_argument("--gold", action="store_true")
-    parser.add_argument("--blush_style", default="oval"); parser.add_argument("--token", default="")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--color", nargs=3, type=int, default=[150, 150, 150])
+    parser.add_argument("--eyewear", default="none")
+    parser.add_argument("--headgear", default="none")
+    parser.add_argument("--item_r", default="none")
+    parser.add_argument("--item_l", default="none")
+    parser.add_argument("--gold", action="store_true")
+    parser.add_argument("--blush_style", default="oval")
+    parser.add_argument("--token", default="")
     args = parser.parse_args()
-    generate_octopus_final(args.name, tuple(args.color), args.mood, args.eyewear, args.headgear, args.item_r, args.item_l, args.blush_style, args.gold, token=args.token)
+    
+    generate_all_avatars(
+        body_rgb=tuple(args.color),
+        eyewear=args.eyewear,
+        headgear=args.headgear,
+        item_r=args.item_r,
+        item_l=args.item_l,
+        blush_style=args.blush_style,
+        has_gold=args.gold,
+        token=args.token
+    )
