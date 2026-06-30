@@ -33,9 +33,26 @@ export APP_GID=$(id -g $APP_USER 2>/dev/null || echo 1000)
 if [ "$(id -u)" = "0" ]; then
     echo "🔐 [Root] Fixing ownership and permissions for mounted volumes..."
 
-    # Fix agent_home directory
+    # Fix directory permissions scoped to specific instance subdirectory to avoid interference
     if [ -d "$SCRIPT_DIR/agent_home" ]; then
         chown $APP_UID:$APP_GID "$SCRIPT_DIR/agent_home" 2>/dev/null || true
+
+        # Smartly identify the current Agent directory name (capitalized first letter)
+        AGENT_DIR=""
+        if [ ! -z "$INSTANCE_NAME" ]; then
+            AGENT_DIR=$(echo "$INSTANCE_NAME" | awk '{print toupper(substr($0,1,1))tolower(substr($0,2))}')
+        elif [ ! -z "$APP_USER" ]; then
+            PURE_NAME=${APP_USER#agent_}
+            AGENT_DIR=$(echo "$PURE_NAME" | awk '{print toupper(substr($0,1,1))tolower(substr($0,2))}')
+        fi
+
+        # Iterate and recursively fix specific agent subdirectories if they exist
+        for NAME in "$AGENT_DIR" "$INSTANCE_NAME" "${APP_USER#agent_}"; do
+            if [ ! -z "$NAME" ] && [ -d "$SCRIPT_DIR/agent_home/$NAME" ]; then
+                echo "🔐 [Root] Fixing permissions for specific instance directory: agent_home/$NAME"
+                chown -R $APP_UID:$APP_GID "$SCRIPT_DIR/agent_home/$NAME" 2>/dev/null || true
+            fi
+        done
     fi
 
     # Ensure dynamic user home and tmux directory exist and are writable
