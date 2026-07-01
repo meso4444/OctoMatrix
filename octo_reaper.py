@@ -105,7 +105,7 @@ def trigger_inactivity_greeting(agent_name):
     payload = {
         "source": "awake",
         "user_id": "system",
-        "content": f"(系統提示) 您已超過 {inactivity_hours} 小時未與真實用戶進行互動。請主動發送一條完全符合您個人性格特質與說話風格的溫和問候給用戶，詢問其近況或提供協助。",
+        "content": f"{SYS_PREFIX} 看看幾點了, 執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖，接著執行 python3 toolbox/matrix_notifier.py '{{向 {config.MATRIX_USERNAME} 問候近況}}'",
         "metadata": {
             "target_agent": agent_name
         }
