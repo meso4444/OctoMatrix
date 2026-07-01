@@ -53,6 +53,24 @@ def get_source_agent() -> str:
         curr = os.path.dirname(curr)
     return "UnknownAgent"
 
+def get_sys_prefix(default_prefix: str) -> str:
+    # 嘗試從環境變數或專案狀態中取得
+    sys_prefix = os.getenv("SYS_PREFIX")
+    if sys_prefix: return sys_prefix
+    
+    curr = os.path.dirname(os.path.abspath(__file__))
+    for _ in range(4):
+        env_file = os.path.join(curr, 'octo_cyberbrain', '.cyberbrain_env')
+        if os.path.exists(env_file):
+            try:
+                with open(env_file, 'r') as f:
+                    for line in f:
+                        if line.startswith("SYS_PREFIX="):
+                            return line.strip().split('=', 1)[1]
+            except: pass
+        curr = os.path.dirname(curr)
+    return default_prefix
+
 def main():
     parser = argparse.ArgumentParser(description="Agent-to-Agent 通訊發送器")
     parser.add_argument("--target", required=True, help="目標 Agent 的名字")
@@ -62,7 +80,7 @@ def main():
     router_url = f"{get_router_url()}/inter-agent/message"
     source_agent = get_source_agent()
 
-    SYS_PREFIX = "【系統提示】"
+    SYS_PREFIX = get_sys_prefix("【系統提示】")
     sop_template = f"""{SYS_PREFIX}
 執行以下 [SOP]:
 [Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖。
