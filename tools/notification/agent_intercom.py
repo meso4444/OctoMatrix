@@ -22,6 +22,21 @@ import sys
 import argparse
 import requests
 
+# Dynamically load project root directory into sys.path
+_current_dir = os.path.dirname(os.path.abspath(__file__))
+_root_dir = _current_dir
+for _ in range(5):
+    if os.path.exists(os.path.join(_root_dir, 'config.py')):
+        if _root_dir not in sys.path:
+            sys.path.insert(0, _root_dir)
+        break
+    _root_dir = os.path.dirname(_root_dir)
+
+try:
+    from config import SYS_PREFIX
+except ImportError:
+    SYS_PREFIX = "[System Prompt]"
+
 def get_router_url() -> str:
     curr = os.path.dirname(os.path.abspath(__file__))
     for _ in range(4):
@@ -53,24 +68,6 @@ def get_source_agent() -> str:
         curr = os.path.dirname(curr)
     return "UnknownAgent"
 
-def get_sys_prefix(default_prefix: str) -> str:
-    # Attempt to retrieve from environment variable or project status
-    sys_prefix = os.getenv("SYS_PREFIX")
-    if sys_prefix: return sys_prefix
-    
-    curr = os.path.dirname(os.path.abspath(__file__))
-    for _ in range(4):
-        env_file = os.path.join(curr, 'octo_cyberbrain', '.cyberbrain_env')
-        if os.path.exists(env_file):
-            try:
-                with open(env_file, 'r') as f:
-                    for line in f:
-                        if line.startswith("SYS_PREFIX="):
-                            return line.strip().split('=', 1)[1]
-            except: pass
-        curr = os.path.dirname(curr)
-    return default_prefix
-
 def main():
     parser = argparse.ArgumentParser(description="Agent-to-Agent communication sender")
     parser.add_argument("--target", required=True, help="Target Agent name")
@@ -80,7 +77,6 @@ def main():
     router_url = f"{get_router_url()}/inter-agent/message"
     source_agent = get_source_agent()
 
-    SYS_PREFIX = get_sys_prefix("[System Prompt]")
     sop_template = f"""{SYS_PREFIX}
 Execute the following [SOP]:
 [Step 0 - Empathize]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching the current mood.
