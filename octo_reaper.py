@@ -105,7 +105,7 @@ def trigger_inactivity_greeting(agent_name):
     payload = {
         "source": "awake",
         "user_id": "system",
-        "content": f"(System Prompt) You have not interacted with a real user for more than {inactivity_hours} hours. Please proactively send a warm greeting to the user that perfectly matches your personal personality traits and speaking style, asking about their recent situation or offering assistance.",
+        "content": f"{SYS_PREFIX} Look what time it is, execute python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png to send a sticker matching your current mood, and then execute python3 toolbox/matrix_notifier.py '{{ask {config.MATRIX_USERNAME} about their recent status}}'",
         "metadata": {
             "target_agent": agent_name
         }
