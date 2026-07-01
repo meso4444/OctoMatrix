@@ -174,14 +174,14 @@ for TARGET_PATH in "$AGENT_HOME_DIR"/*; do
                 done
             fi
 
-            # - Active shell log: owned by Agent, only Owner can write (644)
+            # - Active shell log: owned by System Manager, only Owner can write (644)
             if [ -f "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" ]; then
-                chown "$USER_NAME:$USER_NAME" "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" 2>/dev/null || true
+                chown "$MANAGER_USER:$MANAGER_GROUP" "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" 2>/dev/null || true
                 chmod 644 "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" 2>/dev/null || true
             fi
-            # - Active Ghost JSON: owned by Agent, Others can write (646) for updater calls
+            # - Active Ghost JSON: owned by System Manager, Others can write (646) for updater calls
             if [ -f "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" ]; then
-                chown "$USER_NAME:$USER_NAME" "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" 2>/dev/null || true
+                chown "$MANAGER_USER:$MANAGER_GROUP" "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" 2>/dev/null || true
                 chmod 646 "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" 2>/dev/null || true
             fi
 
