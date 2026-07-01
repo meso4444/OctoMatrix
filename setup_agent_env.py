@@ -357,8 +357,7 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
 
     env_file = os.path.join(cyber_path, '.cyberbrain_env')
     with open(env_file, 'w') as ef:
-        sys_prefix = getattr(config, 'SYS_PREFIX', '【系統提示】')
-        ef.write(f"AGENT_NAME={name}\nTMUX_SESSION_NAME={session_name}\nROUTER_PORT={os.environ.get('ROUTER_PORT', '12210')}\nSYS_PREFIX={sys_prefix}\n")
+        ef.write(f"AGENT_NAME={name}\nTMUX_SESSION_NAME={session_name}\nROUTER_PORT={os.environ.get('ROUTER_PORT', '12210')}\n")
     subprocess.run(['chmod', '644', env_file], check=False)
 
 
