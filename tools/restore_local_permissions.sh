@@ -174,9 +174,16 @@ for TARGET_PATH in "$AGENT_HOME_DIR"/*; do
                 done
             fi
 
-            # - Active logs and ghost status (owned by Agent for appending writes)
-            [ -f "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" ] && chown "$USER_NAME:$USER_NAME" "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" 2>/dev/null || true
-            [ -f "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" ] && chown "$USER_NAME:$USER_NAME" "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" 2>/dev/null || true
+            # - Active shell log: owned by Agent, only Owner can write (644)
+            if [ -f "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" ]; then
+                chown "$USER_NAME:$USER_NAME" "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" 2>/dev/null || true
+                chmod 644 "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" 2>/dev/null || true
+            fi
+            # - Active Ghost JSON: owned by Agent, Others can write (646) for updater calls
+            if [ -f "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" ]; then
+                chown "$USER_NAME:$USER_NAME" "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" 2>/dev/null || true
+                chmod 646 "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" 2>/dev/null || true
+            fi
 
             # E. Lock .system_distributed_files.txt manifest if it exists (644)
             DIST_LIST="$TARGET_PATH/.system_distributed_files.txt"
