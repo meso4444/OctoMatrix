@@ -174,14 +174,14 @@ for TARGET_PATH in "$AGENT_HOME_DIR"/*; do
                 done
             fi
 
-            # - 活動日誌：擁有者為 Agent 帳戶，只有 Owner 可寫 (644)
+            # - 活動日誌：擁有者為系統管理員，只有 Owner 可寫 (644)
             if [ -f "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" ]; then
-                chown "$USER_NAME:$USER_NAME" "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" 2>/dev/null || true
+                chown "$MANAGER_USER:$MANAGER_GROUP" "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" 2>/dev/null || true
                 chmod 644 "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" 2>/dev/null || true
             fi
-            # - 活動 Ghost JSON：擁有者為 Agent 帳戶，Others 可寫 (646) 供 updater 調用寫入
+            # - 活動 Ghost JSON：擁有者為系統管理員，Others 可寫 (646) 供 updater 調用寫入
             if [ -f "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" ]; then
-                chown "$USER_NAME:$USER_NAME" "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" 2>/dev/null || true
+                chown "$MANAGER_USER:$MANAGER_GROUP" "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" 2>/dev/null || true
                 chmod 646 "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" 2>/dev/null || true
             fi
 
