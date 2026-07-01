@@ -174,9 +174,16 @@ for TARGET_PATH in "$AGENT_HOME_DIR"/*; do
                 done
             fi
 
-            # - 僅對活動日誌與活動狀態檔案變更擁有者，以利 Agent 追加寫入
-            [ -f "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" ] && chown "$USER_NAME:$USER_NAME" "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" 2>/dev/null || true
-            [ -f "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" ] && chown "$USER_NAME:$USER_NAME" "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" 2>/dev/null || true
+            # - 活動日誌：擁有者為 Agent 帳戶，只有 Owner 可寫 (644)
+            if [ -f "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" ]; then
+                chown "$USER_NAME:$USER_NAME" "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" 2>/dev/null || true
+                chmod 644 "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" 2>/dev/null || true
+            fi
+            # - 活動 Ghost JSON：擁有者為 Agent 帳戶，Others 可寫 (646) 供 updater 調用寫入
+            if [ -f "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" ]; then
+                chown "$USER_NAME:$USER_NAME" "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" 2>/dev/null || true
+                chmod 646 "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" 2>/dev/null || true
+            fi
 
             # E. 額外修復並鎖定 .system_distributed_files.txt 清單檔 (如果存在)
             DIST_LIST="$TARGET_PATH/.system_distributed_files.txt"

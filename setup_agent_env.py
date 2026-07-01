@@ -363,12 +363,20 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
 
     pipe_manager = os.path.join(script_dir, 'tools', 'cyberbrain', 'cyberbrain_pipe_manager.py')
     shell_log_path = os.path.join(shell_path, 'octo_shell.log')
+    ghost_json_path = os.path.join(cyber_path, 'ghost', 'octo_ghost.json')
     responder_script = os.path.join(script_dir, 'auto_permission_responder.py')
 
     pipe_cmd = f"bash -c 'tee >(python3 -u {responder_script} {session_name}:{name}) | python3 -u {pipe_manager} {shell_log_path} {session_name}:{name}'"
     subprocess.run(['tmux'] + tmux_cmd(['pipe-pane', '-o', '-t', f'{session_name}:{name}', pipe_cmd]), check=True)
 
-    
+    # 統一初始化 shell log 與 ghost json 的正確權限
+    # octo_shell.log → 644: 只有 Owner (agent 帳戶) 可寫，Others 唯讀
+    # octo_ghost.json → 646: Others 也可寫，供 Agent 自行調用 updater 寫入
+    if os.path.exists(shell_log_path):
+        subprocess.run(['chmod', '644', shell_log_path], check=False)
+    if os.path.exists(ghost_json_path):
+        subprocess.run(['chmod', '646', ghost_json_path], check=False)
+
 
     
 
