@@ -103,7 +103,7 @@ def trigger_inactivity_greeting(agent_name):
     
     inject_url = f"http://{router_host}:{router_port}/inject"
     payload = {
-        "source": "awake",
+        "source": "reaper",
         "user_id": "system",
         "content": f"{SYS_PREFIX} Look what time it is, execute python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png to send a sticker matching your current mood, and then execute python3 toolbox/matrix_notifier.py '{{ask {config.MATRIX_USERNAME} about their recent status}}'",
         "metadata": {
