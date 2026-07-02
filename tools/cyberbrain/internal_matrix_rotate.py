@@ -227,6 +227,9 @@ def main():
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", "/clear"])
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"]) 
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+        
+        time.sleep(1.0) # Buffer 1 second to prevent subsequent BSpace from consuming characters of /clear
         
         cleared = False
         for i in range(100):
