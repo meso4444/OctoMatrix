@@ -223,22 +223,23 @@ def main():
         
         time.sleep(1.0)
         
-        # 🚀 強化手段 2: 注入 /clear 指令 (僅一次)
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", "/clear"])
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"]) 
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-        
-        time.sleep(1.0) # 緩衝 1 秒，避免後續的 BSpace 吃掉 /clear 的字元
-
-        
         cleared = False
         for i in range(100):
-            # 🚀 強化手段 3: 持續擊發 Enter + BSpace 試圖觸發執行
+            # 🚀 強化手段 2 & 3 整併: 在每一次輪詢都重新清理並注入 /clear 指令
+            # 1. 發送 6 次 BSpace 消除上一輪可能未能送出而殘留的 `/clear` 字元
+            for _ in range(6):
+                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "BSpace"])
+            
+            # 2. 重新注入 /clear
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", "/clear"])
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"]) 
+            
+            # 3. 發送 Enter
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "BSpace"])
-
-            time.sleep(3.0) # 等待 3 秒觀察結果
+            
+            # 4. 緩衝 1 秒給予 CLI 執行時間，避免被下一輪退格吃掉，並再等 2 秒觀察結果 (共 3 秒)
+            time.sleep(3.0) 
 
             # 檢測是否重置成功
             res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
@@ -247,7 +248,7 @@ def main():
                 cleared = True
                 print(f"✅ 第 {i+1} 次嘗試成功！偵測到 {ENGINE} 啟動關鍵字。")
                 break
-            print(f"⚠️ 第 {i+1} 次嘗試失敗 (CLI 忙碌中)，3 秒後續發 Enter...")
+            print(f"⚠️ 第 {i+1} 次嘗試失敗 (CLI 忙碌中)，3 秒後重新注入...")
         
         if not cleared:
             print("⚠️ 逾時 100 次嘗試仍未偵測到重置關鍵字，嘗試終極保險 [Ctrl+C] -> 6s -> [Ctrl+C]...")
