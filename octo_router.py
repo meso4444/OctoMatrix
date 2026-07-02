@@ -475,8 +475,10 @@ class CommandHandler:
                         f.write("\n\n")
                     f.write(content) # 只存純淨的用戶訊息
                 if msg.source != 'awake':
-                    status_text = '重整思緒中' if os.path.exists(flag_file) else '修復重啟中'
-                    self.notifier.notify(msg.source, 'custom', {'content': f'👻 <b>[{target_agent}]</b> 正在{status_text}，請稍候...'})
+                    self.notifier.notify(msg.source, 'custom', {'content': f'🐚 <b>{target_agent}</b> 正在喚醒深海回音，靜靜聆聽……'})
+                    sleepy_path = os.path.join(agent_dir, 'avatar/emojis/sleepy.png')
+                    if os.path.exists(sleepy_path):
+                        self.notifier.notify_file(msg.source, sleepy_path, file_type='sticker')
                 return True
             except Exception as e:
                 logger.error(f"❌ [Router] 寫入暫存檔失敗: {e}")
