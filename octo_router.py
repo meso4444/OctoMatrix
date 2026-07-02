@@ -475,8 +475,10 @@ Message from {MATRIX_USERNAME}:
                         f.write("\n\n")
                     f.write(content) # Only store pure user messages
                 if msg.source != 'awake':
-                    status_text = 'reorganizing thoughts' if os.path.exists(flag_file) else 'rebooting and restoring'
-                    self.notifier.notify(msg.source, 'custom', {'content': f'👻 <b>[{target_agent}]</b> is {status_text}, please wait...'})
+                    self.notifier.notify(msg.source, 'custom', {'content': f'🐚 <b>{target_agent}</b> 正在喚醒深海回音，靜靜聆聽……'})
+                    sleepy_path = os.path.join(agent_dir, 'avatar/emojis/sleepy.png')
+                    if os.path.exists(sleepy_path):
+                        self.notifier.notify_file(msg.source, sleepy_path, file_type='sticker')
                 return True
             except Exception as e:
                 logger.error(f"❌ [Router] Failed to write temporary file: {e}")
