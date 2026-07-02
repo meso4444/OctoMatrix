@@ -223,21 +223,23 @@ def main():
         
         time.sleep(1.0)
         
-        # 🚀 Hardening Means 2: Inject /clear command (only once)
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", "/clear"])
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"]) 
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-        
-        time.sleep(1.0) # Buffer 1 second to prevent subsequent BSpace from consuming characters of /clear
-        
         cleared = False
         for i in range(100):
-            # 🚀 Hardening Means 3: Continuously trigger Enter + BSpace to trigger execution
+            # 🚀 Reinforcement 2 & 3 Merged: Clear and re-inject /clear command in each polling cycle
+            # 1. Send 6 BSpaces to clear potentially left-over `/clear` characters from the previous cycle
+            for _ in range(6):
+                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "BSpace"])
+            
+            # 2. Re-inject /clear
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", "/clear"])
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"]) 
+            
+            # 3. Send Enter
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "BSpace"])
-
-            time.sleep(3.0) # Wait 3 seconds to observe the result
+            
+            # 4. Buffer 1 second to allow CLI to execute, and wait another 2 seconds to observe (total 3s)
+            time.sleep(3.0) 
 
             # Detect if reset was successful
             res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
@@ -246,7 +248,7 @@ def main():
                 cleared = True
                 print(f"✅ Attempt {i+1} successful! Detected {ENGINE} startup keyword.")
                 break
-            print(f"⚠️ Attempt {i+1} failed (CLI is busy), sending Enter again in 3 seconds...")
+            print(f"⚠️ Attempt {i+1} failed (CLI is busy), re-injecting in 3 seconds...")
         
         if not cleared:
             print("⚠️ Timeout after 100 attempts, reset keyword not detected. Attempting ultimate fallback...")
