@@ -179,10 +179,15 @@ for TARGET_PATH in "$AGENT_HOME_DIR"/*; do
                 chown "$MANAGER_USER:$MANAGER_GROUP" "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" 2>/dev/null || true
                 chmod 644 "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" 2>/dev/null || true
             fi
-            # - 活動 Ghost JSON：擁有者為系統管理員，Others 可寫 (646) 供 updater 調用寫入
+            # - 活動 Ghost JSON：擁有者為系統管理員，全域可讀寫 (666) 供 updater 調用寫入
             if [ -f "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" ]; then
                 chown "$MANAGER_USER:$MANAGER_GROUP" "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" 2>/dev/null || true
-                chmod 646 "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" 2>/dev/null || true
+                chmod 666 "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" 2>/dev/null || true
+            fi
+            # - 任務接續檔 task_memo.txt：擁有者為系統管理員，全域可讀寫 (666)
+            if [ -f "$TARGET_PATH/octo_cyberbrain/task_memo.txt" ]; then
+                chown "$MANAGER_USER:$MANAGER_GROUP" "$TARGET_PATH/octo_cyberbrain/task_memo.txt" 2>/dev/null || true
+                chmod 666 "$TARGET_PATH/octo_cyberbrain/task_memo.txt" 2>/dev/null || true
             fi
 
             # E. 額外修復並鎖定 .system_distributed_files.txt 清單檔 (如果存在)

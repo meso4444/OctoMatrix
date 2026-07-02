@@ -20,6 +20,7 @@ import glob
 import shutil
 import subprocess
 import time
+import requests
 from datetime import datetime
 
 # ==========================================
@@ -195,27 +196,42 @@ def main():
             open(TEMP_LOG, 'w').close()
             
         print(f"⏳ 注入 /clear 並開始週期性嘗試 Enter (每 3 秒一次，共 100 次)...")
-        # 🚀 強化手段 1: 前置喚醒 (暴力淨空)。[Ctrl+C] + [Enter] -> 等待 6 秒 -> [Ctrl+C] + [Enter]
+        # 🚀 強化手段 1: 前置喚醒 (暴力淨空)
         if ENGINE == 'codex':
             res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
             lines = [line for line in res.stdout.split('\n') if line.strip()]
             if 'Working (' in '\n'.join(lines[-20:]):
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+        elif ENGINE == 'claude':
+            # Claude 支援多行編輯，在空閒時敲 Enter 會產生空行，因此只發送 C-c Escape 來中斷
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
         else:
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+            
         time.sleep(6.0)
+        
         if ENGINE == 'codex':
             res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
             lines = [line for line in res.stdout.split('\n') if line.strip()]
             if 'Working (' in '\n'.join(lines[-20:]):
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+        elif ENGINE == 'claude':
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
         else:
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+            
         time.sleep(1.0)
         
         # 🚀 強化手段 2: 注入 /clear 指令 (僅一次)
+        if ENGINE == 'claude':
+            # 注入前強行發送 C-c C-u 清理當前輸入行，避免空行殘留
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "C-u"])
+            time.sleep(0.5)
+
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", "/clear"])
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"]) 
@@ -251,6 +267,8 @@ def main():
                 lines = [line for line in res.stdout.split('\n') if line.strip()]
                 if 'Working (' in '\n'.join(lines[-20:]):
                     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
+            elif ENGINE == 'claude':
+                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
             else:
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
             time.sleep(3.0)
@@ -258,32 +276,41 @@ def main():
             if any(marker in res.stdout for marker in prompt_markers):
                 cleared = True
                 print("✅ 終極保險救援成功！偵測到啟動關鍵字。")
-            else:
-                print("❌ 終極保險救援失敗，發送求救訊息。取消注入。")
-                help_msg = f"{AGENT_NAME} 可能卡在時空夾縫中, 如果 {AGENT_NAME} 還是沒有回覆訊息, 嘗試切換至其他 Agent 輸入 「/fix {AGENT_NAME}」讓其他 Agent 幫忙拯救 {AGENT_NAME}"
-                escaped_help = help_msg.replace('!', '！').replace('$', '\\$')
-                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
-                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped_help])
-                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
-                time.sleep(1.0)
-                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-                time.sleep(0.5)
 
         if not cleared:
-            print("⚠️ 重置失敗流程處理中...")
+            print("❌ 重置失敗，外拋 /fix 指令給 Router Web API 進行修復...")
+            # 1. 還原 temp.log 到 shell.log
             if os.path.exists(TEMP_LOG):
                 shutil.copy2(TEMP_LOG, SHELL_LOG)
                 os.remove(TEMP_LOG)
-            
-            # 發送恢復提示，讓 Agent 接續先前的任務
-            recovery_prompt = f"{SYS_PREFIX}系統維護逾時取消。請確認是否 octo_cyberbrain/task_memo.txt 存在，若存在則讀取後接續執行被中斷的任務，讀取完畢後執行rm -f octo_cyberbrain/task_memo.txt。"
-            escaped_rec = recovery_prompt.replace('!', '！').replace('$', '\\$')
-            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
-            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped_rec])
-            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
-            time.sleep(1.0)
-            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-            time.sleep(0.5)
+                
+            # 2. 獲取 Router Port
+            octo_root = os.path.dirname(os.path.dirname(AGENT_HOME))
+            port_file = os.path.join(octo_root, ".router_port")
+            port = 12210
+            if os.path.exists(port_file):
+                try:
+                    with open(port_file, 'r') as f:
+                        port = int(f.read().strip())
+                except: pass
+                
+            # 3. 呼叫 Router /inject 執行 /fix 任務
+            try:
+                requests.post(
+                    f"http://127.0.0.1:{port}/inject",
+                    json={"source": "system", "user_id": "system", "content": f"/fix {AGENT_NAME}"},
+                    timeout=5
+                )
+                print(f"✅ 已成功外拋 /fix {AGENT_NAME} 至 Router API (Port: {port})。")
+            except Exception as e:
+                print(f"⚠️ 外拋 /fix 失敗: {e}")
+                
+            # 4. 清理自身的 .rotation_flag
+            if os.path.exists(FLAG_FILE):
+                try: os.remove(FLAG_FILE)
+                except: pass
+                
+            sys.exit(1)
 
             # 確保積累的用戶指令與 Agent 交互指令不會被拋棄
             if os.path.exists(PENDING_USER_FILE):
@@ -451,7 +478,7 @@ def main():
                     # os.remove(TASK_MEMO)
                     with open(TASK_MEMO, 'w', encoding='utf-8') as f:
                         f.write(memo_prompt)
-                    task_memo_prompt = "接著確認是否octo_cyberbrain/task_memo.txt存在，若存在則讀取後接續執行任務，task_memo.txt讀取完畢後執行rm -f octo_cyberbrain/task_memo.txt"
+                    task_memo_prompt = "接著確認是否octo_cyberbrain/task_memo.txt存在，若存在則讀取後接續執行任務，task_memo.txt讀取完畢後執行 true > octo_cyberbrain/task_memo.txt 以清空內容。"
             except Exception as e:
                 print(f"處理 task_memo.txt 時發生錯誤: {e}")
 

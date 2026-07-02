@@ -371,11 +371,21 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
 
     # 統一初始化 shell log 與 ghost json 的正確權限
     # octo_shell.log → 644: 只有 Owner (agent 帳戶) 可寫，Others 唯讀
-    # octo_ghost.json → 646: Others 也可寫，供 Agent 自行調用 updater 寫入
+    # octo_ghost.json → 666: 全域可讀寫，供 Agent 自行調用 updater 寫入
     if os.path.exists(shell_log_path):
         subprocess.run(['chmod', '644', shell_log_path], check=False)
     if os.path.exists(ghost_json_path):
-        subprocess.run(['chmod', '646', ghost_json_path], check=False)
+        subprocess.run(['chmod', '666', ghost_json_path], check=False)
+
+    # 預先建立 task_memo.txt，確保其 Inode 被鎖定為 666 權限，避免權限衝突
+    task_memo_path = os.path.join(cyber_path, 'task_memo.txt')
+    if not os.path.exists(task_memo_path):
+        try:
+            with open(task_memo_path, 'w', encoding='utf-8') as f:
+                f.write("")
+        except: pass
+    if os.path.exists(task_memo_path):
+        subprocess.run(['chmod', '666', task_memo_path], check=False)
 
 
     

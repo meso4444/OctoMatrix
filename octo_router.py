@@ -404,6 +404,14 @@ class CommandHandler:
                     engine = target_info.get('engine', '').lower()
                     self.notifier.notify(msg.source, 'custom', {'content': f'🚑 系統啟動 <b>[{target_name}]</b> 的硬重置修復 (引擎: {engine})...'})
                     try:
+                        # 建立 .fix_flag 標記檔以啟動 pending 緩衝阻斷
+                        agent_dir = os.path.join(AGENT_HOME_BASE, target_name)
+                        fix_flag = os.path.join(agent_dir, 'octo_cyberbrain', '.fix_flag')
+                        try:
+                            os.makedirs(os.path.dirname(fix_flag), exist_ok=True)
+                            open(fix_flag, 'w').close()
+                        except: pass
+
                         subprocess.run(['tmux', 'kill-window', '-t', f'{TMUX_SESSION_NAME}:{target_name}'], check=False)
                         time.sleep(1)
                         subprocess.Popen(['python3', os.path.join(script_dir, 'setup_agent_env.py'), '--agent', target_name])
@@ -457,16 +465,18 @@ class CommandHandler:
         # 👻 GHOST 實體檔案阻塞與積累機制
         agent_dir = os.path.join(AGENT_HOME_BASE, target_agent)
         flag_file = os.path.join(agent_dir, 'octo_cyberbrain', '.rotation_flag')
+        fix_flag = os.path.join(agent_dir, 'octo_cyberbrain', '.fix_flag')
         pending_user_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_user.txt')
 
-        if msg.source not in ['reaper', 'system_flush'] and os.path.exists(flag_file):
+        if msg.source not in ['reaper', 'system_flush'] and (os.path.exists(flag_file) or os.path.exists(fix_flag)):
             try:
                 with open(pending_user_file, 'a', encoding='utf-8') as f:
                     if os.path.exists(pending_user_file) and os.path.getsize(pending_user_file) > 0:
                         f.write("\n\n")
                     f.write(content) # 只存純淨的用戶訊息
                 if msg.source != 'awake':
-                    self.notifier.notify(msg.source, 'custom', {'content': f'👻 <b>[{target_agent}]</b> 正在重整思緒中，請稍候...'})
+                    status_text = '重整思緒中' if os.path.exists(flag_file) else '修復重啟中'
+                    self.notifier.notify(msg.source, 'custom', {'content': f'👻 <b>[{target_agent}]</b> 正在{status_text}，請稍候...'})
                 return True
             except Exception as e:
                 logger.error(f"❌ [Router] 寫入暫存檔失敗: {e}")
