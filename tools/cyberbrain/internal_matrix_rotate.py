@@ -196,20 +196,18 @@ def main():
             open(TEMP_LOG, 'w').close()
             
         print(f"⏳ 注入 /clear 並開始週期性嘗試 Enter (每 3 秒一次，共 100 次)...")
-        # 🚀 強化手段 1: 前置喚醒 (暴力淨空)
+        # 🚀 強化手段 1: 前置喚醒 (暴力淨空)。每次擊發 Enter 隨即緊接發送 BSpace 以防空行
         if ENGINE == 'codex':
             res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
             lines = [line for line in res.stdout.split('\n') if line.strip()]
             if 'Working (' in '\n'.join(lines[-20:]):
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
-            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-        elif ENGINE == 'claude':
-            # Claude 支援多行編輯，在空閒時敲 Enter 會產生空行，因此只發送 C-c Escape 來中斷
-            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
         else:
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
-            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
             
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "BSpace"])
+        
         time.sleep(6.0)
         
         if ENGINE == 'codex':
@@ -217,29 +215,24 @@ def main():
             lines = [line for line in res.stdout.split('\n') if line.strip()]
             if 'Working (' in '\n'.join(lines[-20:]):
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
-            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-        elif ENGINE == 'claude':
-            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
         else:
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
-            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
             
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "BSpace"])
+        
         time.sleep(1.0)
         
         # 🚀 強化手段 2: 注入 /clear 指令 (僅一次)
-        if ENGINE == 'claude':
-            # 注入前強行發送 C-c C-u 清理當前輸入行，避免空行殘留
-            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "C-u"])
-            time.sleep(0.5)
-
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", "/clear"])
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"]) 
         
         cleared = False
         for i in range(100):
-            # 🚀 強化手段 3: 持續擊發 Enter 試圖觸發執行
+            # 🚀 強化手段 3: 持續擊發 Enter + BSpace 試圖觸發執行
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "BSpace"])
 
             time.sleep(3.0) # 等待 3 秒觀察結果
 
@@ -267,8 +260,6 @@ def main():
                 lines = [line for line in res.stdout.split('\n') if line.strip()]
                 if 'Working (' in '\n'.join(lines[-20:]):
                     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
-            elif ENGINE == 'claude':
-                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
             else:
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
             time.sleep(3.0)
