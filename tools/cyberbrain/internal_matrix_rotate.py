@@ -20,6 +20,7 @@ import glob
 import shutil
 import subprocess
 import time
+import requests
 from datetime import datetime
 
 # ==========================================
@@ -195,27 +196,42 @@ def main():
             open(TEMP_LOG, 'w').close()
             
         print(f"⏳ Injecting /clear and starting periodic Enter retries (every 3 seconds, 100 times total)...")
-        # 🚀 Hardening Means 1: Pre-wake (Force clear). [Ctrl+C] + [Enter] -> wait 6s -> [Ctrl+C] + [Enter]
+        # 🚀 Hardening Means 1: Pre-wake (Force clear)
         if ENGINE == 'codex':
             res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
             lines = [line for line in res.stdout.split('\n') if line.strip()]
             if 'Working (' in '\n'.join(lines[-20:]):
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+        elif ENGINE == 'claude':
+            # Claude supports multi-line editing, pressing Enter when idle creates a blank line. Send C-c Escape only to interrupt.
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
         else:
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+            
         time.sleep(6.0)
+        
         if ENGINE == 'codex':
             res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
             lines = [line for line in res.stdout.split('\n') if line.strip()]
             if 'Working (' in '\n'.join(lines[-20:]):
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+        elif ENGINE == 'claude':
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
         else:
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
+            
         time.sleep(1.0)
         
         # 🚀 Hardening Means 2: Inject /clear command (only once)
+        if ENGINE == 'claude':
+            # Send C-c C-u to clean up any input lines to avoid blank line issues
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "C-u"])
+            time.sleep(0.5)
+
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", "/clear"])
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"]) 
@@ -251,6 +267,8 @@ def main():
                 lines = [line for line in res.stdout.split('\n') if line.strip()]
                 if 'Working (' in '\n'.join(lines[-20:]):
                     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
+            elif ENGINE == 'claude':
+                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
             else:
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c", "Escape"])
             time.sleep(3.0)
@@ -258,32 +276,41 @@ def main():
             if any(marker in res.stdout for marker in prompt_markers):
                 cleared = True
                 print("✅ Ultimate fallback successful! Detected startup keyword.")
-            else:
-                print("❌ Ultimate fallback failed. Sending SOS message. Cancelling injection.")
-                help_msg = f"{AGENT_NAME} 可能卡在時空夾縫中, 如果 {AGENT_NAME} 還是沒有回覆訊息, 嘗試切換至其他 Agent 輸入 「/fix {AGENT_NAME}」讓其他 Agent 幫忙拯救 {AGENT_NAME}"
-                escaped_help = help_msg.replace('!', '！').replace('$', '\\$')
-                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
-                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped_help])
-                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
-                time.sleep(1.0)
-                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-                time.sleep(0.5)
 
         if not cleared:
-            print("⚠️ Timeout after 100 attempts, reset keyword not detected. Cancelling injection.")
+            print("❌ Reset failed. Offloading /fix command to Router Web API for repair...")
+            # 1. Restore temp.log to shell.log
             if os.path.exists(TEMP_LOG):
                 shutil.copy2(TEMP_LOG, SHELL_LOG)
                 os.remove(TEMP_LOG)
-            
-            # Send recovery prompt to let Agent resume the previous task
-            recovery_prompt = f"{SYS_PREFIX} Maintenance timeout cancelled. Please check if octo_cyberbrain/task_memo.txt exists. If it does, read it and resume the interrupted task, then execute rm -f octo_cyberbrain/task_memo.txt."
-            escaped_rec = recovery_prompt.replace('!', '！').replace('$', '\\$')
-            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
-            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped_rec])
-            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
-            time.sleep(1.0)
-            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
-            time.sleep(0.5)
+                
+            # 2. Get Router Port
+            octo_root = os.path.dirname(os.path.dirname(AGENT_HOME))
+            port_file = os.path.join(octo_root, ".router_port")
+            port = 12210
+            if os.path.exists(port_file):
+                try:
+                    with open(port_file, 'r') as f:
+                        port = int(f.read().strip())
+                except: pass
+                
+            # 3. Request Router /inject to run /fix task
+            try:
+                requests.post(
+                    f"http://127.0.0.1:{port}/inject",
+                    json={"source": "system", "user_id": "system", "content": f"/fix {AGENT_NAME}"},
+                    timeout=5
+                )
+                print(f"✅ Successfully requested /fix {AGENT_NAME} to Router API (Port: {port}).")
+            except Exception as e:
+                print(f"⚠️ Failed to request /fix: {e}")
+                
+            # 4. Clean up own .rotation_flag
+            if os.path.exists(FLAG_FILE):
+                try: os.remove(FLAG_FILE)
+                except: pass
+                
+            sys.exit(1)
 
             # Ensure accumulated user commands and agent commands are not discarded
             if os.path.exists(PENDING_USER_FILE):
@@ -455,7 +482,7 @@ Task Resumption Message:
                     # os.remove(TASK_MEMO)
                     with open(TASK_MEMO, 'w', encoding='utf-8') as f:
                         f.write(memo_prompt)
-                    task_memo_prompt = " Next, verify if octo_cyberbrain/task_memo.txt exists; if so, read it to resume the task and then execute rm -f octo_cyberbrain/task_memo.txt."
+                    task_memo_prompt = " Next, verify if octo_cyberbrain/task_memo.txt exists; if so, read it to resume the task and then execute 'true > octo_cyberbrain/task_memo.txt' to clear its content."
             except Exception as e:
                 print(f"Error processing task_memo.txt: {e}")
 

@@ -179,10 +179,15 @@ for TARGET_PATH in "$AGENT_HOME_DIR"/*; do
                 chown "$MANAGER_USER:$MANAGER_GROUP" "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" 2>/dev/null || true
                 chmod 644 "$TARGET_PATH/octo_cyberbrain/shell/octo_shell.log" 2>/dev/null || true
             fi
-            # - Active Ghost JSON: owned by System Manager, Others can write (646) for updater calls
+            # - Active Ghost JSON: owned by System Manager, globally readable/writable (666) for updater calls
             if [ -f "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" ]; then
                 chown "$MANAGER_USER:$MANAGER_GROUP" "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" 2>/dev/null || true
-                chmod 646 "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" 2>/dev/null || true
+                chmod 666 "$TARGET_PATH/octo_cyberbrain/ghost/octo_ghost.json" 2>/dev/null || true
+            fi
+            # - Task resumption file task_memo.txt: owned by System Manager, globally readable/writable (666)
+            if [ -f "$TARGET_PATH/octo_cyberbrain/task_memo.txt" ]; then
+                chown "$MANAGER_USER:$MANAGER_GROUP" "$TARGET_PATH/octo_cyberbrain/task_memo.txt" 2>/dev/null || true
+                chmod 666 "$TARGET_PATH/octo_cyberbrain/task_memo.txt" 2>/dev/null || true
             fi
 
             # E. Lock .system_distributed_files.txt manifest if it exists (644)

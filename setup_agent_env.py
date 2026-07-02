@@ -369,13 +369,23 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
     pipe_cmd = f"bash -c 'tee >(python3 -u {responder_script} {session_name}:{name}) | python3 -u {pipe_manager} {shell_log_path} {session_name}:{name}'"
     subprocess.run(['tmux'] + tmux_cmd(['pipe-pane', '-o', '-t', f'{session_name}:{name}', pipe_cmd]), check=True)
 
-    # Initialize correct permissions for shell log and ghost json
+    # Initialize correct permissions for shell log, ghost json, and task memo
     # octo_shell.log → 644: Only Owner (agent account) can write, Others read-only
-    # octo_ghost.json → 646: Others can also write, for Agent to call updater
+    # octo_ghost.json → 666: Readable/writable by all
     if os.path.exists(shell_log_path):
         subprocess.run(['chmod', '644', shell_log_path], check=False)
     if os.path.exists(ghost_json_path):
-        subprocess.run(['chmod', '646', ghost_json_path], check=False)
+        subprocess.run(['chmod', '666', ghost_json_path], check=False)
+
+    # Pre-initialize task_memo.txt to ensure Inode and owner are locked with 666 permissions
+    task_memo_path = os.path.join(cyber_path, 'task_memo.txt')
+    if not os.path.exists(task_memo_path):
+        try:
+            with open(task_memo_path, 'w', encoding='utf-8') as f:
+                f.write("")
+        except: pass
+    if os.path.exists(task_memo_path):
+        subprocess.run(['chmod', '666', task_memo_path], check=False)
 
 
     

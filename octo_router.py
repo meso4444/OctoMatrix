@@ -404,6 +404,14 @@ Message from {MATRIX_USERNAME}:
                     engine = target_info.get('engine', '').lower()
                     self.notifier.notify(msg.source, 'custom', {'content': f'🚑 System initiating Hard Reset for <b>[{target_name}]</b> (engine: {engine})...'})
                     try:
+                        # Create .fix_flag to activate pending message block
+                        agent_dir = os.path.join(AGENT_HOME_BASE, target_name)
+                        fix_flag = os.path.join(agent_dir, 'octo_cyberbrain', '.fix_flag')
+                        try:
+                            os.makedirs(os.path.dirname(fix_flag), exist_ok=True)
+                            open(fix_flag, 'w').close()
+                        except: pass
+
                         subprocess.run(['tmux', 'kill-window', '-t', f'{TMUX_SESSION_NAME}:{target_name}'], check=False)
                         time.sleep(1)
                         # Call setup_agent_env.py directly to rebuild the agent window
@@ -457,16 +465,18 @@ Message from {MATRIX_USERNAME}:
         # 👻 GHOST physical file blocking and accumulation mechanism
         agent_dir = os.path.join(AGENT_HOME_BASE, target_agent)
         flag_file = os.path.join(agent_dir, 'octo_cyberbrain', '.rotation_flag')
+        fix_flag = os.path.join(agent_dir, 'octo_cyberbrain', '.fix_flag')
         pending_user_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_user.txt')
 
-        if msg.source not in ['reaper', 'system_flush'] and os.path.exists(flag_file):
+        if msg.source not in ['reaper', 'system_flush'] and (os.path.exists(flag_file) or os.path.exists(fix_flag)):
             try:
                 with open(pending_user_file, 'a', encoding='utf-8') as f:
                     if os.path.exists(pending_user_file) and os.path.getsize(pending_user_file) > 0:
                         f.write("\n\n")
                     f.write(content) # Only store pure user messages
                 if msg.source != 'awake':
-                    self.notifier.notify(msg.source, 'custom', {'content': f'👻 <b>[{target_agent}]</b> is reorganizing thoughts, please wait...'})
+                    status_text = 'reorganizing thoughts' if os.path.exists(flag_file) else 'rebooting and restoring'
+                    self.notifier.notify(msg.source, 'custom', {'content': f'👻 <b>[{target_agent}]</b> is {status_text}, please wait...'})
                 return True
             except Exception as e:
                 logger.error(f"❌ [Router] Failed to write temporary file: {e}")
