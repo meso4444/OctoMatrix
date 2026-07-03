@@ -214,7 +214,7 @@ try:
         test_msg = f"{SYS_PREFIX} Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood, then execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME}}}'`"
         agent_dir = os.path.join(os.environ['SCRIPT_DIR'], 'agent_home', name)
         flag_file = os.path.join(agent_dir, 'octo_cyberbrain', '.rotation_flag')
-        pending_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_inject.txt')
+        pending_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_user.txt')
         
         if os.path.exists(flag_file):
             with open(pending_file, 'a', encoding='utf-8') as f:

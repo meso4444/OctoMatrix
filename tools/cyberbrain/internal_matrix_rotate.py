@@ -163,6 +163,61 @@ def main():
             print(f"❌ Failed to get AGENT_NAME or TMUX_SESSION_NAME (Source: {ENV_FILE}). Aborting reset.")
             sys.exit(1)
 
+            # Ensure pending user instructions and Agent interactions are not discarded
+            if os.path.exists(PENDING_USER_FILE):
+                try:
+                    with open(PENDING_USER_FILE, 'r', encoding='utf-8') as f:
+                        pending_content = f.read().strip()
+                    if pending_content:
+                        sys_prompt = f"""{SYS_PREFIX}
+Execute the following [SOP]:
+[Step 0 - Identify]: Identify whether the Task Resumption Message is a real task. If it is a real task, proceed to Step1; if the content is just a prompt and not a task, do not execute subsequent Steps.
+[Step 1 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
+[Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} in your personality, mentioning you just reorganized your thoughts, express apologies for the wait, and autonomously think of an appropriate task resumption preview}}'`.
+[Step 3 - Clarify]: If task is clear, proceed to Step4; if unclear, proactively dive into keywords. If clear history exists, proceed to Step4, otherwise suspend task and execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate clarification question}}'`, and do not execute subsequent Steps.
+[Step 4 - Execute]: Start task and write md. For large tasks, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate progress update}}'` midway, then proceed to Step5 after task completion.
+[Step 5 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
+[Step 6 - Report]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate task completion report}}'`. Only use --file to send related report documents to {MATRIX_USERNAME} if the report content exceeds 1000 words, otherwise report directly with a complete message.
+[Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
+[Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST.
+
+Message from {MATRIX_USERNAME}:
+{pending_content}
+
+{SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
+                        final_message = sys_prompt
+                        escaped = final_message.replace('!', '！').replace('$', '\\$')
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped], check=True)
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
+                        time.sleep(1.0)
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
+                        time.sleep(0.3)
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
+                        print("📩 Pending user instructions have been successfully injected!")
+                    os.remove(PENDING_USER_FILE)
+                except Exception as e:
+                    print(f"❌ Error processing pending User instructions: {e}")
+
+            if os.path.exists(PENDING_AGENT_FILE):
+                try:
+                    with open(PENDING_AGENT_FILE, 'r', encoding='utf-8') as f:
+                        pending_content = f.read().strip()
+                    if pending_content:
+                        sys_prompt = f"Interaction message from another Agent:\n{pending_content}"
+                        escaped = sys_prompt.replace('!', '！').replace('$', '\\$')
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped], check=True)
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
+                        time.sleep(1.0)
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
+                        time.sleep(0.3)
+                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
+                        print("📩 Pending Agent interaction instructions have been successfully injected!")
+                    os.remove(PENDING_AGENT_FILE)
+                except Exception as e:
+                    print(f"❌ Error processing pending Agent instructions: {e}")
+
         TMUX_TARGET = f"{TMUX_SESSION_NAME}:{AGENT_NAME}"
         LIMIT, CONTEXT_SIZE, ENGINE_DOC_NAME, ENGINE = get_config(AGENT_NAME)
         try:
@@ -442,123 +497,84 @@ Message from {MATRIX_USERNAME}:
         save_json(ghost_file, {"keywords": [], "file_paths": [], "semantic_outline": []})
 
         # ==========================================
-        # Step 4: Neural Reset Injection
+        # Step 4: Neural Reset & Task Integration
         # ==========================================
         task_memo_prompt = ""
+        combined_memo = ""
+
+        def build_sop_block(msg_type, content):
+            return f"""{SYS_PREFIX}\nExecute the following [SOP]:\n[Step 0 - Identify]: Determine if the Task Resumption Message is a real task. If yes, proceed to Step1; if it's merely a hint without a task, skip subsequent steps.
+[Step 1 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{mood}.png` to send a sticker matching your current mood.
+[Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py '{Use your personal style to greet {MATRIX_USERNAME}, mention you just reorganized your thoughts, apologize for the wait, and independently think of a suitable task resumption preview}'`.
+[Step 3 - Clarify]: If task instructions are clear, proceed to Step4; if unclear, perform a shell deep dive and if there's historical context, proceed to Step4. Otherwise, abort and execute `python3 toolbox/matrix_notifier.py '{Greet {MATRIX_USERNAME}, independently think of suitable questions or clarifications}'` to ask for specific directions, skipping subsequent steps.
+[Step 4 - Execute]: Officially start executing the task and write the md file. After completing small tasks, proceed to Step5; for large tasks, periodically execute `python3 toolbox/matrix_notifier.py '{Greet {MATRIX_USERNAME}, independently think of a suitable progress report}'` for intermediate reporting, then proceed to Step5 upon completion.
+[Step 5 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{mood}.png` to send a sticker matching your current mood.
+[Step 6 - Report]: Execute `python3 toolbox/matrix_notifier.py '{Greet {MATRIX_USERNAME}, independently think of a suitable final task report}'` to summarize the outcome. Only if the report content exceeds 1000 words, use `--file` to send the relevant report document to {MATRIX_USERNAME}; otherwise, report directly with a full message.
+[Step 7 - Absorb]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to absorb your GHOST and memory.
+[Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "semantic outline" --keywords "keyword1,keyword2" --paths "/path1,/path2"` to imprint the current task status into GHOST.\n\n{msg_type}\n{content}\n\n{SYS_PREFIX}Please strictly follow the [SOP] above when replying."""
+
+        # 1. Agent's own task memo (Top)
         if os.path.exists(TASK_MEMO):
             try:
                 with open(TASK_MEMO, 'r', encoding='utf-8') as f:
                     memo_content = f.read().strip()
                 if memo_content:
-                    memo_prompt = f"""{SYS_PREFIX}
-Execute the following [SOP]:
-[Step 0 - Identify]: Identify whether the Task Resumption Message is a real task. If it is a real task, proceed to Step1; if the content is just a prompt and not a task, do not execute subsequent Steps.
-[Step 1 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
-[Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} in your personality, mentioning you just reorganized your thoughts, express apologies for the wait, and autonomously think of an appropriate task resumption preview}}'`.
-[Step 3 - Clarify]: If task is clear, proceed to Step4; if unclear, proactively dive into keywords. If clear history exists, proceed to Step4, otherwise suspend task and execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate clarification question}}'`, and do not execute subsequent Steps.
-[Step 4 - Execute]: Start task and write md. For large tasks, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate progress update}}'` midway, then proceed to Step5 after task completion.
-[Step 5 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
-[Step 6 - Report]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate task completion report}}'`. Only use --file to send related report documents to {MATRIX_USERNAME} if the report content exceeds 1000 words, otherwise report directly with a complete message.
-[Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
-[Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST.
-
-Task Resumption Message:
-{memo_content}
-
-{SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
-                    # Overwrite directly to keep the original file Inode and Owner (Agent grants 666 permission upon creation)
-                    # os.remove(TASK_MEMO)
-                    with open(TASK_MEMO, 'w', encoding='utf-8') as f:
-                        f.write(memo_prompt)
-                    task_memo_prompt = " Next, verify if octo_cyberbrain/task_memo.txt exists; if so, read it to resume the task and then execute 'true > octo_cyberbrain/task_memo.txt' to clear its content."
+                    combined_memo += build_sop_block("Task Resumption Message:", memo_content) + "\n\n"
             except Exception as e:
                 print(f"Error processing task_memo.txt: {e}")
 
+        # 2. pending_user (Middle)
+        if os.path.exists(PENDING_USER_FILE):
+            try:
+                with open(PENDING_USER_FILE, 'r', encoding='utf-8') as f:
+                    pending_content = f.read().strip()
+                if pending_content:
+                    combined_memo += build_sop_block("Message from {MATRIX_USERNAME}:", pending_content) + "\n\n"
+                os.remove(PENDING_USER_FILE)
+            except Exception as e:
+                print(f"Error processing pending_user: {e}")
+
+        # 3. pending_agent (Bottom)
+        if os.path.exists(PENDING_AGENT_FILE):
+            try:
+                with open(PENDING_AGENT_FILE, 'r', encoding='utf-8') as f:
+                    pending_content = f.read().strip()
+                if pending_content:
+                    agent_prompt = f"Interaction message from another Agent:\n{pending_content}"
+                    combined_memo += agent_prompt + "\n\n"
+                os.remove(PENDING_AGENT_FILE)
+            except Exception as e:
+                print(f"Error processing pending_agent: {e}")
+
+        # Write unified task_memo
+        if combined_memo.strip():
+            with open(TASK_MEMO, 'w', encoding='utf-8') as f:
+                f.write(combined_memo.strip())
+            task_memo_prompt = "Next, verify if octo_cyberbrain/task_memo.txt exists; if so, read it to resume the task and then execute 'true > octo_cyberbrain/task_memo.txt' to clear its content."
+
         if task_memo_prompt:
-            prompt = f"{SYS_PREFIX} Please execute python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot to get keywords, then bring all retrieved keywords into a single execution of 'python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"Keyword1\" \"Keyword2\"' for Shell GHOST deep dive. Once complete, re-establish compliance with {ENGINE_DOC_NAME}. This task does not require sending messages to the user.{task_memo_prompt}"
+            prompt = f"{SYS_PREFIX}Please execute python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot to get keywords, then bring all retrieved keywords into a single execution of 'python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword "Keyword1" "Keyword2"' for Shell GHOST deep dive. Once complete, re-establish compliance with {ENGINE_DOC_NAME}. This task does not require sending messages to the user. {task_memo_prompt}"
         else:
-            prompt = f"{SYS_PREFIX} Please execute python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot to get keywords, then bring all retrieved keywords into a single execution of 'python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"Keyword1\" \"Keyword2\"' for Shell GHOST deep dive. Once complete, re-establish compliance with {ENGINE_DOC_NAME}. This task does not require sending messages to the user."
+            prompt = f"{SYS_PREFIX}Please execute python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot to get keywords, then bring all retrieved keywords into a single execution of 'python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword "Keyword1" "Keyword2"' for Shell GHOST deep dive. Once complete, re-establish compliance with {ENGINE_DOC_NAME}. This task does not require sending messages to the user."
 
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", prompt])
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
-        time.sleep(2.0) # Longer prompt needs more input wait time
+        time.sleep(2.0)
         
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
         time.sleep(0.5)
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
         time.sleep(0.5)
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"]) # Triple Enter safety
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
 
-        # 🚀 Early release of Flag: Sleep 3 seconds then release Flag
+        # Early unlock
         time.sleep(3.0)
         if os.path.exists(FLAG_FILE):
             try:
                 os.remove(FLAG_FILE)
             except Exception:
                 pass
-
-        # ==========================================
-        # Step 5: Pending Injection
-        # ==========================================
-        if os.path.exists(PENDING_USER_FILE):
-            try:
-                with open(PENDING_USER_FILE, 'r', encoding='utf-8') as f:
-                    pending_content = f.read().strip()
-                    
-                if pending_content:
-                    # Append normal system prompt
-                    sys_prompt = f"""{SYS_PREFIX}
-Execute the following [SOP]:
-[Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
-[Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If a task, proceed to Step2; if a greeting, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate greeting response}}'`, and do not execute subsequent Steps.
-[Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate initial preview}}'` to preview the task's initial direction.
-[Step 3 - Clarify]: If task is clear, proceed to Step4; if unclear, proactively dive into keywords. If clear history exists, proceed to Step4, otherwise suspend task and execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate clarification question}}'`, and do not execute subsequent Steps.
-[Step 4 - Execute]: Start task and write md. For large tasks, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate progress update}}'` midway, then proceed to Step5 after task completion.
-[Step 5 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
-[Step 6 - Report]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate task completion report}}'`. Only use --file to send related report documents to {MATRIX_USERNAME} if the report content exceeds 1000 words, otherwise report directly with a complete message.
-[Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
-[Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST.
-
-Message from {MATRIX_USERNAME}:
-{pending_content}
-
-{SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
-                    final_message = sys_prompt
-                    escaped = final_message.replace('!', '！').replace('$', '\\$')
-                    
-                    # Inject at once without triggering Ctrl+C
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped], check=True)
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
-                    time.sleep(1.0)
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
-                    time.sleep(0.3)
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
-                    print("📩 Pending user commands injected successfully!")
-                
-                os.remove(PENDING_USER_FILE)
-            except Exception as e:
-                print(f"❌ Error processing pending user commands: {e}")
-
-        if os.path.exists(PENDING_AGENT_FILE):
-            try:
-                with open(PENDING_AGENT_FILE, 'r', encoding='utf-8') as f:
-                    pending_content = f.read().strip()
-                if pending_content:
-                    sys_prompt = f"來自其他 Agent 的交互訊息:\n{pending_content}"
-                    escaped = sys_prompt.replace('!', '！').replace('$', '\\$')
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped], check=True)
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
-                    time.sleep(1.0)
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
-                    time.sleep(0.3)
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
-                    print("📩 Pending agent commands injected successfully!")
-                os.remove(PENDING_AGENT_FILE)
-            except Exception as e:
-                print(f"❌ Error processing pending agent commands: {e}")
 
     except BaseException as e:
         # Catch all exceptions including SystemExit to ensure cleanup
