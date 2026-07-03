@@ -63,7 +63,7 @@ def notify_agent(agent_name):
     payload = {
         "source": "reaper",
         "user_id": "system",
-        "content": f"{SYS_PREFIX} 若有任務進行中，請先中斷任務，把當前任務狀態記錄到octo_cyberbrain/task_memo.txt（建立檔案時請務必賦予 666 權限）。接著請使用參數模式執行 `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"語義大綱\" --keywords \"關鍵字\" --paths \"路徑\"` 來更新GHOST 狀態,不需發送訊息給用戶",
+        "content": f"{SYS_PREFIX} 若有任務進行中，請先中斷任務，把當前任務狀態記錄到octo_cyberbrain/task_memo.txt。接著請使用參數模式執行 `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"語義大綱\" --keywords \"關鍵字\" --paths \"路徑\"` 來更新GHOST 狀態,不需發送訊息給用戶",
         "metadata": {
             "target_agent": agent_name
         }
