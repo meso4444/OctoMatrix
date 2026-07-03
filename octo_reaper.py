@@ -63,7 +63,7 @@ def notify_agent(agent_name):
     payload = {
         "source": "reaper",
         "user_id": "system",
-        "content": f"{SYS_PREFIX} If there is an ongoing task, please pause it and save the current task status to octo_cyberbrain/task_memo.txt (ensure the file is created with 666 permissions). Then, please use parameter mode to execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"semantic outline\" --keywords \"keywords\" --paths \"paths\"` to update GHOST status, no need to send message to user",
+        "content": f"{SYS_PREFIX} If there is an ongoing task, please pause it and save the current task status to octo_cyberbrain/task_memo.txt. Then, please use parameter mode to execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"semantic outline\" --keywords \"keywords\" --paths \"paths\"` to update GHOST status, no need to send message to user",
         "metadata": {
             "target_agent": agent_name
         }

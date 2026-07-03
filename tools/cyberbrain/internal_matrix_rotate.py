@@ -550,13 +550,9 @@ Message from {MATRIX_USERNAME}:
         if combined_memo.strip():
             with open(TASK_MEMO, 'w', encoding='utf-8') as f:
                 f.write(combined_memo.strip())
-            task_memo_prompt = "Next, verify if octo_cyberbrain/task_memo.txt exists; if so, read it to resume the task and then execute 'true > octo_cyberbrain/task_memo.txt' to clear its content."
-
-        if task_memo_prompt:
-            prompt = f"{SYS_PREFIX}Please execute python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot to get keywords, then bring all retrieved keywords into a single execution of 'python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword "Keyword1" "Keyword2"' for Shell GHOST deep dive. Once complete, re-establish compliance with {ENGINE_DOC_NAME}. This task does not require sending messages to the user. {task_memo_prompt}"
-        else:
-            prompt = f"{SYS_PREFIX}Please execute python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot to get keywords, then bring all retrieved keywords into a single execution of 'python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword "Keyword1" "Keyword2"' for Shell GHOST deep dive. Once complete, re-establish compliance with {ENGINE_DOC_NAME}. This task does not require sending messages to the user."
-
+        
+        task_memo_prompt = "Next, verify if octo_cyberbrain/task_memo.txt exists; if so, read it to resume the task and then execute 'true > octo_cyberbrain/task_memo.txt' to clear its content."
+        prompt = f"{SYS_PREFIX}Please execute python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot to get keywords, then bring all retrieved keywords into a single execution of 'python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"Keyword1\" \"Keyword2\"' for Shell GHOST deep dive. Once complete, re-establish compliance with {ENGINE_DOC_NAME}. This task does not require sending messages to the user. {task_memo_prompt}"
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", prompt])
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
