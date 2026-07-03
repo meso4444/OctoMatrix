@@ -446,123 +446,84 @@ def main():
         save_json(ghost_file, {"keywords": [], "file_paths": [], "semantic_outline": []})
 
         # ==========================================
-        # Step 4: 靈魂重塑注入 (Neural Reset Injection)
+        # Step 4: 靈魂重塑與任務整合注入 (Neural Reset & Task Integration)
         # ==========================================
         task_memo_prompt = ""
+        combined_memo = ""
+
+        def build_sop_block(msg_type, content):
+            return f"""{SYS_PREFIX}\n執行以下 [SOP]:\n[Step 0 - 辨識]：辨識 任務接續訊息 是否為真實任務，若為真實任務則進入Step1; 若內容僅為提示無任務則不執行後續Step。
+[Step 1 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{mood}.png 發符合當下心情的貼圖。
+[Step 2 - 預告]：執行 python3 toolbox/matrix_notifier.py '{用你的個性方式向{MATRIX_USERNAME}問候說你剛重整了一下思緒，表達久等了的不好意思的心情，並自主思考合適的任務接續預告}'。
+[Step 3 - 梳理]：若任務指示明確進入Step4; 若不明確，深潛shell紀錄後若有歷史脈絡進入Step4，否則先中止並執行 python3 toolbox/matrix_notifier.py '{向{MATRIX_USERNAME}問候，自主思考合適的詢問或澄清}' 詢問具體方向，不執行後續Step。
+[Step 4 - 執行]：正式開始執行任務並撰寫md。小型任務完成後進入Step5; 大型任務中途執行 python3 toolbox/matrix_notifier.py '{向{MATRIX_USERNAME}問候，自主思考合適的進度回報}' 進行中間進度回報，任務完成後再進入Step5。
+[Step 5 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{mood}.png 發符合當下心情的貼圖。
+[Step 6 - 回報]：執行 python3 toolbox/matrix_notifier.py '{向{MATRIX_USERNAME}問候，自主思考合適的任務完成報告}' 彙總回報，只有當回報內容大於1000字時才搭配使用 --file 發送相關報告文檔給 {MATRIX_USERNAME}，否則直接以完整訊息彙報。
+[Step 7 - 收攝]：執行 python3 octo_cyberbrain/octo_ghost_reader.py --level current 收攝你的 GHOST 與記憶。
+[Step 8 - 刻印]：執行 python3 octo_cyberbrain/octo_ghost_updater.py --outline "語義大綱" --keywords "關鍵字1,關鍵字2" --paths "/檔案路徑1,/檔案路徑2" 將本次任務狀態刻印到GHOST。\n\n{msg_type}\n{content}\n\n{SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
+
+        # 1. Agent 自己的 task memo (Top)
         if os.path.exists(TASK_MEMO):
             try:
                 with open(TASK_MEMO, 'r', encoding='utf-8') as f:
                     memo_content = f.read().strip()
                 if memo_content:
-                    memo_prompt = f"""{SYS_PREFIX}
-執行以下 [SOP]:
-[Step 0 - 辨識]：辨識 任務接續訊息 是否為真實任務，若為真實任務則進入Step1; 若內容僅為提示無任務則不執行後續Step。
-[Step 1 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖。
-[Step 2 - 預告]：執行 python3 toolbox/matrix_notifier.py '{{用你的個性方式向{MATRIX_USERNAME}問候說你剛重整了一下思緒，表達久等了的不好意思的心情，並自主思考合適的任務接續預告}}'。
-[Step 3 - 梳理]：若任務指示明確進入Step4; 若不明確，深潛shell紀錄後若有歷史脈絡進入Step4，否則先中止並執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，自主思考合適的詢問或澄清}}' 詢問具體方向，不執行後續Step。
-[Step 4 - 執行]：正式開始執行任務並撰寫md。小型任務完成後進入Step5; 大型任務中途執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，自主思考合適的進度回報}}' 進行中間進度回報，任務完成後再進入Step5。
-[Step 5 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖。
-[Step 6 - 回報]：執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，自主思考合適的任務完成報告}}' 彙總回報，只有當回報內容大於1000字時才搭配使用 --file 發送相關報告文檔給 {MATRIX_USERNAME}，否則直接以完整訊息彙報。
-[Step 7 - 收攝]：執行 python3 octo_cyberbrain/octo_ghost_reader.py --level current 收攝你的 GHOST 與記憶。
-[Step 8 - 刻印]：執行 python3 octo_cyberbrain/octo_ghost_updater.py --outline "語義大綱" --keywords "關鍵字1,關鍵字2" --paths "/檔案路徑1,/檔案路徑2" 將本次任務狀態刻印到GHOST。
-
-任務接續訊息:
-{memo_content}
-
-{SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
-                    # 直接覆寫以保留原檔案 Inode 與 Owner (Agent 寫入時已賦予 666 權限)
-                    # os.remove(TASK_MEMO)
-                    with open(TASK_MEMO, 'w', encoding='utf-8') as f:
-                        f.write(memo_prompt)
-                    task_memo_prompt = "接著確認是否octo_cyberbrain/task_memo.txt存在，若存在則讀取後接續執行任務，task_memo.txt讀取完畢後執行 true > octo_cyberbrain/task_memo.txt 以清空內容。"
+                    combined_memo += build_sop_block("任務接續訊息:", memo_content) + "\n\n"
             except Exception as e:
                 print(f"處理 task_memo.txt 時發生錯誤: {e}")
 
+        # 2. pending_user (Middle)
+        if os.path.exists(PENDING_USER_FILE):
+            try:
+                with open(PENDING_USER_FILE, 'r', encoding='utf-8') as f:
+                    pending_content = f.read().strip()
+                if pending_content:
+                    combined_memo += build_sop_block("來自 {MATRIX_USERNAME} 的訊息:", pending_content) + "\n\n"
+                os.remove(PENDING_USER_FILE)
+            except Exception as e:
+                print(f"處理 pending_user 時發生錯誤: {e}")
+
+        # 3. pending_agent (Bottom)
+        if os.path.exists(PENDING_AGENT_FILE):
+            try:
+                with open(PENDING_AGENT_FILE, 'r', encoding='utf-8') as f:
+                    pending_content = f.read().strip()
+                if pending_content:
+                    agent_prompt = f"來自其他 Agent 的交互訊息:\n{pending_content}"
+                    combined_memo += agent_prompt + "\n\n"
+                os.remove(PENDING_AGENT_FILE)
+            except Exception as e:
+                print(f"處理 pending_agent 時發生錯誤: {e}")
+
+        # 寫入統一的 task_memo
+        if combined_memo.strip():
+            with open(TASK_MEMO, 'w', encoding='utf-8') as f:
+                f.write(combined_memo.strip())
+            task_memo_prompt = "接著確認是否octo_cyberbrain/task_memo.txt存在，若存在則讀取後接續執行任務，task_memo.txt讀取完畢後執行 true > octo_cyberbrain/task_memo.txt 以清空內容。"
+
         if task_memo_prompt:
-            prompt = f"{SYS_PREFIX}請執行 python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot 取得關鍵字，然後一次性將所有撈到的關鍵字全部帶入執行 `python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"關鍵字1\" \"關鍵字2\"` 進行Shell GHOST深潛，完成後重新提升{ENGINE_DOC_NAME}的遵守，此任務不需發送訊息給用戶。{task_memo_prompt}"
+            prompt = f"{SYS_PREFIX}請執行 python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot 取得關鍵字，然後一次性將所有撈到的關鍵字全部帶入執行 `python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword "關鍵字1" "關鍵字2"` 進行Shell GHOST深潛，完成後重新提升{ENGINE_DOC_NAME}的遵守，此任務不需發送訊息給用戶。 {task_memo_prompt}"
         else:
-            prompt = f"{SYS_PREFIX}請執行 python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot 取得關鍵字，然後一次性將所有撈到的關鍵字全部帶入執行 `python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"關鍵字1\" \"關鍵字2\"` 進行Shell GHOST深潛，完成後重新提升{ENGINE_DOC_NAME}的遵守，此任務不需發送訊息給用戶。"
+            prompt = f"{SYS_PREFIX}請執行 python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot 取得關鍵字，然後一次性將所有撈到的關鍵字全部帶入執行 `python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword "關鍵字1" "關鍵字2"` 進行Shell GHOST深潛，完成後重新提升{ENGINE_DOC_NAME}的遵守，此任務不需發送訊息給用戶。"
 
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", prompt])
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
-        time.sleep(2.0) # 長 Prompt 需要更長的輸入等待時間
+        time.sleep(2.0)
         
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
         time.sleep(0.5)
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
         time.sleep(0.5)
-        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"]) # 三重 Enter 保險
+        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
 
-        # 🚀 提早解除 Flag：給予 3 秒 sleep 後解除 Flag
+        # 提早解除 Flag
         time.sleep(3.0)
         if os.path.exists(FLAG_FILE):
             try:
                 os.remove(FLAG_FILE)
             except Exception:
                 pass
-
-        # ==========================================
-        # Step 5: 積累指令注入 (Pending injection)
-        # ==========================================
-        if os.path.exists(PENDING_USER_FILE):
-            try:
-                with open(PENDING_USER_FILE, 'r', encoding='utf-8') as f:
-                    pending_content = f.read().strip()
-                    
-                if pending_content:
-                    # 補上常規系統提示
-                    sys_prompt = f"""{SYS_PREFIX}
-執行以下 [SOP]:
-[Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖。
-[Step 1 - 辨識]：辨識 {MATRIX_USERNAME} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，並自主思考合適的問候回覆}}' 回應，並且不執行後續Step。
-[Step 2 - 預告]：執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，並自主思考合適的初步預告}}' 預告任務進行初步方向。
-[Step 3 - 梳理]：若任務指示明確進入Step4; 若不明確，深潛shell紀錄後若有歷史脈絡進入Step4，否則先中止並執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，自主思考合適的詢問或澄清}}' 詢問具體方向，不執行後續Step。
-[Step 4 - 執行]：正式開始執行任務並撰寫md。小型任務完成後進入Step5; 大型任務中途執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，自主思考合適的進度回報}}' 進行中間進度回報，任務完成後再進入Step5。
-[Step 5 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖。
-[Step 6 - 回報]：執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，自主思考合適的任務完成報告}}' 彙總回報，只有當回報內容大於1000字時才搭配使用 --file 發送相關報告文檔給 {MATRIX_USERNAME}，否則直接以完整訊息彙報。
-[Step 7 - 收攝]：執行 python3 octo_cyberbrain/octo_ghost_reader.py --level current 收攝你的 GHOST 與記憶。
-[Step 8 - 刻印]：執行 python3 octo_cyberbrain/octo_ghost_updater.py --outline "語義大綱" --keywords "關鍵字1,關鍵字2" --paths "/檔案路徑1,/檔案路徑2" 將本次任務狀態刻印到GHOST。
-
-來自 {MATRIX_USERNAME} 的訊息:
-{pending_content}
-
-{SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
-                    final_message = sys_prompt
-                    escaped = final_message.replace('!', '！').replace('$', '\\$')
-                    
-                    # 以不觸發 Ctrl+C 的方式一次性注入
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped], check=True)
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
-                    time.sleep(1.0)
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
-                    time.sleep(0.3)
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
-                    print("📩 已將積累的用戶指令注入完成！")
-                
-                os.remove(PENDING_USER_FILE)
-            except Exception as e:
-                print(f"❌ 處理積累的 User 指令時發生錯誤: {e}")
-
-        if os.path.exists(PENDING_AGENT_FILE):
-            try:
-                with open(PENDING_AGENT_FILE, 'r', encoding='utf-8') as f:
-                    pending_content = f.read().strip()
-                if pending_content:
-                    sys_prompt = f"來自其他 Agent 的交互訊息:\n{pending_content}"
-                    escaped = sys_prompt.replace('!', '！').replace('$', '\\$')
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped], check=True)
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
-                    time.sleep(1.0)
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
-                    time.sleep(0.3)
-                    subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
-                    print("📩 已將積累的 Agent 交互指令注入完成！")
-                os.remove(PENDING_AGENT_FILE)
-            except Exception as e:
-                print(f"❌ 處理積累的 Agent 指令時發生錯誤: {e}")
 
     except BaseException as e:
         # 捕捉包含 SystemExit 在內的所有異常，確保清理執行

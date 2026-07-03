@@ -201,7 +201,7 @@ class CommandHandler:
 
         if is_interfering:
             flag_file = os.path.join(AGENT_HOME_BASE, target_agent, 'octo_cyberbrain', '.rotation_flag')
-            if os.path.exists(flag_file) and msg.source not in ['reaper', 'system_flush']:
+            if os.path.exists(flag_file) and msg.source != 'system_flush':
                 self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> 系統正在進行 GHOST 深度重整，請待重置完畢後再執行視窗干涉指令。'})
                 return True
 
@@ -468,7 +468,7 @@ class CommandHandler:
         fix_flag = os.path.join(agent_dir, 'octo_cyberbrain', '.fix_flag')
         pending_user_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_user.txt')
 
-        if msg.source not in ['reaper', 'system_flush'] and (os.path.exists(flag_file) or os.path.exists(fix_flag)):
+        if msg.source != 'system_flush' and (os.path.exists(flag_file) or os.path.exists(fix_flag)):
             try:
                 with open(pending_user_file, 'a', encoding='utf-8') as f:
                     if os.path.exists(pending_user_file) and os.path.getsize(pending_user_file) > 0:
