@@ -514,7 +514,7 @@ def main():
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
 
         # 提早解除 Flag
-        time.sleep(3.0)
+        time.sleep(30.0)
         if os.path.exists(FLAG_FILE):
             try:
                 os.remove(FLAG_FILE)
