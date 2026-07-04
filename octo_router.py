@@ -247,22 +247,13 @@ class CommandHandler:
             self.injector.inject('/clear', target_agent)
             self.notifier.notify(msg.source, 'custom', {'content': f'🧹 已清除 <b>[{target_agent}]</b> 的畫面與上下文'})
             return True
-        elif cmd_content == '/resume_latest' or cmd_content == '/resume':
+        elif cmd_content == '/resume_latest':
             if not check_cooldown(target_agent, 'resume_latest'):
                 self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> 操作冷卻中，請稍後再試。'})
                 return True
             # 🚀 Enter 鍵物理減肥：僅調用 inject，不再手動補發 Enter，防止 Loop
             self.injector.inject('/resume', target_agent)
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'Escape'], check=False)
-            
-            # 統一防呆清除機制 (確保 /resume 後無條件解除鎖定)
-            agent_dir = os.path.join(AGENT_HOME_BASE, target_agent)
-            for f_name in ['.rotation_flag', '.fix_flag']:
-                f_path = os.path.join(agent_dir, 'octo_cyberbrain', f_name)
-                if os.path.exists(f_path):
-                    try: os.remove(f_path)
-                    except: pass
-                    
             self.notifier.notify(msg.source, 'custom', {'content': f'🧠 已嘗試恢復 <b>[{target_agent}]</b> 最近一次對話'})
             return True
         elif cmd_content == '/sys_refresh':
