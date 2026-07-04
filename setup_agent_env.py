@@ -574,9 +574,13 @@ def main():
     for agent in target_agents:
         agent_dir = os.path.join(AGENT_HOME_BASE, agent['name'])
         flag_file = os.path.join(agent_dir, 'octo_cyberbrain', '.rotation_flag')
+        fix_flag = os.path.join(agent_dir, 'octo_cyberbrain', '.fix_flag')
         pending_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_user.txt')
         if os.path.exists(flag_file):
             try: os.remove(flag_file)
+            except: pass
+        if os.path.exists(fix_flag):
+            try: os.remove(fix_flag)
             except: pass
         if os.path.exists(pending_file):
             try: os.remove(pending_file)
