@@ -247,22 +247,13 @@ class CommandHandler:
             self.injector.inject('/clear', target_agent)
             self.notifier.notify(msg.source, 'custom', {'content': f'🧹 Cleared screen and context for <b>[{target_agent}]</b>'})
             return True
-        elif cmd_content == '/resume_latest' or cmd_content == '/resume':
+        elif cmd_content == '/resume_latest':
             if not check_cooldown(target_agent, 'resume_latest'):
                 self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> Operation cooling down, please try again later.'})
                 return True
             # 🚀 Enter key physical optimization: only call inject, no manual Enter supplement to prevent Loop
             self.injector.inject('/resume', target_agent)
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'Escape'], check=False)
-            
-            # Unified Fail-Safe Clearance
-            agent_dir = os.path.join(AGENT_HOME_BASE, target_agent)
-            for f_name in ['.rotation_flag', '.fix_flag']:
-                f_path = os.path.join(agent_dir, 'octo_cyberbrain', f_name)
-                if os.path.exists(f_path):
-                    try: os.remove(f_path)
-                    except: pass
-                    
             self.notifier.notify(msg.source, 'custom', {'content': f'🧠 Attempted to resume <b>[{target_agent}]</b> latest conversation'})
             return True
         elif cmd_content == '/sys_refresh':
