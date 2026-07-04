@@ -476,6 +476,15 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', '\x1b[201~']))
         time.sleep(0.5)
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
+        
+        # Unified Fail-Safe Clearance
+        agent_dir = os.path.join(AGENT_HOME_BASE, name)
+        for f_name in ['.rotation_flag', '.fix_flag']:
+            f_path = os.path.join(agent_dir, 'octo_cyberbrain', f_name)
+            if os.path.exists(f_path):
+                try: os.remove(f_path)
+                except: pass
+                
         time.sleep(3)
 
         if engine == 'gemini':
@@ -573,15 +582,7 @@ def main():
     # 5. 清理注入殘留鎖
     for agent in target_agents:
         agent_dir = os.path.join(AGENT_HOME_BASE, agent['name'])
-        flag_file = os.path.join(agent_dir, 'octo_cyberbrain', '.rotation_flag')
-        fix_flag = os.path.join(agent_dir, 'octo_cyberbrain', '.fix_flag')
         pending_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_user.txt')
-        if os.path.exists(flag_file):
-            try: os.remove(flag_file)
-            except: pass
-        if os.path.exists(fix_flag):
-            try: os.remove(fix_flag)
-            except: pass
         if os.path.exists(pending_file):
             try: os.remove(pending_file)
             except: pass
