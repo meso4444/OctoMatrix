@@ -103,7 +103,7 @@ def trigger_inactivity_greeting(agent_name):
     
     inject_url = f"http://{router_host}:{router_port}/inject"
     payload = {
-        "source": "reaper",
+        "source": "reaper_idle",
         "user_id": "system",
         "content": f"{SYS_PREFIX} 看看幾點了, 執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖，接著執行 python3 toolbox/matrix_notifier.py '{{向 {config.MATRIX_USERNAME} 問候近況}}'",
         "metadata": {
