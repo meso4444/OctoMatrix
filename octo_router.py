@@ -474,7 +474,7 @@ class CommandHandler:
                     if os.path.exists(pending_user_file) and os.path.getsize(pending_user_file) > 0:
                         f.write("\n\n")
                     f.write(content) # 只存純淨的用戶訊息
-                if msg.source != 'awake':
+                if msg.source not in ['awake', 'reaper_idle']:
                     self.notifier.notify(msg.source, 'custom', {'content': f'🐚 <b>{target_agent}</b> 正在喚醒深海回音，靜靜聆聽……'})
                     sleepy_path = os.path.join(agent_dir, 'avatar/emojis/sleepy.png')
                     if os.path.exists(sleepy_path):
@@ -483,8 +483,8 @@ class CommandHandler:
             except Exception as e:
                 logger.error(f"❌ [Router] 寫入暫存檔失敗: {e}")
 
-        success = self.injector.inject(final_message, target_agent, interrupt_first=(msg.source not in ['awake', 'system_flush']))
-        if success and msg.source != 'awake':
+        success = self.injector.inject(final_message, target_agent, interrupt_first=(msg.source not in ['awake', 'reaper_idle', 'system_flush']))
+        if success and msg.source not in ['awake', 'reaper_idle']:
             self.notifier.notify(msg.source, 'matrix_connected', {'timestamp': timestamp, 'agent_name': target_agent})
             
             # 自動發送 Agent Avatar 貼圖
