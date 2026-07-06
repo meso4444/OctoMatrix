@@ -34,3 +34,4 @@
 # 【技能包】 僅留存於本地共用空間
 /skills/*.tar.gz
 /skills/*.zip
+.venv/
