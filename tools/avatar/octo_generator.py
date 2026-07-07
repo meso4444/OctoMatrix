@@ -29,11 +29,6 @@ CLI (mirrors v1 exactly):
 
 import os, sys, io, zipfile, argparse, requests
 
-# ── path bootstrap ────────────────────────────────────────────────────────────
-_TOOLBOX_DIR = os.path.dirname(os.path.abspath(__file__))
-_SOLAS_HOME  = os.path.dirname(_TOOLBOX_DIR)
-_PROJECT_DIR = os.path.join(_SOLAS_HOME, 'project')
-sys.path.insert(0, _PROJECT_DIR)
 
 from octo_anim_v5_gen import (
     generate_sticker as _anim_gen,
