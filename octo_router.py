@@ -336,31 +336,8 @@ class CommandHandler:
                 "expires_at": datetime.now() + timedelta(minutes=5)
             }
             
-            prompt = f"""[System Security Authorization Command: Avatar Renewal Procedure]
-The user has officially initiated a `/avatar_renew` request.
-Authorization Unlock Key: --token {token}
-User Specific Requirements: {requirement}
-
-Before executing any actions, you MUST strictly adhere to the following [Security and Protection SOP]:
-
-[Step 1 - Requirement Compliance Validation]:
-Carefully review the user's requested character image or accessory requirements. Compare them with the capabilities defined in `AGENT_AVATAR_GUIDE.md` and supported by `octo_generator.py`.
-- If the user requests an unsupported art style, accessory, or any element violating the OctoMatrix character standards (e.g., realistic human photos, gore, or custom gear not supported by the generator), enter [Step 1-Reject].
-- If the requirements are fully compliant, proceed to [Step 2].
-
-[Step 1-Reject - Polite Rejection and Alternatives]:
-Clearly state to the user that the current generation system cannot support the request (maintaining your character personality) and proactively suggest 1 or 2 compliant alternatives supported by the system. Do NOT run any generation commands until the user agrees to an alternative.
-
-[Step 2 - Strict Script Execution Policy]:
-Once the requirement is confirmed, begin generating.
-⚠️ [CRITICAL WARNING]:
-1. You can ONLY and MUST use the native `toolbox/octo_generator.py` script to generate.
-2. Writing or using custom Python/Shell scripts to generate images is STRICTLY PROHIBITED.
-3. Modifying, copying (cloning), or overwriting `octo_generator.py` is STRICTLY PROHIBITED.
-4. When executing the script, please refer to `knowledge/AGENT_AVATAR_GUIDE.md` for the command example to configure all parameters, and make sure to append the authorization key `--token {token}`.
-
-[Step 3 - Reporting Results]:
-Once generation and automatic upload package are complete, report the result to the user and present the newly generated emoji sticker."""
+            import config
+            prompt = config.AVATAR_RENEW_PROMPT.format(token=token, requirement=requirement)
 
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '\x1b[200~'])
             subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', '-l', '--', prompt], check=False)
@@ -375,17 +352,8 @@ Once generation and automatic upload package are complete, report the result to 
                 target = parts[1]
                 res = subprocess.run(['tmux', 'capture-pane', '-t', f'{TMUX_SESSION_NAME}:{target}', '-p'], capture_output=True, text=True)
                 output = "\n".join(res.stdout.split('\n')[-50:])
-                prompt = f"""{SYS_PREFIX}
-Execute the following [SOP]:
-[Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
-[Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If a task, proceed to Step2; if a greeting, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate greeting response}}'`, and do not execute subsequent Steps.
-[Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate initial preview}}'` to preview the task's initial direction.
-[Step 3 - Clarify]: If task is clear, proceed to Step4; if unclear, proactively dive into keywords. If clear history exists, proceed to Step4, otherwise suspend task and execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate clarification question}}'`, and do not execute subsequent Steps.
-[Step 4 - Execute]: Start task and write md. For large tasks, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate progress update}}'` midway, then proceed to Step5 after task completion.
-[Step 5 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
-[Step 6 - Report]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate task completion report}}'`. Only use --file to send related report documents to {MATRIX_USERNAME} if the report content exceeds 1000 words, otherwise report directly with a complete message.
-[Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
-[Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST.
+                import config
+                prompt = f"""{config.USER_MESSAGE_SOP}
 
 Message from {MATRIX_USERNAME}:
 以下是目前 {target} 的狀態，請分析...
@@ -442,17 +410,8 @@ Message from {MATRIX_USERNAME}:
         # 🛡️ Inject standard SOP (Matrix message processing flow)
         # ==========================================
         if msg.source in ['telegram', 'discord', 'slack', 'awake'] and 'Execute the following [SOP]:' not in content:
-            sop = f"""{SYS_PREFIX}
-Execute the following [SOP]:
-[Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
-[Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If a task, proceed to Step2; if a greeting, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate greeting response}}'`, and do not execute subsequent Steps.
-[Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate initial preview}}'` to preview the task's initial direction.
-[Step 3 - Clarify]: If task is clear, proceed to Step4; if unclear, proactively dive into keywords. If clear history exists, proceed to Step4, otherwise suspend task and execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate clarification question}}'`, and do not execute subsequent Steps.
-[Step 4 - Execute]: Start task and write md. For large tasks, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate progress update}}'` midway, then proceed to Step5 after task completion.
-[Step 5 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
-[Step 6 - Report]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate task completion report}}'`. Only use --file to send related report documents to {MATRIX_USERNAME} if the report content exceeds 1000 words, otherwise report directly with a complete message.
-[Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
-[Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST.
+            import config
+            sop = f"""{config.USER_MESSAGE_SOP}
 
 Message from {MATRIX_USERNAME}:
 {content}
@@ -543,31 +502,8 @@ Message from {MATRIX_USERNAME}:
         self.notifier.notify(msg.source, 'custom', {'content': status_text})
 
     def _send_help(self, msg: MCMessage):
-        help_text = "📖 <b>OctoMatrix System Complete Feature Guide</b>\n\n"
-        help_text += f"<b>🎯 Currently Focused Agent:</b> <code>{CURRENT_AGENT}</code>\n\n"
-        help_text += "───────────────────────────────\n\n"
-        help_text += "<b>🤖 Conversation and Basic Operations</b>\n"
-        help_text += "• <b>Direct Send</b>: Messages will be sent to the active Agent marked with ⭐.\n"
-        help_text += "• <b>Send Image</b>: Automatically perform multimodal analysis (Telegram/Discord only).\n"
-        help_text += "• <code>/switch [name]</code>: Switch the current active Agent for conversation.\n"
-        help_text += "• <code>/menu</code>: Pop up physical management key menu (recommended for mobile).\n\n"
-        help_text += "<b>🔍 Monitoring and Diagnostics</b>\n"
-        help_text += "• <code>/status</code>: View all Agent survival, awake content and channel connectivity.\n"
-        help_text += "• <code>/capture [name]</code>: Capture the last 50 lines of a specific window to check for runtime errors.\n"
-        help_text += "• <code>/inspect [name]</code>: Assign the current AI to check another AI's status and error messages.\n\n"
-        help_text += "<b>🛠️ Control and Fix</b>\n"
-        help_text += "• <code>/interrupt</code>: Send Ctrl+C to the active Agent to forcefully interrupt a frozen process.\n"
-        help_text += "• <code>/clear</code>: Clear the window display and the Agent's current context.\n"
-        help_text += "• <code>/resume_latest</code>: Attempt to restore the last conversation record from CLI local cache.\n"
-        help_text += "• <code>/fix [name]</code>: Force restart and attempt to recover the conversation. Use this if the AI is stuck or unresponsive.\n"
-        help_text += "• <code>/sys_refresh</code>: Check and update the Agent's system protocol and specification.\n"
-        help_text += "• <code>/avatar_renew {requirements}</code>: Redefine and reconstruct the Agent's visual avatar and persona.\n"
-        help_text += "• <code>/avatar_renew list</code>: View the Avatar backup history list (with preview images).\n"
-        help_text += "• <code>/avatar_renew restore {index|filename}</code>: Restore to a specific historical version.\n\n"
-        help_text += "<b>⏰ Automated Awakening</b>\n"
-        help_text += "• Directly request through conversation \"ask Agent to create awake tasks\" to implement scheduled awake tasks. Monitor existing awake tasks through <code>/status</code>.\n\n"
-        help_text += "───────────────────────────────\n"
-        help_text += "💡 <b>Tips</b>: Use slash <code>/</code> command for Telegram and Discord; use exclamation mark <code>!</code> for Slack."
+        import config
+        help_text = config.get_help_text(CURRENT_AGENT)
         self.notifier.notify(msg.source, 'custom', {'content': help_text})
 
     def _send_menu(self, msg: MCMessage):
