@@ -63,7 +63,7 @@ def notify_agent(agent_name):
     payload = {
         "source": "reaper",
         "user_id": "system",
-        "content": f"{SYS_PREFIX} If there is an ongoing task, please pause it and save the current task status to octo_cyberbrain/task_memo.txt. Then, please use parameter mode to execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"semantic outline\" --keywords \"keywords\" --paths \"paths\"` to update GHOST status, and execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood, then execute `python3 toolbox/matrix_notifier.py 'Scattered thought bubbles are merging into the focused sea... {{A reassuring greeting to ask {MATRIX_USERNAME} to wait a moment}}'`",
+        "content": f"{SYS_PREFIX} If there is an ongoing task, please pause it and save the current task status to octo_cyberbrain/task_memo.txt. Then, please use parameter mode to execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"semantic outline\" --keywords \"keywords\" --paths \"paths\"` to update GHOST status, and execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.webm` to send a sticker matching your current mood, then execute `python3 toolbox/matrix_notifier.py 'Scattered thought bubbles are merging into the focused sea... {{A reassuring greeting to ask {MATRIX_USERNAME} to wait a moment}}'`",
         "metadata": {
             "target_agent": agent_name
         }
@@ -105,7 +105,7 @@ def trigger_inactivity_greeting(agent_name):
     payload = {
         "source": "reaper",
         "user_id": "system",
-        "content": f"{SYS_PREFIX} Look what time it is, execute python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png to send a sticker matching your current mood, and then execute python3 toolbox/matrix_notifier.py '{{ask {config.MATRIX_USERNAME} about their recent status}}'",
+        "content": f"{SYS_PREFIX} Look what time it is, execute python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.webm to send a sticker matching your current mood, and then execute python3 toolbox/matrix_notifier.py '{{ask {config.MATRIX_USERNAME} about their recent status}}'",
         "metadata": {
             "target_agent": agent_name
         }

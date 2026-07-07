@@ -71,7 +71,7 @@ python3 toolbox/matrix_notifier.py --file audio /tmp/notification.wav 'Voice con
 
 ```bash
 ## Send independent emotion sticker
-python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.png
+python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/happy.webm
 
 ```
 ---

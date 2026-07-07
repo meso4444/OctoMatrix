@@ -16,7 +16,7 @@ Agents should design based on personal preferences without constraints. Suggeste
 
 **One-Click Generate Base Image and Emoji Pack**
 - No need to manually specify `--name` or call `--mood` iteratively.
-- Directly run the one-click command, and the script will automatically generate `base.png` and all 12 fixed emoji PNGs in memory, bundle them into a ZIP, and send it to the Router API for overwrite update.
+- Directly run the one-click command, and the script will automatically generate `base.webm` and all 12 fixed emoji WebMs in memory, bundle them into a ZIP, and send it to the Router API for overwrite update.
 ```bash
 # One-click generation command example:
 python3 toolbox/octo_generator.py --color 41 128 185 --headgear grad --eyewear monocle --item_r magnifier --blush_style oval --token <YourToken>
