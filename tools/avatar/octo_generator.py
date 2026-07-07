@@ -147,7 +147,8 @@ def generate_all_avatars(
     agent_name, agent_home = _get_agent_info_cwd()
     avatar_dir      = os.path.join(agent_home, 'avatar')
     base_webm_path  = os.path.join(avatar_dir, 'base.webm')
-    is_first_blood  = not os.path.exists(base_webm_path)
+    base_png_path   = os.path.join(avatar_dir, 'base.png')
+    is_first_blood  = not (os.path.exists(base_webm_path) or os.path.exists(base_png_path))
 
     archive_files = {}
 
