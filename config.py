@@ -315,16 +315,3 @@ def get_help_text(CURRENT_AGENT):
     help_text += "───────────────────────────────\n"
     help_text += "💡 <b>Tip</b>: Use slash <code>/</code> for Telegram and Discord; use exclamation mark <code>!</code> for Slack."
     return help_text
-
-
-AGENT_INTERCOM_SOP = f"""{SYS_PREFIX}
-Execute the following [SOP]:
-[Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
-[Step 1 - Identify]: Identify whether Source Agent's message is an incomplete collaboration task. If so, proceed to Step2; if not, execute `python3 toolbox/matrix_notifier.py '{{Report the completion status of the collaboration task to {{MATRIX_USERNAME}}}}'` and do not execute subsequent Steps.
-[Step 2 - Clarify]: If the collaboration task is clear, execute `python3 toolbox/matrix_notifier.py '{{Greet {{MATRIX_USERNAME}} and autonomously think of an appropriate initial preview}}'` to preview the collaboration direction, and proceed to Step3; if unclear, suspend the task and execute `python3 toolbox/agent_intercom.py --target "Source Agent 的名字" --message "{{Your message...}}"` to ask Source Agent for direction, and do not execute subsequent Steps.
-[Step 3 - Execute]: Start collaboration task and write md. If the task needs staged handovers or completion verification with Source Agent, execute `python3 toolbox/agent_intercom.py --target "Source Agent 的名字" --message "{{Your message...}}"` to communicate with Agent, and do not execute subsequent Steps; if the task is confirmed complete or failed, proceed to Step4.
-[Step 4 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
-[Step 5 - Report User]: Execute `python3 toolbox/matrix_notifier.py '{{Report successful handover or failure to {{MATRIX_USERNAME}}}}'`.
-[Step 6 - Report Agent]: Execute `python3 toolbox/agent_intercom.py --target "Source Agent 的名字" --message "{{Explain completion or failure status, and note this message does not require Agent reply to avoid infinite loops. If in doubt ask {{MATRIX_USERNAME}}}}"`
-[Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
-[Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST."""
