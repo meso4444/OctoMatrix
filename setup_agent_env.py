@@ -114,15 +114,15 @@ def setup_agent_dirs(agent_config, script_dir):
             safe_copy(src_file, dst_file, script_dir)
 
     # 預先建立核心規範文件，確保由系統帳戶持有並設定 666 權限
-    core_rule_files = ['GEMINI.md', 'CLAUDE.md', 'AGENT.md']
-    for rule_file in core_rule_files:
-        touch_path = os.path.join(home, rule_file)
-        if not os.path.exists(touch_path):
-            try:
-                with open(touch_path, 'a'): pass
-            except Exception: pass
-        if os.path.exists(touch_path):
-            subprocess.run(['chmod', '666', touch_path], check=False)
+    engine = agent_config.get('engine', 'AGENT').upper()
+    rule_file = f"{engine}.md"
+    touch_path = os.path.join(home, rule_file)
+    if not os.path.exists(touch_path):
+        try:
+            with open(touch_path, 'a'): pass
+        except Exception: pass
+    if os.path.exists(touch_path):
+        subprocess.run(['chmod', '666', touch_path], check=False)
 
     knowledge_files = [
         ('tools/avatar/AGENT_AVATAR_GUIDE.md', 'AGENT_AVATAR_GUIDE.md'),
