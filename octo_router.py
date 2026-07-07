@@ -410,8 +410,8 @@ Message from {MATRIX_USERNAME}:
         # 🛡️ Inject standard SOP (Matrix message processing flow)
         # ==========================================
         if msg.source in ['telegram', 'discord', 'slack', 'awake'] and 'Execute the following [SOP]:' not in content:
-            import config
-            sop = f"""{config.USER_MESSAGE_SOP}
+            from config import USER_MESSAGE_SOP
+            sop = f"""{USER_MESSAGE_SOP}
 
 Message from {MATRIX_USERNAME}:
 {content}
@@ -724,12 +724,16 @@ def inter_agent_message():
     flag_file = os.path.join(agent_dir, 'octo_cyberbrain', '.rotation_flag')
     pending_agent_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_agent.txt')
 
+    # Encapsulate AGENT_INTERCOM_SOP (combine sender and content into full System Prompt)
+    from config import get_agent_intercom_sop
+    formatted_message = get_agent_intercom_sop(source, message)
+
     if os.path.exists(flag_file):
         try:
             with open(pending_agent_file, 'a', encoding='utf-8') as f:
                 if os.path.exists(pending_agent_file) and os.path.getsize(pending_agent_file) > 0:
                     f.write("\n\n")
-                f.write(message)
+                f.write(formatted_message)
             logger.info(f"👻 [Inter-Agent] {target_agent} is reorganizing, message queued to pending_agent.txt")
             return jsonify({"status": "success", "message": "queued in pending_agent.txt"}), 200
         except Exception as e:
@@ -737,7 +741,7 @@ def inter_agent_message():
 
     # Call AtomicInjector for physical keystroke injection
     # Force interrupt_first=False, retaining User's absolute interrupt privilege, Agent messages can only queue
-    success = handler.injector.inject(message, target_agent, interrupt_first=False)
+    success = handler.injector.inject(formatted_message, target_agent, interrupt_first=False)
     
     return jsonify({"status": "success" if success else "failed"}), 200
 

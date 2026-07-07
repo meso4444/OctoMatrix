@@ -315,3 +315,22 @@ def get_help_text(CURRENT_AGENT):
     help_text += "───────────────────────────────\n"
     help_text += "💡 <b>Tip</b>: Use slash <code>/</code> for Telegram and Discord; use exclamation mark <code>!</code> for Slack."
     return help_text
+
+
+def get_agent_intercom_sop(source_agent, message):
+    return f"""{SYS_PREFIX}
+Execute the following [SOP]:
+[Step 0 - Empathize]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching the current mood.
+[Step 1 - Identify]: Identify if the Source Agent's message is an unfinished collaboration task. If it is an unfinished collaboration task, proceed to Step2; if not, execute `python3 toolbox/matrix_notifier.py '{{Report the completion status of the collaboration task to {MATRIX_USERNAME}}}'`, and do not execute subsequent Steps.
+[Step 2 - Clarify]: If the collaboration task is clear, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate initial preview}}'` to preview the initial direction of the collaboration, and proceed to Step3; if unclear, suspend the task and execute `python3 toolbox/agent_intercom.py --target "{source_agent}" --message "{{Your message...}}"` to ask the Source Agent for specific directions, and do not execute subsequent Steps.
+[Step 3 - Execute]: Officially start the collaboration task and write md. If the task still requires a phased handover or completion verification with the Source Agent, execute `python3 toolbox/agent_intercom.py --target "{source_agent}" --message "{{Your message...}}"` for inter-agent handover, and do not execute subsequent Steps; if the collaboration task is confirmed completed or failed, proceed to Step4.
+[Step 4 - Empathize]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching the current mood.
+[Step 5 - Report to User]: Execute `python3 toolbox/matrix_notifier.py '{{Report successful transfer or failure exception to {MATRIX_USERNAME}}}'`.
+[Step 6 - Report to Agent]: Execute `python3 toolbox/agent_intercom.py --target "{source_agent}" --message "{{Explain the completed or failed status, and note that this message does not require an Agent communication reply to avoid an infinite loop. If in doubt, ask {MATRIX_USERNAME}}}"`
+[Step 7 - Absorb]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to absorb your GHOST and memory.
+[Step 8 - Engrave]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Semantic Outline" --keywords "keyword1,keyword2" --paths "/file/path1,/file/path2"` to engrave this task's status into GHOST.
+
+Message from {source_agent}:
+{message}
+
+{SYS_PREFIX} Please strictly follow the [SOP] above to reply."""
