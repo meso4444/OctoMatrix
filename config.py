@@ -277,12 +277,12 @@ AVATAR_RENEW_PROMPT = """【系統安全授權指令：Avatar 形象更新程序
 
 USER_MESSAGE_SOP = f"""{SYS_PREFIX}
 執行以下 [SOP]:
-[Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖。
+[Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.webm 發符合當下心情的貼圖。
 [Step 1 - 辨識]：辨識 {MATRIX_USERNAME} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，並自主思考合適的問候回覆}}' 回應，並且不執行後續Step。
 [Step 2 - 預告]：執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，並自主思考合適的初步預告}}' 預告任務進行初步方向。
 [Step 3 - 梳理]：若任務指示明確進入Step4; 若不明確，深潛shell紀錄後若有歷史脈絡進入Step4，否則先中止並執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，自主思考合適的詢問或澄清}}' 詢問具體方向，不執行後續Step。
 [Step 4 - 執行]：正式開始執行任務並撰寫md。小型任務完成後進入Step5; 大型任務中途執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，自主思考合適的進度回報}}' 進行中間進度回報，任務完成後再進入Step5。
-[Step 5 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖。
+[Step 5 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.webm 發符合當下心情的貼圖。
 [Step 6 - 回報]：執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，自主思考合適的任務完成報告}}' 彙總回報，只有當回報內容大於1000字時才搭配使用 --file 發送相關報告文檔給 {MATRIX_USERNAME}，否則直接以完整訊息彙報。
 [Step 7 - 收攝]：執行 python3 octo_cyberbrain/octo_ghost_reader.py --level current 收攝你的 GHOST 與記憶。
 [Step 8 - 刻印]：執行 python3 octo_cyberbrain/octo_ghost_updater.py --outline "語義大綱" --keywords "關鍵字1,關鍵字2" --paths "/檔案路徑1,/檔案路徑2" 將本次任務狀態刻印到GHOST。"""
@@ -319,11 +319,11 @@ def get_help_text(CURRENT_AGENT):
 def get_agent_intercom_sop(source_agent, message):
     return f"""{SYS_PREFIX}
 執行以下 [SOP]:
-[Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖。
+[Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.webm 發符合當下心情的貼圖。
 [Step 1 - 辨識]：辨識 Source Agent 的訊息是否為未完成協作任務，若為未完成協作任務則進入Step2; 若非則執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}報告協作任務的完成狀態}}'，並且不執行後續Step。
 [Step 2 - 梳理]：若協作任務明確則執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，並自主思考合適的初步預告}}' 預告協作進行的初步方向，並且進入Step3; 若不明確，則先中止任務並執行 python3 toolbox/agent_intercom.py --target "{source_agent}" --message "{{你的訊息...}}" 向 Source Agent 詢問具體方向，不執行後續Step。
 [Step 3 - 執行]：正式開始執行協作任務並撰寫md。若協作任務仍需要與 Source Agent 進行階段性交接或者完工驗證，則執行 python3 toolbox/agent_intercom.py --target "{source_agent}" --message "{{你的訊息...}}" 進行 Agent 間通訊交接，且不執行後續Step; 若協作任務已確認完工或失敗則進入Step4。
-[Step 4 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖。
+[Step 4 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.webm 發符合當下心情的貼圖。
 [Step 5 - 回報User]：執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}回報傳遞成功通知或失敗異常}}'。
 [Step 6 - 回報Agent]：執行 python3 toolbox/agent_intercom.py --target "{source_agent}" --message "{{說明完工或失敗狀態，並且註明此訊息不需再進行Agent通訊回覆避免進入無限迴圈，若有疑義則詢問{MATRIX_USERNAME}}}"
 [Step 7 - 收攝]：執行 python3 octo_cyberbrain/octo_ghost_reader.py --level current 收攝你的 GHOST 與記憶。
