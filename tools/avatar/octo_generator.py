@@ -52,13 +52,14 @@ def generate_octopus_image(body_rgb=(150, 150, 150),
     SILVER = (189, 195, 199, 255); TAN    = (210, 180, 140, 255); ORANGE = (255, 127,  80, 255)
 
     body_color = (*body_rgb, 255)
+    _is_gold = has_gold or globals().get('CURRENT_HAS_GOLD', False)
     for y in range(size):
         for x in range(size):
-            if (x - 32)**2 + (y - 32)**2 < 14**2:
+            dist_sq = (x - 32)**2 + (y - 32)**2
+            if dist_sq < 14**2:
                 px[x, y] = body_color
-
-    if has_gold or globals().get('CURRENT_HAS_GOLD', False):
-        draw.arc([18, 18, 46, 46], start=180, end=360, fill=GOLD, width=2)
+                if _is_gold and y < 26 and dist_sq > 12**2:
+                    px[x, y] = GOLD
 
 
     lx, ly = 24, 30; rx, ry = 40, 30
