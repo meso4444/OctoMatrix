@@ -225,7 +225,9 @@ class TelegramSender:
         try:
             # 貼圖特化處理：自動轉換為 WebP 且強制不帶 caption
             if file_type == 'sticker':
-                if not file_path.lower().endswith('.webp'):
+                if file_path.lower().endswith('.webm'):
+                    pass # WebM 原生支援
+                elif not file_path.lower().endswith('.webp'):
                     try:
                         from PIL import Image
                         target_path = file_path + ".webp"
@@ -233,6 +235,7 @@ class TelegramSender:
                         is_temp_webp = True
                     except Exception as e:
                         logger.warning(f"[Notifier] 貼圖轉換失敗: {e}")
+                        target_path = file_path # 轉換失敗時回滾
                 caption = "" # 貼圖強制不帶文字
 
             method_map = {'photo': 'sendPhoto', 'video': 'sendVideo', 'audio': 'sendAudio', 'sticker': 'sendSticker'}
@@ -280,13 +283,16 @@ class DiscordSender:
         target_path = file_path
         try:
             if file_type == 'sticker':
-                if not file_path.lower().endswith('.webp'):
+                if file_path.lower().endswith('.webm'):
+                    pass # WebM 原生支援
+                elif not file_path.lower().endswith('.webp'):
                     try:
                         from PIL import Image
                         target_path = file_path + ".webp"
                         Image.open(file_path).save(target_path, "WEBP")
                         is_temp_webp = True
-                    except: pass
+                    except:
+                        target_path = file_path
                 caption = "" # 貼圖模式不帶文字
 
             with open(target_path, 'rb') as f:
@@ -328,13 +334,16 @@ class SlackSender:
         target_path = file_path
         try:
             if file_type == 'sticker':
-                if not file_path.lower().endswith('.webp'):
+                if file_path.lower().endswith('.webm'):
+                    pass # WebM 原生支援
+                elif not file_path.lower().endswith('.webp'):
                     try:
                         from PIL import Image
                         target_path = file_path + ".webp"
                         Image.open(file_path).save(target_path, "WEBP")
                         is_temp_webp = True
-                    except: pass
+                    except:
+                        target_path = file_path
                 caption = "" # 貼圖模式不帶文字
 
             # 使用 files_upload_v2 自動處理全新的三階段上傳流程 (2025+ 規範)
