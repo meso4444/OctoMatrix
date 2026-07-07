@@ -145,10 +145,6 @@ def generate_all_avatars(
       - Has avatar: POST ZIP to router /api/internal/avatar/update with token
     """
     agent_name, agent_home = _get_agent_info_cwd()
-    avatar_dir      = os.path.join(agent_home, 'avatar')
-    base_webm_path  = os.path.join(avatar_dir, 'base.webm')
-    base_png_path   = os.path.join(avatar_dir, 'base.png')
-    is_first_blood  = not (os.path.exists(base_webm_path) or os.path.exists(base_png_path))
 
     archive_files = {}
 
@@ -175,26 +171,20 @@ def generate_all_avatars(
             z.writestr(arcname, data)
     zip_bytes = zip_io.getvalue()
 
-    if is_first_blood:
-        os.makedirs(avatar_dir, exist_ok=True)
-        with zipfile.ZipFile(io.BytesIO(zip_bytes)) as z:
-            z.extractall(avatar_dir)
-        print('✨ [Generator v2] First-blood state (no avatar). Generated and extracted ZIP locally.')
-    else:
-        router_port = _get_router_port(agent_home)
-        url   = f'http://127.0.0.1:{router_port}/api/internal/avatar/update'
-        files = {'archive': ('avatar.zip', zip_bytes, 'application/zip')}
-        data  = {'agent_name': agent_name, 'token': token}
-        try:
-            resp = requests.post(url, files=files, data=data, timeout=30)
-            if resp.status_code == 200:
-                print('✅ [Generator v2] Avatar updated and synced successfully.')
-            else:
-                print(f'❌ [Generator v2] Router rejected update: {resp.status_code} - {resp.text}')
-                sys.exit(1)
-        except Exception as e:
-            print(f'❌ [Generator v2] Failed to connect to Router: {e}')
+    router_port = _get_router_port(agent_home)
+    url   = f'http://127.0.0.1:{router_port}/api/internal/avatar/update'
+    files = {'archive': ('avatar.zip', zip_bytes, 'application/zip')}
+    data  = {'agent_name': agent_name, 'token': token}
+    try:
+        resp = requests.post(url, files=files, data=data, timeout=30)
+        if resp.status_code == 200:
+            print('✅ [Generator v2] Avatar updated and synced successfully.')
+        else:
+            print(f'❌ [Generator v2] Router rejected update: {resp.status_code} - {resp.text}')
             sys.exit(1)
+    except Exception as e:
+        print(f'❌ [Generator v2] Failed to connect to Router: {e}')
+        sys.exit(1)
 
 
 # ── CLI (mirrors v1 interface) ────────────────────────────────────────────────
