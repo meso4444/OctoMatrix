@@ -278,12 +278,12 @@ Once generation and automatic upload package are complete, report the result to 
 
 USER_MESSAGE_SOP = f"""{SYS_PREFIX}
 Execute the following [SOP]:
-[Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
+[Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.webm` to send a sticker matching your current mood.
 [Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If a task, proceed to Step2; if a greeting, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate greeting response}}'`, and do not execute subsequent Steps.
 [Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate initial preview}}'` to preview the task's initial direction.
 [Step 3 - Clarify]: If task is clear, proceed to Step4; if unclear, proactively dive into keywords. If clear history exists, proceed to Step4, otherwise suspend task and execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate clarification question}}'`, and do not execute subsequent Steps.
 [Step 4 - Execute]: Start task and write md. For large tasks, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate progress update}}'` midway, then proceed to Step5 after task completion.
-[Step 5 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
+[Step 5 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.webm` to send a sticker matching your current mood.
 [Step 6 - Report]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate task completion report}}'`. Only use --file to send related report documents to {MATRIX_USERNAME} if the report content exceeds 1000 words, otherwise report directly with a complete message.
 [Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
 [Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST."""
@@ -320,11 +320,11 @@ def get_help_text(CURRENT_AGENT):
 def get_agent_intercom_sop(source_agent, message):
     return f"""{SYS_PREFIX}
 Execute the following [SOP]:
-[Step 0 - Empathize]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching the current mood.
+[Step 0 - Empathize]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.webm` to send a sticker matching the current mood.
 [Step 1 - Identify]: Identify if the Source Agent's message is an unfinished collaboration task. If it is an unfinished collaboration task, proceed to Step2; if not, execute `python3 toolbox/matrix_notifier.py '{{Report the completion status of the collaboration task to {MATRIX_USERNAME}}}'`, and do not execute subsequent Steps.
 [Step 2 - Clarify]: If the collaboration task is clear, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate initial preview}}'` to preview the initial direction of the collaboration, and proceed to Step3; if unclear, suspend the task and execute `python3 toolbox/agent_intercom.py --target "{source_agent}" --message "{{Your message...}}"` to ask the Source Agent for specific directions, and do not execute subsequent Steps.
 [Step 3 - Execute]: Officially start the collaboration task and write md. If the task still requires a phased handover or completion verification with the Source Agent, execute `python3 toolbox/agent_intercom.py --target "{source_agent}" --message "{{Your message...}}"` for inter-agent handover, and do not execute subsequent Steps; if the collaboration task is confirmed completed or failed, proceed to Step4.
-[Step 4 - Empathize]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching the current mood.
+[Step 4 - Empathize]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.webm` to send a sticker matching the current mood.
 [Step 5 - Report to User]: Execute `python3 toolbox/matrix_notifier.py '{{Report successful transfer or failure exception to {MATRIX_USERNAME}}}'`.
 [Step 6 - Report to Agent]: Execute `python3 toolbox/agent_intercom.py --target "{source_agent}" --message "{{Explain the completed or failed status, and note that this message does not require an Agent communication reply to avoid an infinite loop. If in doubt, ask {MATRIX_USERNAME}}}"`
 [Step 7 - Absorb]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to absorb your GHOST and memory.
