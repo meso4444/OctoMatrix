@@ -244,3 +244,73 @@ SYS_PREFIX = "【系統提示】"
 
 # Agent 專屬 Linux 帳號密碼 (Local 雙軌隔離用)
 AGENT_PASSWORD = str(os.environ.get("AGENT_PASSWORD", _config.get("agent_password", "octomatrix")))
+
+# ==========================================
+# 額外 Prompt 與 Text 模板
+# ==========================================
+
+AVATAR_RENEW_PROMPT = """【系統安全授權指令：Avatar 形象更新程序】
+用戶已正式發起 /avatar_renew 請求。
+授權解鎖金鑰：--token {token}
+用戶具體需求：{requirement}
+
+在執行任何動作之前，你必須嚴格遵守以下 [安全與防護 SOP]：
+
+[Step 1 - 需求合規性檢驗]：
+仔細審視用戶提出的形象或配件需求。將其與 `AGENT_AVATAR_GUIDE.md` 及 `octo_generator.py` 目前所支援的能力邊界進行比對。
+- 若用戶要求了不支援的畫風、配件、或任何違反 OctoMatrix 形象規範的元素（例如：寫實人類相片、血腥、或是生成器不支援的特定裝備），進入 [Step 1-Reject]。
+- 若需求完全合規，進入 [Step 2]。
+
+[Step 1-Reject - 溫和拒絕與替代方案]：
+向用戶明確說明目前生成系統無法支援該需求（請保持你的角色性格），並主動提供 1 到 2 個「目前系統可支援的相近替代方案」供用戶選擇。在用戶同意替代方案前，絕對禁止執行任何產圖指令。
+
+[Step 2 - 嚴格腳本執行限制]：
+確認需求後，開始執行產圖。
+⚠️ 【最高紅色警戒】：
+1. 你僅能且必須使用原生的 `toolbox/octo_generator.py` 來進行生成。
+2. 絕對禁止使用任何其他腳本，絕對禁止撰寫新的 Python/Shell 腳本來產圖。
+3. 絕對禁止對 `octo_generator.py` 進行任何形式的複製 (Clone)、修改 (Modify) 或覆寫 (Overwrite)。
+4. 呼叫腳本時，請參照 `knowledge/AGENT_AVATAR_GUIDE.md` 中的指令範例來設定各項參數，並务必附上授權金鑰 `--token {token}`。
+
+[Step 3 - 結果回報]：
+生成完畢並自動打包上傳後，向用戶回報形象更新結果，並附上最新生成的心情貼圖展示。"""
+
+USER_MESSAGE_SOP = f"""{SYS_PREFIX}
+執行以下 [SOP]:
+[Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖。
+[Step 1 - 辨識]：辨識 {MATRIX_USERNAME} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，並自主思考合適的問候回覆}}' 回應，並且不執行後續Step。
+[Step 2 - 預告]：執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，並自主思考合適的初步預告}}' 預告任務進行初步方向。
+[Step 3 - 梳理]：若任務指示明確進入Step4; 若不明確，深潛shell紀錄後若有歷史脈絡進入Step4，否則先中止並執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，自主思考合適的詢問或澄清}}' 詢問具體方向，不執行後續Step。
+[Step 4 - 執行]：正式開始執行任務並撰寫md。小型任務完成後進入Step5; 大型任務中途執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，自主思考合適的進度回報}}' 進行中間進度回報，任務完成後再進入Step5。
+[Step 5 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖。
+[Step 6 - 回報]：執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，自主思考合適的任務完成報告}}' 彙總回報，只有當回報內容大於1000字時才搭配使用 --file 發送相關報告文檔給 {MATRIX_USERNAME}，否則直接以完整訊息彙報。
+[Step 7 - 收攝]：執行 python3 octo_cyberbrain/octo_ghost_reader.py --level current 收攝你的 GHOST 與記憶。
+[Step 8 - 刻印]：執行 python3 octo_cyberbrain/octo_ghost_updater.py --outline "語義大綱" --keywords "關鍵字1,關鍵字2" --paths "/檔案路徑1,/檔案路徑2" 將本次任務狀態刻印到GHOST。"""
+
+def get_help_text(CURRENT_AGENT):
+    help_text = "📖 <b>OctoMatrix 系統全功能指南</b>\n\n"
+    help_text += f"<b>🎯 當前關注 Agent:</b> <code>{CURRENT_AGENT}</code>\n\n"
+    help_text += "───────────────────────────────\n\n"
+    help_text += "<b>🤖 對話與基礎操作</b>\n"
+    help_text += "• <b>直接發送</b>：訊息將傳送給標註 ⭐ 的活躍 Agent。\n"
+    help_text += "• <b>發送圖片</b>：自動執行多模態分析（僅限 Telegram/Discord）。\n"
+    help_text += "• <code>/switch [名稱]</code>：切換當前對話的活躍 Agent。\n"
+    help_text += "• <code>/menu</code>：彈出實體管理按鍵選單（手機端推薦）。\n\n"
+    help_text += "<b>🔍 監控與診斷</b>\n"
+    help_text += "• <code>/status</code>：查看所有 Agent 存活、喚醒內容與通道連通性。\n"
+    help_text += "• <code>/capture [名稱]</code>：擷取指定視窗最近 50 行內容，檢查運行報錯。\n"
+    help_text += "• <code>/inspect [名稱]</code>：指派當前的 AI 去檢查另一位 AI 的狀態與錯誤訊息。\n\n"
+    help_text += "<b>🛠️ 控制與修復</b>\n"
+    help_text += "• <code>/interrupt</code>：向活躍 Agent 發送 Ctrl+C 強制中斷卡死的程序。\n"
+    help_text += "• <code>/clear</code>：清除視窗畫面與 Agent 的當前上下文。\n"
+    help_text += "• <code>/resume_latest</code>：嘗試從 CLI 本地快取恢復最近一次的對話紀錄。\n"
+    help_text += "• <code>/fix [名稱]</code>：強制重啟並嘗試恢復對話。若 AI 卡住或無回應時可使用此指令。\n"
+    help_text += "• <code>/sys_refresh</code>：檢查並更新 Agent 的系統協定與規範。\n"
+    help_text += "• <code>/avatar_renew {需求}</code>：重新定義並建構 Agent 的視覺形象與性格。\n"
+    help_text += "• <code>/avatar_renew list</code>：查看歷史 Avatar 備份列表（附預覽圖）。\n"
+    help_text += "• <code>/avatar_renew restore {編號|檔名}</code>：還原至指定歷史版本。\n\n"
+    help_text += "<b>⏰ 自動化喚醒</b>\n"
+    help_text += "• 請直接透過對話「要求 Agent 建立喚醒任務」，即可實現定時喚醒任務。可透過 <code>/status</code> 監控現有喚醒任務。\n\n"
+    help_text += "───────────────────────────────\n"
+    help_text += "💡 <b>提示</b>：Telegram 與 Discord 請使用斜線 <code>/</code> 指令；Slack 請使用驚嘆號 <code>!</code> 引導。"
+    return help_text
