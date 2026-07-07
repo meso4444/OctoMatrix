@@ -187,7 +187,7 @@ class CommandHandler:
                     command = item.get('command', '')
                     if '{input}' in command:
                         USER_STATES[msg.user_id] = {'command_template': command}
-                        self.notifier.notify(msg.source, 'custom', {'content': f"📋 <b>Waiting for Input</b>\n\n{item.get('prompt', 'Please enter content:')}"})
+                        self.notifier.notify(msg.source, 'custom', {'content': f"📋 Waiting for Input\n\n{item.get('prompt', 'Please enter content:')}"})
                         return True
                     content = command # Physical content replacement, execute downward, no recursion
 
@@ -578,7 +578,11 @@ Message from {MATRIX_USERNAME}:
                 if temp_preview_path and os.path.exists(temp_preview_path):
                     caption = f"🖼️ <b>[{target_agent}] History Backup #{idx} Preview</b>\nFile: <code>{filename}</code>\nTime: {mtime}\nSize: {size_kb:.1f} KB"
                     file_type = 'sticker' if temp_preview_path.endswith('.webm') else 'photo'
-                    self.notifier.notify_file(msg.source, temp_preview_path, file_type=file_type, caption=caption)
+                    if file_type == 'sticker':
+                        self.notifier.notify_file(msg.source, temp_preview_path, file_type=file_type)
+                        self.notifier.notify(msg.source, 'custom', {'content': caption})
+                    else:
+                        self.notifier.notify_file(msg.source, temp_preview_path, file_type=file_type, caption=caption)
             except Exception as e:
                 logger.error(f"❌ [Router] Failed to extract backup #{idx} preview: {e}")
             finally:
