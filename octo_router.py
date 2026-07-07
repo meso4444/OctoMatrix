@@ -435,7 +435,9 @@ Message from {MATRIX_USERNAME}:
                     f.write(content) # Only store pure user messages
                 if msg.source != 'awake':
                     self.notifier.notify(msg.source, 'custom', {'content': f'🐚 <b>{target_agent}</b> 正在喚醒深海回音，靜靜聆聽……'})
-                    sleepy_path = os.path.join(agent_dir, 'avatar/emojis/sleepy.png')
+                    sleepy_webm = os.path.join(agent_dir, 'avatar/emojis/sleepy.webm')
+                    sleepy_png = os.path.join(agent_dir, 'avatar/emojis/sleepy.png')
+                    sleepy_path = sleepy_webm if os.path.exists(sleepy_webm) else sleepy_png
                     if os.path.exists(sleepy_path):
                         self.notifier.notify_file(msg.source, sleepy_path, file_type='sticker')
                 return True
@@ -448,15 +450,22 @@ Message from {MATRIX_USERNAME}:
             
             # Automatically send Agent Avatar sticker
             avatar_dir = os.path.join(agent_dir, 'avatar')
+            base_webm = os.path.join(avatar_dir, 'base.webm')
             base_png = os.path.join(avatar_dir, 'base.png')
             sticker_path = None
-            if os.path.exists(base_png):
+            if os.path.exists(base_webm):
+                sticker_path = base_webm
+            elif os.path.exists(base_png):
                 sticker_path = base_png
             else:
                 import glob
-                png_files = glob.glob(os.path.join(avatar_dir, '*.png'))
-                if png_files:
-                    sticker_path = png_files[0]
+                webm_files = glob.glob(os.path.join(avatar_dir, '*.webm'))
+                if webm_files:
+                    sticker_path = webm_files[0]
+                else:
+                    png_files = glob.glob(os.path.join(avatar_dir, '*.png'))
+                    if png_files:
+                        sticker_path = png_files[0]
             
             if sticker_path:
                 self.notifier.notify_file(msg.source, sticker_path, file_type='sticker')
@@ -533,34 +542,42 @@ Message from {MATRIX_USERNAME}:
             size_kb = os.path.getsize(path) / 1024.0
             mtime = datetime.fromtimestamp(os.path.getmtime(path)).strftime("%Y-%m-%d %H:%M:%S")
             content_text += f"{idx}. <code>{filename}</code> ({size_kb:.1f} KB) - {mtime}\n"
-        content_text += "\n💡 Tips: Use <code>/avatar_renew restore &lt;index&gt;</code> (e.g., <code>/avatar_renew restore 1</code>) to restore.\n⏳ Extracting and sending `base.png` previews for each backup in the background..."
+        content_text += "\n💡 Tip: Use <code>/avatar_renew restore &lt;number&gt;</code> (e.g. <code>/avatar_renew restore 1</code>) to restore.\n⏳ Extracting and sending `base.webm` or `base.png` previews in background..."
         self.notifier.notify(msg.source, 'custom', {'content': content_text})
 
-        # Extract and send preview images sequentially
+        # Recursively extract and send preview image
         for idx, path in enumerate(history_zips, 1):
             filename = os.path.basename(path)
             size_kb = os.path.getsize(path) / 1024.0
             mtime = datetime.fromtimestamp(os.path.getmtime(path)).strftime("%Y-%m-%d %H:%M:%S")
             
-            temp_preview_path = os.path.join("/tmp", f"preview_{target_agent}_{idx}_{int(time.time())}.png")
+            temp_preview_path = None
             try:
                 with zipfile.ZipFile(path, 'r') as z:
                     target_entry = None
                     for entry in z.namelist():
-                        if entry == "base.png" or entry.endswith("/base.png"):
+                        if entry == "base.webm" or entry.endswith("/base.webm"):
                             target_entry = entry
                             break
+                    if not target_entry:
+                        for entry in z.namelist():
+                            if entry == "base.png" or entry.endswith("/base.png"):
+                                target_entry = entry
+                                break
                     if target_entry:
+                        ext = ".webm" if target_entry.endswith(".webm") else ".png"
+                        temp_preview_path = os.path.join("/tmp", f"preview_{target_agent}_{idx}_{int(time.time())}{ext}")
                         with open(temp_preview_path, 'wb') as out_f:
                             out_f.write(z.read(target_entry))
                 
-                if os.path.exists(temp_preview_path):
+                if temp_preview_path and os.path.exists(temp_preview_path):
                     caption = f"🖼️ <b>[{target_agent}] History Backup #{idx} Preview</b>\nFile: <code>{filename}</code>\nTime: {mtime}\nSize: {size_kb:.1f} KB"
-                    self.notifier.notify_file(msg.source, temp_preview_path, file_type='photo', caption=caption)
+                    file_type = 'sticker' if temp_preview_path.endswith('.webm') else 'photo'
+                    self.notifier.notify_file(msg.source, temp_preview_path, file_type=file_type, caption=caption)
             except Exception as e:
                 logger.error(f"❌ [Router] Failed to extract backup #{idx} preview: {e}")
             finally:
-                if os.path.exists(temp_preview_path):
+                if temp_preview_path and os.path.exists(temp_preview_path):
                     try:
                         os.remove(temp_preview_path)
                     except:
@@ -600,7 +617,8 @@ Message from {MATRIX_USERNAME}:
             
         try:
             base_png_file = os.path.join(avatar_dir, "base.png")
-            if os.path.exists(base_png_file):
+            base_webm_file = os.path.join(avatar_dir, "base.webm")
+            if os.path.exists(base_png_file) or os.path.exists(base_webm_file):
                 timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
                 current_backup = os.path.join(avatar_dir, f"history_{timestamp_str}.zip")
                 
@@ -769,9 +787,10 @@ def update_avatar():
             
         avatar_dir = os.path.join(AGENT_HOME_BASE, agent_name, "avatar")
         base_png_file = os.path.join(avatar_dir, "base.png")
+        base_webm_file = os.path.join(avatar_dir, "base.webm")
         
-        # [Mechanics Check] Check if agent is in "First-Blood" (no base avatar) state
-        is_first_blood = not os.path.exists(base_png_file)
+        # [Mechanism Check] Check if it's "first-blood no-avatar" state
+        is_first_blood = not (os.path.exists(base_png_file) or os.path.exists(base_webm_file))
         
         if is_first_blood:
             # [Exempt Pass] Bypass Token validation during First-Blood phase
