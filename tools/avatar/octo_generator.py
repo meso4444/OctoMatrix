@@ -57,7 +57,7 @@ def generate_octopus_image(body_rgb=(150, 150, 150),
             if (x - 32)**2 + (y - 32)**2 < 14**2:
                 px[x, y] = body_color
 
-    if has_gold:
+    if has_gold or globals().get('CURRENT_HAS_GOLD', False):
         draw.arc([18, 18, 46, 46], start=180, end=360, fill=GOLD, width=2)
 
 
@@ -1221,6 +1221,9 @@ def generate_all_avatars(
     agent_name, agent_home = _get_agent_info_cwd()
 
     archive_files = {}
+
+    global CURRENT_HAS_GOLD
+    CURRENT_HAS_GOLD = has_gold
 
     for mood in ALL_MOODS:
         tmp_out = f'/tmp/avatar_v2_{mood}_{os.getpid()}.webm'
