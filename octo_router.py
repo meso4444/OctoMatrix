@@ -502,8 +502,8 @@ class CommandHandler:
         self.notifier.notify(msg.source, 'custom', {'content': status_text})
 
     def _send_help(self, msg: MCMessage):
-        import config
-        help_text = config.get_help_text(CURRENT_AGENT)
+        from config import get_help_text
+        help_text = get_help_text(CURRENT_AGENT)
         self.notifier.notify(msg.source, 'custom', {'content': help_text})
 
     def _send_menu(self, msg: MCMessage):
@@ -724,12 +724,15 @@ def inter_agent_message():
     flag_file = os.path.join(agent_dir, 'octo_cyberbrain', '.rotation_flag')
     pending_agent_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_agent.txt')
 
+    # 封裝 AGENT_INTERCOM_SOP (將發送方與內容組合為完整 System Prompt)
+    formatted_message = get_agent_intercom_sop(source, message)
+
     if os.path.exists(flag_file):
         try:
             with open(pending_agent_file, 'a', encoding='utf-8') as f:
                 if os.path.exists(pending_agent_file) and os.path.getsize(pending_agent_file) > 0:
                     f.write("\n\n")
-                f.write(message)
+                f.write(formatted_message)
             logger.info(f"👻 [Inter-Agent] {target_agent} 正在重整，訊息已暫存至 pending_agent.txt")
             return jsonify({"status": "success", "message": "queued in pending_agent.txt"}), 200
         except Exception as e:
@@ -737,7 +740,7 @@ def inter_agent_message():
 
     # 調用 AtomicInjector 進行物理按鍵注入
     # 強制 interrupt_first=False，保留 User 的絕對中斷特權，Agent 訊息僅能排隊
-    success = handler.injector.inject(message, target_agent, interrupt_first=False)
+    success = handler.injector.inject(formatted_message, target_agent, interrupt_first=False)
     
     return jsonify({"status": "success" if success else "failed"}), 200
 
