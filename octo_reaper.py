@@ -63,7 +63,7 @@ def notify_agent(agent_name):
     payload = {
         "source": "reaper",
         "user_id": "system",
-        "content": f"{SYS_PREFIX} 若有任務進行中，請先中斷任務，把當前任務狀態記錄到octo_cyberbrain/task_memo.txt。接著請使用參數模式執行 `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"語義大綱\" --keywords \"關鍵字\" --paths \"路徑\"` 來更新GHOST 狀態，並執行 `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` 發符合當下心情的貼圖及執行 `python3 toolbox/matrix_notifier.py '零散的思緒泡泡正在融入專注大海... {{讓 {config.MATRIX_USERNAME} 稍等的安撫問候}}'`",
+        "content": f"{SYS_PREFIX} 若有任務進行中，請先中斷任務，把當前任務狀態記錄到octo_cyberbrain/task_memo.txt。接著請使用參數模式執行 `python3 octo_cyberbrain/octo_ghost_updater.py --outline \"語義大綱\" --keywords \"關鍵字\" --paths \"路徑\"` 來更新GHOST 狀態，並執行 `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.webm` 發符合當下心情的貼圖及執行 `python3 toolbox/matrix_notifier.py '零散的思緒泡泡正在融入專注大海... {{讓 {config.MATRIX_USERNAME} 稍等的安撫問候}}'`",
         "metadata": {
             "target_agent": agent_name
         }
@@ -105,7 +105,7 @@ def trigger_inactivity_greeting(agent_name):
     payload = {
         "source": "reaper_idle",
         "user_id": "system",
-        "content": f"{SYS_PREFIX} 看看幾點了, 執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖，接著執行 python3 toolbox/matrix_notifier.py '{{向 {config.MATRIX_USERNAME} 問候近況}}'",
+        "content": f"{SYS_PREFIX} 看看幾點了, 執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.webm 發符合當下心情的貼圖，接著執行 python3 toolbox/matrix_notifier.py '{{向 {config.MATRIX_USERNAME} 問候近況}}'",
         "metadata": {
             "target_agent": agent_name
         }

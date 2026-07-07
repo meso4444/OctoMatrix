@@ -16,7 +16,7 @@ Agent 應依據個人喜好進行設計，不應受到拘束。建議思考維�
 
 **一鍵生成基礎形象與表情包**
 - 不需要手動指定 `--name` 或逐個對應 `--mood` 生成。
-- 直接使用一鍵生成命令，腳本會自動在記憶體中一次性產出 `base.png` 與所有固定的 12 款表情包 PNG，並自動封裝為 ZIP 發送給 Router API 進行高權覆寫更新。
+- 直接使用一鍵生成命令，腳本會自動在記憶體中一次性產出 `base.webm` 與所有固定的 12 款表情包 WebM，並自動封裝為 ZIP 發送給 Router API 進行高權覆寫更新。
 ```bash
 # 一鍵生成指令範例：
 python3 toolbox/octo_generator.py --color 41 128 185 --headgear grad --eyewear monocle --item_r magnifier --blush_style oval --token <YourToken>

@@ -596,7 +596,7 @@ def main():
         spawn_agent(target_agents[0], script_dir, session_name, is_first=False)
         try:
             from config import SYS_PREFIX, MATRIX_USERNAME
-            test_msg = f"{SYS_PREFIX}執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png 發符合當下心情的貼圖，接著執行 python3 toolbox/matrix_notifier.py '{{向 {MATRIX_USERNAME} 問候，並說明你剛從修復程序中重啟}}'"
+            test_msg = f"{SYS_PREFIX}執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.webm 發符合當下心情的貼圖，接著執行 python3 toolbox/matrix_notifier.py '{{向 {MATRIX_USERNAME} 問候，並說明你剛從修復程序中重啟}}'"
             subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:{args.agent}', test_msg], check=True)
             time.sleep(0.5)
             subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:{args.agent}', 'Enter'], check=True)
