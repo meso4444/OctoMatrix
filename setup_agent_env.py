@@ -114,9 +114,14 @@ def setup_agent_dirs(agent_config, script_dir):
             safe_copy(src_file, dst_file, script_dir)
 
     # 預先建立核心規範文件，確保由系統帳戶持有並設定 666 權限
-    engine = agent_config.get('engine', 'AGENT').upper()
-    rule_file = f"{engine}.md"
-    touch_path = os.path.join(home, rule_file)
+    engine = agent_config.get('engine', 'gemini')
+    engine_doc_name = 'CLAUDE.md'
+    if engine == 'gemini' or engine == 'agy':
+        engine_doc_name = 'GEMINI.md'
+    elif engine == 'codex':
+        engine_doc_name = 'AGENTS.md'
+        
+    touch_path = os.path.join(home, engine_doc_name)
     if not os.path.exists(touch_path):
         try:
             with open(touch_path, 'a'): pass
