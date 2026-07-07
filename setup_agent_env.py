@@ -34,9 +34,10 @@ def safe_copy(src, dst, script_dir):
     if os.path.exists(src):
         subprocess.run(['rm', '-f', dst], check=False)
         subprocess.run(['cp', src, dst], check=True)
+        filename = os.path.basename(dst)
         if dst.endswith('.py') or dst.endswith('.sh'):
             subprocess.run(['chmod', '755', dst], check=False)
-        elif dst.endswith('.md') or dst.endswith('.yaml'):
+        elif filename in ['GEMINI.md', 'CLAUDE.md', 'AGENT.md']:
             subprocess.run(['chmod', '666', dst], check=False)
         else:
             subprocess.run(['chmod', '644', dst], check=False)
