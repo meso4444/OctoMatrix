@@ -435,7 +435,9 @@ class CommandHandler:
                     f.write(content) # 只存純淨的用戶訊息
                 if msg.source not in ['awake', 'reaper_idle']:
                     self.notifier.notify(msg.source, 'custom', {'content': f'🐚 <b>{target_agent}</b> 正在喚醒深海回音，靜靜聆聽……'})
-                    sleepy_path = os.path.join(agent_dir, 'avatar/emojis/sleepy.png')
+                    sleepy_webm = os.path.join(agent_dir, 'avatar/emojis/sleepy.webm')
+                    sleepy_png = os.path.join(agent_dir, 'avatar/emojis/sleepy.png')
+                    sleepy_path = sleepy_webm if os.path.exists(sleepy_webm) else sleepy_png
                     if os.path.exists(sleepy_path):
                         self.notifier.notify_file(msg.source, sleepy_path, file_type='sticker')
                 return True
@@ -448,15 +450,22 @@ class CommandHandler:
             
             # 自動發送 Agent Avatar 貼圖
             avatar_dir = os.path.join(agent_dir, 'avatar')
+            base_webm = os.path.join(avatar_dir, 'base.webm')
             base_png = os.path.join(avatar_dir, 'base.png')
             sticker_path = None
-            if os.path.exists(base_png):
+            if os.path.exists(base_webm):
+                sticker_path = base_webm
+            elif os.path.exists(base_png):
                 sticker_path = base_png
             else:
                 import glob
-                png_files = glob.glob(os.path.join(avatar_dir, '*.png'))
-                if png_files:
-                    sticker_path = png_files[0]
+                webm_files = glob.glob(os.path.join(avatar_dir, '*.webm'))
+                if webm_files:
+                    sticker_path = webm_files[0]
+                else:
+                    png_files = glob.glob(os.path.join(avatar_dir, '*.png'))
+                    if png_files:
+                        sticker_path = png_files[0]
             
             if sticker_path:
                 self.notifier.notify_file(msg.source, sticker_path, file_type='sticker')
@@ -533,7 +542,7 @@ class CommandHandler:
             size_kb = os.path.getsize(path) / 1024.0
             mtime = datetime.fromtimestamp(os.path.getmtime(path)).strftime("%Y-%m-%d %H:%M:%S")
             content_text += f"{idx}. <code>{filename}</code> ({size_kb:.1f} KB) - {mtime}\n"
-        content_text += "\n💡 提示：使用 <code>/avatar_renew restore &lt;編號&gt;</code> (例如 <code>/avatar_renew restore 1</code>) 即可進行還原。\n⏳ 正在背景解壓並傳送各備份的 `base.png` 預覽圖..."
+        content_text += "\n💡 提示：使用 <code>/avatar_renew restore &lt;編號&gt;</code> (例如 <code>/avatar_renew restore 1</code>) 即可進行還原。\n⏳ 正在背景解壓並傳送各備份的 `base.webm` 或 `base.png` 預覽圖..."
         self.notifier.notify(msg.source, 'custom', {'content': content_text})
 
         # 遞迴解壓並傳送 preview 圖
@@ -542,25 +551,33 @@ class CommandHandler:
             size_kb = os.path.getsize(path) / 1024.0
             mtime = datetime.fromtimestamp(os.path.getmtime(path)).strftime("%Y-%m-%d %H:%M:%S")
             
-            temp_preview_path = os.path.join("/tmp", f"preview_{target_agent}_{idx}_{int(time.time())}.png")
+            temp_preview_path = None
             try:
                 with zipfile.ZipFile(path, 'r') as z:
                     target_entry = None
                     for entry in z.namelist():
-                        if entry == "base.png" or entry.endswith("/base.png"):
+                        if entry == "base.webm" or entry.endswith("/base.webm"):
                             target_entry = entry
                             break
+                    if not target_entry:
+                        for entry in z.namelist():
+                            if entry == "base.png" or entry.endswith("/base.png"):
+                                target_entry = entry
+                                break
                     if target_entry:
+                        ext = ".webm" if target_entry.endswith(".webm") else ".png"
+                        temp_preview_path = os.path.join("/tmp", f"preview_{target_agent}_{idx}_{int(time.time())}{ext}")
                         with open(temp_preview_path, 'wb') as out_f:
                             out_f.write(z.read(target_entry))
                 
-                if os.path.exists(temp_preview_path):
+                if temp_preview_path and os.path.exists(temp_preview_path):
                     caption = f"🖼️ <b>[{target_agent}] 歷史備份 #{idx} 預覽</b>\n檔案：<code>{filename}</code>\n時間：{mtime}\n大小：{size_kb:.1f} KB"
-                    self.notifier.notify_file(msg.source, temp_preview_path, file_type='photo', caption=caption)
+                    file_type = 'sticker' if temp_preview_path.endswith('.webm') else 'photo'
+                    self.notifier.notify_file(msg.source, temp_preview_path, file_type=file_type, caption=caption)
             except Exception as e:
                 logger.error(f"❌ [Router] 提取備份 #{idx} 預覽圖失敗: {e}")
             finally:
-                if os.path.exists(temp_preview_path):
+                if temp_preview_path and os.path.exists(temp_preview_path):
                     try:
                         os.remove(temp_preview_path)
                     except:
@@ -600,7 +617,8 @@ class CommandHandler:
             
         try:
             base_png_file = os.path.join(avatar_dir, "base.png")
-            if os.path.exists(base_png_file):
+            base_webm_file = os.path.join(avatar_dir, "base.webm")
+            if os.path.exists(base_png_file) or os.path.exists(base_webm_file):
                 timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
                 current_backup = os.path.join(avatar_dir, f"history_{timestamp_str}.zip")
                 
@@ -768,9 +786,10 @@ def update_avatar():
             
         avatar_dir = os.path.join(AGENT_HOME_BASE, agent_name, "avatar")
         base_png_file = os.path.join(avatar_dir, "base.png")
+        base_webm_file = os.path.join(avatar_dir, "base.webm")
         
         # [機制判斷] 檢查是否為「首刷無頭像」狀態
-        is_first_blood = not os.path.exists(base_png_file)
+        is_first_blood = not (os.path.exists(base_png_file) or os.path.exists(base_webm_file))
         
         if is_first_blood:
             # [豁免放行] 首刷期間不強制要求 Token
