@@ -36,6 +36,8 @@ def safe_copy(src, dst, script_dir):
         subprocess.run(['cp', src, dst], check=True)
         if dst.endswith('.py') or dst.endswith('.sh'):
             subprocess.run(['chmod', '755', dst], check=False)
+        elif dst.endswith('.md') or dst.endswith('.yaml'):
+            subprocess.run(['chmod', '666', dst], check=False)
         else:
             subprocess.run(['chmod', '644', dst], check=False)
         # 記錄系統派發的檔案路徑
