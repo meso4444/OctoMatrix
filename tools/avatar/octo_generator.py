@@ -1231,7 +1231,7 @@ def generate_all_avatars(
         generate_sticker(
             mood=mood, body_rgb=body_rgb, headgear=headgear,
             eyewear=eyewear, item_r=item_r, item_l=item_l,
-            blush_style=blush_style, has_gold=has_gold, out_webm=tmp_out, fps=fps,
+            blush_style=blush_style, out_webm=tmp_out, fps=fps,
         )
         with open(tmp_out, 'rb') as f:
             data = f.read()
