@@ -187,7 +187,7 @@ class CommandHandler:
                     command = item.get('command', '')
                     if '{input}' in command:
                         USER_STATES[msg.user_id] = {'command_template': command}
-                        self.notifier.notify(msg.source, 'custom', {'content': f"📋 <b>等待輸入</b>\n\n{item.get('prompt', '請輸入內容:')}"})
+                        self.notifier.notify(msg.source, 'custom', {'content': f"📋 等待輸入\n\n{item.get('prompt', '請輸入內容:')}"})
                         return True
                     content = command # 物理替換內容，向下執行，不觸發遞迴
 
@@ -578,7 +578,11 @@ class CommandHandler:
                 if temp_preview_path and os.path.exists(temp_preview_path):
                     caption = f"🖼️ <b>[{target_agent}] 歷史備份 #{idx} 預覽</b>\n檔案：<code>{filename}</code>\n時間：{mtime}\n大小：{size_kb:.1f} KB"
                     file_type = 'sticker' if temp_preview_path.endswith('.webm') else 'photo'
-                    self.notifier.notify_file(msg.source, temp_preview_path, file_type=file_type, caption=caption)
+                    if file_type == 'sticker':
+                        self.notifier.notify_file(msg.source, temp_preview_path, file_type=file_type)
+                        self.notifier.notify(msg.source, 'custom', {'content': caption})
+                    else:
+                        self.notifier.notify_file(msg.source, temp_preview_path, file_type=file_type, caption=caption)
             except Exception as e:
                 logger.error(f"❌ [Router] 提取備份 #{idx} 預覽圖失敗: {e}")
             finally:
