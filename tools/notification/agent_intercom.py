@@ -79,8 +79,8 @@ def main():
 
     payload = {
         "source": source_agent,
+        "target_agent": args.target,
         "message": args.message
-    }
     }
 
     try:
