@@ -183,7 +183,7 @@ def generate_all_avatars(
         os.makedirs(avatar_dir, exist_ok=True)
         with zipfile.ZipFile(io.BytesIO(zip_bytes)) as z:
             z.extractall(avatar_dir)
-        print('✨ [Generator v2] 首刷無頭像狀態，已直接生成並解壓 ZIP 到本地。')
+        print('✨ [Generator v2] First-blood state (no avatar). Generated and extracted ZIP locally.')
     else:
         router_port = _get_router_port(agent_home)
         url   = f'http://127.0.0.1:{router_port}/api/internal/avatar/update'
@@ -192,12 +192,12 @@ def generate_all_avatars(
         try:
             resp = requests.post(url, files=files, data=data, timeout=30)
             if resp.status_code == 200:
-                print('✅ [Generator v2] Avatar 更新成功並已同步。')
+                print('✅ [Generator v2] Avatar updated and synced successfully.')
             else:
-                print(f'❌ [Generator v2] Router 拒絕更新：{resp.status_code} - {resp.text}')
+                print(f'❌ [Generator v2] Router rejected update: {resp.status_code} - {resp.text}')
                 sys.exit(1)
         except Exception as e:
-            print(f'❌ [Generator v2] 連線至 Router 失敗: {e}')
+            print(f'❌ [Generator v2] Failed to connect to Router: {e}')
             sys.exit(1)
 
 

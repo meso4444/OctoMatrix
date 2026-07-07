@@ -226,7 +226,7 @@ def generate_all_avatars(body_rgb=(150, 150, 150),
     base_png_file = os.path.join(avatar_dir, "base.png")
     is_first_blood = not os.path.exists(base_png_file)
     
-    # 1. 一次性生成所有固定的頭像與 Emoji (13 款)
+    # 1. Generate all fixed avatars and Emojis at once (13 variants)
     archive_files = {}
     
     # base
@@ -243,7 +243,7 @@ def generate_all_avatars(body_rgb=(150, 150, 150),
         img.save(img_io, format="PNG")
         archive_files[f"emojis/{mood}.png"] = img_io.getvalue()
         
-    # 2. 在記憶體中打包成 ZIP
+    # 2. Pack into ZIP in memory
     zip_io = io.BytesIO()
     with zipfile.ZipFile(zip_io, 'w', zipfile.ZIP_DEFLATED) as z:
         for arcname, data in archive_files.items():
@@ -252,13 +252,13 @@ def generate_all_avatars(body_rgb=(150, 150, 150),
     zip_bytes = zip_io.getvalue()
     
     if is_first_blood:
-        # 首刷無頭像，直接解壓縮到本地 avatar 目錄
+        # First-blood (no avatar), extract directly to local avatar directory
         os.makedirs(avatar_dir, exist_ok=True)
         with zipfile.ZipFile(io.BytesIO(zip_bytes)) as z:
             z.extractall(avatar_dir)
-        print("✨ [Generator] 首刷無頭像狀態，已直接生成並解壓 ZIP 到本地。")
+        print("✨ [Generator] First-blood state (no avatar). Generated and extracted ZIP locally.")
     else:
-        # 已有頭像，走 Token 物理上傳機制
+        # Has avatar, use Token physical upload mechanism
         router_port = get_router_port(agent_home)
         url = f"http://127.0.0.1:{router_port}/api/internal/avatar/update"
         
@@ -268,12 +268,12 @@ def generate_all_avatars(body_rgb=(150, 150, 150),
         try:
             response = requests.post(url, files=files, data=data, timeout=10)
             if response.status_code == 200:
-                print("✅ [Generator] Avatar 更新成功並已同步。")
+                print("✅ [Generator] Avatar updated and synced successfully.")
             else:
-                print(f"❌ [Generator] Router 拒絕更新：{response.status_code} - {response.text}")
+                print(f"❌ [Generator] Router rejected update: {response.status_code} - {response.text}")
                 sys.exit(1)
         except Exception as e:
-            print(f"❌ [Generator] 連線至 Router 失敗: {e}")
+            print(f"❌ [Generator] Failed to connect to Router: {e}")
             sys.exit(1)
 
 if __name__ == "__main__":
