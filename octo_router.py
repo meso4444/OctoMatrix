@@ -114,7 +114,7 @@ class AtomicInjector:
                 lines = [line for line in res.stdout.split('\n') if line.strip()]
                 if 'Working (' in '\n'.join(lines[-20:]):
                     subprocess.run(['tmux', 'send-keys', '-t', target, "C-c"], check=False)
-                    time.sleep(1)
+                    time.sleep(0.5)
                     subprocess.run(['tmux', 'send-keys', '-t', target, "Escape"], check=False)
                     time.sleep(0.5)
                     return True
@@ -124,7 +124,7 @@ class AtomicInjector:
                 return False
         else:
             subprocess.run(['tmux', 'send-keys', '-t', target, "C-c"], check=False)
-            time.sleep(1)
+            time.sleep(0.5)
             subprocess.run(['tmux', 'send-keys', '-t', target, "Escape"], check=False)
             time.sleep(0.5)
             return True
@@ -236,14 +236,14 @@ class CommandHandler:
                 lines = [line for line in res.stdout.split('\n') if line.strip()]
                 if 'Working (' in '\n'.join(lines[-20:]):
                     subprocess.run(['tmux', 'send-keys', '-t', target, "C-c"], check=False)
-                    time.sleep(1)
+                    time.sleep(0.5)
                     subprocess.run(['tmux', 'send-keys', '-t', target, "Escape"], check=False)
                     self.notifier.notify(msg.source, 'custom', {'content': f'🛑 Interrupt signal sent to <b>[{target_agent}]</b>'})
                 else:
                     self.notifier.notify(msg.source, 'custom', {'content': f'⚠️ <b>[{target_agent}]</b> is idle. Interrupt bypassed.'})
             else:
                 subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', "C-c"], check=False)
-                time.sleep(1)
+                time.sleep(0.5)
                 subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', "Escape"], check=False)
                 self.notifier.notify(msg.source, 'custom', {'content': f'🛑 Interrupt signal sent to <b>[{target_agent}]</b>'})
             return True
