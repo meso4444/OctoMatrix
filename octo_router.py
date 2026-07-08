@@ -187,7 +187,7 @@ class CommandHandler:
                     command = item.get('command', '')
                     if '{input}' in command:
                         USER_STATES[msg.user_id] = {'command_template': command}
-                        self.notifier.notify(msg.source, 'custom', {'content': f"📋 Waiting for Input\n\n{item.get('prompt', 'Please enter content:')}"})
+                        self.notifier.notify(msg.source, 'custom', {'content': item.get('prompt', 'Please enter content:')})
                         return True
                     content = command # Physical content replacement, execute downward, no recursion
 
