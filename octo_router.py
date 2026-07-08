@@ -187,7 +187,7 @@ class CommandHandler:
                     command = item.get('command', '')
                     if '{input}' in command:
                         USER_STATES[msg.user_id] = {'command_template': command}
-                        self.notifier.notify(msg.source, 'custom', {'content': f"📋 等待輸入\n\n{item.get('prompt', '請輸入內容:')}"})
+                        self.notifier.notify(msg.source, 'custom', {'content': item.get('prompt', '請輸入內容:')})
                         return True
                     content = command # 物理替換內容，向下執行，不觸發遞迴
 
