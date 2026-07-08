@@ -202,11 +202,11 @@ def main():
             lines = [line for line in res.stdout.split('\n') if line.strip()]
             if 'Working (' in '\n'.join(lines[-20:]):
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
-                time.sleep(1)
+                time.sleep(0.5)
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Escape"])
         else:
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
-            time.sleep(1)
+            time.sleep(0.5)
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Escape"])
             
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
@@ -219,11 +219,11 @@ def main():
             lines = [line for line in res.stdout.split('\n') if line.strip()]
             if 'Working (' in '\n'.join(lines[-20:]):
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
-                time.sleep(1)
+                time.sleep(0.5)
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Escape"])
         else:
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
-            time.sleep(1)
+            time.sleep(0.5)
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Escape"])
             
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
@@ -265,11 +265,11 @@ def main():
                 lines = [line for line in res.stdout.split('\n') if line.strip()]
                 if 'Working (' in '\n'.join(lines[-20:]):
                     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
-                    time.sleep(1)
+                    time.sleep(0.5)
                     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Escape"])
             else:
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
-                time.sleep(1)
+                time.sleep(0.5)
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Escape"])
             time.sleep(6.0)
             if ENGINE == 'codex':
@@ -277,11 +277,11 @@ def main():
                 lines = [line for line in res.stdout.split('\n') if line.strip()]
                 if 'Working (' in '\n'.join(lines[-20:]):
                     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
-                    time.sleep(1)
+                    time.sleep(0.5)
                     subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Escape"])
             else:
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "C-c"])
-                time.sleep(1)
+                time.sleep(0.5)
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Escape"])
             time.sleep(3.0)
             res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)

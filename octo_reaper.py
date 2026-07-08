@@ -51,12 +51,12 @@ def notify_agent(agent_name):
             lines = [line for line in res.stdout.split('\n') if line.strip()]
             if 'Working (' in '\n'.join(lines[-20:]):
                 subprocess.run(["tmux", "send-keys", "-t", target, "C-c"])
-                time.sleep(1)
+                time.sleep(0.5)
                 subprocess.run(["tmux", "send-keys", "-t", target, "Escape"])
                 time.sleep(6)
         else:
             subprocess.run(["tmux", "send-keys", "-t", target, "C-c"])
-            time.sleep(1)
+            time.sleep(0.5)
             subprocess.run(["tmux", "send-keys", "-t", target, "Escape"])
             time.sleep(6)
     except Exception as e:
