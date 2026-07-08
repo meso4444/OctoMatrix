@@ -1012,7 +1012,10 @@ def generate_frame(fi, mood, body_rgb, headgear='crown', eyewear='none',
     bob_amp, stretch_range, bob_freq = MOTION[mood]
 
     # ── 1. Base image ──────────────────────────────────────────────────────
-    if mood in BLINK_MOODS and fi in BLINK_FRAMES:
+    if mood == 'happy' and fi in {0, 1, 2}:
+        img = make_blink_frame(mood, body_rgb, headgear, eyewear, item_r, item_l, blush_style)
+
+    elif mood in BLINK_MOODS and mood != 'happy' and fi in BLINK_FRAMES:
         img = make_blink_frame(mood, body_rgb, headgear, eyewear, item_r, item_l, blush_style)
     elif mood == 'wink':
         if fi in BLINK_FRAMES:
