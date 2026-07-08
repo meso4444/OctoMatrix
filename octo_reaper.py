@@ -50,10 +50,14 @@ def notify_agent(agent_name):
             res = subprocess.run(["tmux", "capture-pane", "-p", "-t", target], capture_output=True, text=True)
             lines = [line for line in res.stdout.split('\n') if line.strip()]
             if 'Working (' in '\n'.join(lines[-20:]):
-                subprocess.run(["tmux", "send-keys", "-t", target, "C-c", "Escape"])
+                subprocess.run(["tmux", "send-keys", "-t", target, "C-c"])
+                time.sleep(1)
+                subprocess.run(["tmux", "send-keys", "-t", target, "Escape"])
                 time.sleep(6)
         else:
-            subprocess.run(["tmux", "send-keys", "-t", target, "C-c", "Escape"])
+            subprocess.run(["tmux", "send-keys", "-t", target, "C-c"])
+            time.sleep(1)
+            subprocess.run(["tmux", "send-keys", "-t", target, "Escape"])
             time.sleep(6)
     except Exception as e:
         print(f"[Reaper] 執行前置 Ctrl+C 失敗: {e}")
