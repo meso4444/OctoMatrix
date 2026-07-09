@@ -760,6 +760,7 @@ def inter_agent_message():
     pending_agent_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_agent.txt')
 
     # 封裝 AGENT_INTERCOM_SOP (將發送方與內容組合為完整 System Prompt)
+    from config import get_agent_intercom_sop
     formatted_message = get_agent_intercom_sop(source, message)
 
     if os.path.exists(flag_file):
