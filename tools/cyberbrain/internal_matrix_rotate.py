@@ -163,61 +163,6 @@ def main():
             print(f"❌ Failed to get AGENT_NAME or TMUX_SESSION_NAME (Source: {ENV_FILE}). Aborting reset.")
             sys.exit(1)
 
-            # Ensure pending user instructions and Agent interactions are not discarded
-            if os.path.exists(PENDING_USER_FILE):
-                try:
-                    with open(PENDING_USER_FILE, 'r', encoding='utf-8') as f:
-                        pending_content = f.read().strip()
-                    if pending_content:
-                        sys_prompt = f"""{SYS_PREFIX}
-Execute the following [SOP]:
-[Step 0 - Identify]: Identify whether the Task Resumption Message is a real task. If it is a real task, proceed to Step1; if the content is just a prompt and not a task, do not execute subsequent Steps.
-[Step 1 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
-[Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} in your personality, mentioning you just reorganized your thoughts, express apologies for the wait, and autonomously think of an appropriate task resumption preview}}'`.
-[Step 3 - Clarify]: If task is clear, proceed to Step4; if unclear, proactively dive into keywords. If clear history exists, proceed to Step4, otherwise suspend task and execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate clarification question}}'`, and do not execute subsequent Steps.
-[Step 4 - Execute]: Start task and write md. For large tasks, execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate progress update}}'` midway, then proceed to Step5 after task completion.
-[Step 5 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood.
-[Step 6 - Report]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and autonomously think of an appropriate task completion report}}'`. Only use --file to send related report documents to {MATRIX_USERNAME} if the report content exceeds 1000 words, otherwise report directly with a complete message.
-[Step 7 - Capture]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to capture your GHOST and memories.
-[Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "Task semantic outline" --keywords "Keyword1,Keyword2" --paths "/FilePath1,/FilePath2"` to imprint task status to GHOST.
-
-Message from {MATRIX_USERNAME}:
-{pending_content}
-
-{SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
-                        final_message = sys_prompt
-                        escaped = final_message.replace('!', '！').replace('$', '\\$')
-                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
-                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped], check=True)
-                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
-                        time.sleep(1.0)
-                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
-                        time.sleep(0.3)
-                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
-                        print("📩 Pending user instructions have been successfully injected!")
-                    os.remove(PENDING_USER_FILE)
-                except Exception as e:
-                    print(f"❌ Error processing pending User instructions: {e}")
-
-            if os.path.exists(PENDING_AGENT_FILE):
-                try:
-                    with open(PENDING_AGENT_FILE, 'r', encoding='utf-8') as f:
-                        pending_content = f.read().strip()
-                    if pending_content:
-                        sys_prompt = f"Interaction message from another Agent:\n{pending_content}"
-                        escaped = sys_prompt.replace('!', '！').replace('$', '\\$')
-                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
-                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped], check=True)
-                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"])
-                        time.sleep(1.0)
-                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
-                        time.sleep(0.3)
-                        subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
-                        print("📩 Pending Agent interaction instructions have been successfully injected!")
-                    os.remove(PENDING_AGENT_FILE)
-                except Exception as e:
-                    print(f"❌ Error processing pending Agent instructions: {e}")
-
         TMUX_TARGET = f"{TMUX_SESSION_NAME}:{AGENT_NAME}"
         LIMIT, CONTEXT_SIZE, ENGINE_DOC_NAME, ENGINE = get_config(AGENT_NAME)
         try:
