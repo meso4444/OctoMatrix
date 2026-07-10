@@ -482,8 +482,8 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
     time.sleep(3)
 
     doc_path = os.path.join(home_path, engine_doc_name)
-    if os.path.exists(doc_path):
-        print(f"     ✅ {engine_doc_name} already exists, skip initialization injection (protect existing specification)")
+    if os.path.exists(doc_path) and os.path.getsize(doc_path) > 0:
+        print(f"     ✅ {engine_doc_name} already exists and is not empty, skip initialization injection (protect existing specification)")
         print(f"     🔄 Executing conversation recovery process…")
         
         # Unconditionally send ESC to interrupt any running background task (e.g. Codex MCP) or residual Auto-complete menus
