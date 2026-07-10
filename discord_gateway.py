@@ -297,10 +297,8 @@ class DiscordGateway(commands.Cog):
                     metadata['file_type'] = 'image' if attachment.content_type and 'image' in attachment.content_type else 'file'
                     metadata['local_path'] = local_path
                     
-                    if not content: # 如果只有圖片沒有文字
-                        content = f"請處理這個檔案，路徑位於: `{local_path}`"
-                    else:
-                        content = f"{content}\n\n[附件已下載至: `{local_path}`]"
+                    suffix = f"請處理這個檔案，路徑位於: `{local_path}`"
+                    content = f"{content}\n\n{suffix}" if content and content.strip() else suffix
 
             payload = {
                 'source': 'discord',
