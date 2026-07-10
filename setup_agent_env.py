@@ -482,8 +482,8 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
     time.sleep(3)
 
     doc_path = os.path.join(home_path, engine_doc_name)
-    if os.path.exists(doc_path):
-        print(f"     ✅ {engine_doc_name} 已存在，跳過初始注入 (保護現有規格)")
+    if os.path.exists(doc_path) and os.path.getsize(doc_path) > 0:
+        print(f"     ✅ {engine_doc_name} 已存在且非空，跳過初始注入 (保護現有規格)")
         print(f"     🔄 執行對話復原流程…")
         
         # 無條件發送 ESC 以中斷任何執行中的背景程序 (例如 Codex MCP) 或殘留的 Auto-complete 選單
