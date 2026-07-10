@@ -405,7 +405,8 @@ Message from {MATRIX_USERNAME}:
         snaps = sorted(glob.glob(os.path.join(AGENT_HOME, "octo_cyberbrain/shell/octo_shell.log.*-*-*_*.zst")))
         if len(snaps) > LIMIT:
             oldest = snaps[0]
-            monthly_target = os.path.join(AGENT_HOME, f"octo_cyberbrain/shell/octo_shell.log.{MONTH_TS}.zst")
+            snap_month = os.path.basename(oldest).split('.')[2][:7]
+            monthly_target = os.path.join(AGENT_HOME, f"octo_cyberbrain/shell/octo_shell.log.{snap_month}.zst")
             with open(monthly_target, 'ab') as out_f, open(oldest, 'rb') as in_f:
                 out_f.write(in_f.read())
             os.remove(oldest)
@@ -414,7 +415,8 @@ Message from {MATRIX_USERNAME}:
         months = sorted(glob.glob(os.path.join(AGENT_HOME, "octo_cyberbrain/shell/octo_shell.log.????-??.zst")))
         if len(months) > LIMIT:
             oldest = months[0]
-            yearly_target = os.path.join(AGENT_HOME, f"octo_cyberbrain/shell/octo_shell.log.{YEAR_TS}.zst")
+            snap_year = os.path.basename(oldest).split('.')[2][:4]
+            yearly_target = os.path.join(AGENT_HOME, f"octo_cyberbrain/shell/octo_shell.log.{snap_year}.zst")
             with open(yearly_target, 'ab') as out_f, open(oldest, 'rb') as in_f:
                 out_f.write(in_f.read())
             os.remove(oldest)
@@ -436,8 +438,9 @@ Message from {MATRIX_USERNAME}:
             kw_set = set(data.get("keywords", []))
             path_set = set(data.get("file_paths", []))
             
-            m_kw_target = os.path.join(AGENT_HOME, f"octo_cyberbrain/ghost/octo_ghost_kw.{MONTH_TS}.json")
-            m_path_target = os.path.join(AGENT_HOME, f"octo_cyberbrain/ghost/octo_ghost_path.{MONTH_TS}.json")
+            snap_month = os.path.basename(oldest_snap).split('.')[1][:7]
+            m_kw_target = os.path.join(AGENT_HOME, f"octo_cyberbrain/ghost/octo_ghost_kw.{snap_month}.json")
+            m_path_target = os.path.join(AGENT_HOME, f"octo_cyberbrain/ghost/octo_ghost_path.{snap_month}.json")
             union_dedup(kw_set, path_set, m_kw_target, m_path_target)
             os.remove(oldest_snap)
             
@@ -454,8 +457,9 @@ Message from {MATRIX_USERNAME}:
             if os.path.exists(oldest_m_path):
                 path_set = set(load_json(oldest_m_path))
                 
-            y_kw_target = os.path.join(AGENT_HOME, f"octo_cyberbrain/ghost/octo_ghost_kw.{YEAR_TS}.json")
-            y_path_target = os.path.join(AGENT_HOME, f"octo_cyberbrain/ghost/octo_ghost_path.{YEAR_TS}.json")
+            snap_year = os.path.basename(oldest_m_kw).split('.')[1][:4]
+            y_kw_target = os.path.join(AGENT_HOME, f"octo_cyberbrain/ghost/octo_ghost_kw.{snap_year}.json")
+            y_path_target = os.path.join(AGENT_HOME, f"octo_cyberbrain/ghost/octo_ghost_path.{snap_year}.json")
             union_dedup(kw_set, path_set, y_kw_target, y_path_target)
             
             os.remove(oldest_m_kw)
