@@ -146,7 +146,7 @@ class AtomicInjector:
                     # 🚀 State-aware interruption for Codex, unconditional for others
                     self.send_interrupt(agent_name)
 
-                escaped = content.replace('!', '！').replace('$', '\\$')
+                escaped = content.replace('$', '\\$')
 
                 # 🚀 Physical injection hardening: text and Enter physically separated
                 subprocess.run(['tmux', 'send-keys', '-t', target, '\x1b[200~'])
