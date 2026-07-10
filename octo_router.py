@@ -146,7 +146,7 @@ class AtomicInjector:
                     # 🚀 Codex 狀態感知中斷，其他引擎無條件中斷
                     self.send_interrupt(agent_name)
 
-                escaped = content.replace('$', '\\$')
+                escaped = content.replace('!', '！').replace('$', '\\$')
                 
                 # 🚀 物理注入硬化：文字與 Enter 物理分離
                 subprocess.run(['tmux', 'send-keys', '-t', target, '\x1b[200~'])
