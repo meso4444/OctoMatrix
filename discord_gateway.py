@@ -297,10 +297,8 @@ class DiscordGateway(commands.Cog):
                     metadata['file_type'] = 'image' if attachment.content_type and 'image' in attachment.content_type else 'file'
                     metadata['local_path'] = local_path
 
-                    if not content: # If only image without text
-                        content = f"Please process this file, path: `{local_path}`"
-                    else:
-                        content = f"{content}\n\n[Attachment downloaded to: `{local_path}`]"
+                    suffix = f"Please process this file, path: `{local_path}`"
+                    content = f"{content}\n\n{suffix}" if content and content.strip() else suffix
 
             payload = {
                 'source': 'discord',

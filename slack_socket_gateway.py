@@ -448,10 +448,8 @@ class SlackSocketGateway:
                     metadata['file_type'] = 'image' if 'image' in file_info.get('mimetype', '') else 'file'
                     metadata['local_path'] = local_path
 
-                    if not content or content.strip() == "":
-                        content = f"Please process this file, path: `{local_path}`"
-                    else:
-                        content = f"{content}\n\n[Attachment downloaded to: `{local_path}`]"
+                    suffix = f"Please process this file, path: `{local_path}`"
+                    content = f"{content}\n\n{suffix}" if content and content.strip() else suffix
 
             payload = {
                 'source': 'slack',
