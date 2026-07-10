@@ -449,9 +449,9 @@ class SlackSocketGateway:
                     metadata['local_path'] = local_path
 
                     if not content or content.strip() == "":
-                        content = f"Please process this file, path: {local_path}"
+                        content = f"Please process this file, path: `{local_path}`"
                     else:
-                        content = f"{content}\n\n[Attachment downloaded to: {local_path}]"
+                        content = f"{content}\n\n[Attachment downloaded to: `{local_path}`]"
 
             payload = {
                 'source': 'slack',
