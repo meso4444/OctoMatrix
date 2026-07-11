@@ -406,10 +406,27 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
     if os.path.exists(task_memo_path):
         subprocess.run(['chmod', '666', task_memo_path], check=False)
 
+    # === 新增：Overlay Virtual Environment 初始化腳本 ===
+    main_venv_path = os.path.join(script_dir, '.venv')
+    main_python = os.path.join(main_venv_path, 'bin', 'python3')
+    main_sp_path = ""
+    if os.path.exists(main_python):
+        try:
+            main_sp_result = subprocess.run([main_python, '-c', "import sysconfig; print(sysconfig.get_paths()['purelib'])"], capture_output=True, text=True)
+            main_sp_path = main_sp_result.stdout.strip()
+        except: pass
 
-    
-
-
+    init_venv_script = os.path.join(home_path, '.init_venv.sh')
+    with open(init_venv_script, 'w') as f:
+        f.write(f"#!/bin/bash\n")
+        f.write(f"if [ ! -d \".venv\" ]; then\n")
+        f.write(f"    python3 -m venv .venv\n")
+        f.write(f"    if [ -n \"{main_sp_path}\" ] && [ -d \".venv\" ]; then\n")
+        f.write(f"        .venv/bin/python3 -c \"import sysconfig; open(sysconfig.get_paths()['purelib'] + '/octo_core_overlay.pth', 'w').write('{main_sp_path}\\\\n')\"\n")
+        f.write(f"    fi\n")
+        f.write(f"fi\n")
+    subprocess.run(['chmod', '777', init_venv_script], check=False)
+    # ====================================================
 
     model = agent_config.get('model', '').strip()
 
@@ -441,11 +458,10 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'clear', 'Enter']), check=True)
         time.sleep(0.5)
         subprocess.run(['tmux'] + tmux_cmd(['clear-history', '-t', f'{session_name}:{name}']), check=True)
-        venv_activate = os.path.join(script_dir, '.venv', 'bin', 'activate')
-        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', f'[ -f "{venv_activate}" ] && source "{venv_activate}"']), check=True)
-        time.sleep(0.5)
-        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
-        time.sleep(0.5)
+        venv_activate = os.path.join(home_path, '.venv', 'bin', 'activate')
+        chained_cmd = f"./.init_venv.sh && [ -f \"{venv_activate}\" ] && source \"{venv_activate}\""
+        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', chained_cmd, 'Enter']), check=True)
+        time.sleep(4)
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', cmd]), check=True)
         time.sleep(0.5)
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
@@ -465,11 +481,10 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'clear', 'Enter']), check=True)
         time.sleep(0.5)
         subprocess.run(['tmux'] + tmux_cmd(['clear-history', '-t', f'{session_name}:{name}']), check=True)
-        venv_activate = os.path.join(script_dir, '.venv', 'bin', 'activate')
-        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', f'[ -f "{venv_activate}" ] && source "{venv_activate}"']), check=True)
-        time.sleep(0.5)
-        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
-        time.sleep(0.5)
+        venv_activate = os.path.join(home_path, '.venv', 'bin', 'activate')
+        chained_cmd = f"./.init_venv.sh && [ -f \"{venv_activate}\" ] && source \"{venv_activate}\""
+        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', chained_cmd, 'Enter']), check=True)
+        time.sleep(4)
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', cmd]), check=True)
         time.sleep(0.5)
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
