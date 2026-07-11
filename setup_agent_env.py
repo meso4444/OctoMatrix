@@ -41,7 +41,7 @@ def safe_copy(src, dst, script_dir):
             subprocess.run(['chmod', '666', dst], check=False)
         else:
             subprocess.run(['chmod', '644', dst], check=False)
-        # 記錄系統派發的檔案路徑
+        # Record paths of system-distributed files
         list_path = os.path.join(script_dir, 'agent_home', '.system_distributed_files.txt')
         with open(list_path, 'a') as list_file:
             list_file.write(dst + '\n')
@@ -54,11 +54,11 @@ def load_config():
         return yaml.safe_load(f)
 
 def setup_agent_dirs(agent_config, script_dir):
-    """建立單一 Agent 的目錄結構與拷貝靜態腳本"""
+    """Establish single Agent directory structure and copy static scripts"""
     agent_name = agent_config['name']
     home = os.path.join(AGENT_HOME_BASE, agent_name)
     
-    # 定義所有需要建立且賦予初始權限的子目錄
+    # Define all subdirectories to create and assign initial permissions
     subdirs = [
         'toolbox', 
         'knowledge', 
@@ -73,11 +73,11 @@ def setup_agent_dirs(agent_config, script_dir):
         'avatar/emojis'
     ]
     
-    # 建立主目錄並賦權
+    # Create main directory and assign permissions
     os.makedirs(home, exist_ok=True)
     subprocess.run(['chmod', '1777', home], check=False)
     
-    # 迴圈處理所有子目錄的創建與賦權
+    # Loop through all subdirectories for creation and permission assignment
     for d in subdirs:
         path = os.path.join(home, d)
         os.makedirs(path, exist_ok=True)
@@ -113,7 +113,7 @@ def setup_agent_dirs(agent_config, script_dir):
         if os.path.exists(src_file):
             safe_copy(src_file, dst_file, script_dir)
 
-    # 預先建立核心規範文件，確保由系統帳戶持有並設定 666 權限
+    # Pre-create core specification documents, ensure they are owned by the system account and set to 666 permissions
     engine = agent_config.get('engine', 'gemini')
     engine_doc_name = 'CLAUDE.md'
     if engine == 'gemini' or engine == 'agy':
@@ -151,12 +151,12 @@ def setup_agent_dirs(agent_config, script_dir):
     return home
 
 def setup_collaboration_links(agents, groups):
-    """全域建立協作軟連結，不分群組，一律互相建立 _shared_space"""
+    """Globally create collaboration symlinks, regardless of groups, establishing _shared_space for everyone"""
     agent_names = [a['name'] for a in agents]
     
     expected_links = {name: set() for name in agent_names}
     
-    print("🔗 處理全域協作連結 (Full Mesh)")
+    print("🔗 Processing global collaboration links (Full Mesh)")
     for me in agent_names:
         my_home = os.path.join(AGENT_HOME_BASE, me)
         for partner in agent_names:
@@ -182,12 +182,12 @@ def setup_collaboration_links(agents, groups):
                 
             try:
                 os.symlink(rel_target, full_link_path)
-                # print(f"   + 建立連結: {me} -> {partner}")
+                # print(f"   + Created link: {me} -> {partner}")
             except OSError as e:
-                print(f"   ⚠️ 建立連結失敗: {e}")
+                print(f"   ⚠️ Failed to create link: {e}")
 
-    # 2. 清理過期或不屬於現在配置檔中的連結
-    print("🧹 檢查並清理過期協作連結...")
+    # 2. Clean up expired or non-configured links
+    print("🧹 Checking and cleaning up expired collaboration links...")
     for agent in agent_names:
         home = os.path.join(AGENT_HOME_BASE, agent)
         if not os.path.exists(home):
@@ -200,9 +200,9 @@ def setup_collaboration_links(agents, groups):
                     if item not in expected_links[agent]:
                         try:
                             os.unlink(full_path)
-                            print(f"   - 移除過期連結: {agent}/{item}")
+                            print(f"   - Removed expired link: {agent}/{item}")
                         except OSError as e:
-                            print(f"   ⚠️ 移除失敗: {e}")
+                            print(f"   ⚠️ Failed to remove link: {e}")
 
 def deploy_skills(agents):
     """Deploy Skills and implement Immutable locking"""
@@ -574,7 +574,7 @@ def main():
     parser.add_argument('--all', action='store_true', help='Spawn all agents from config')
     args = parser.parse_args()
 
-    print("🧬  正在初始化 Agent 生態環境...")
+    print("🧬  Initializing Agent Ecosystem...")
     check_permissions()
     
     script_dir = os.environ.get('SCRIPT_DIR', BASE_DIR)
@@ -584,7 +584,7 @@ def main():
     agents = config.get('agents', [])
     groups = config.get('collaboration_groups', [])
     
-    # 防呆：確保 Tmux Session 存在，否則自動建立
+    # Fail-safe: Ensure Tmux Session exists, otherwise auto-create
     result = subprocess.run(['tmux', 'has-session', '-t', session_name], capture_output=True)
     if result.returncode != 0:
         print(f"   [Auto-Fix] Tmux session '{session_name}' not found. Creating it automatically...")
@@ -595,7 +595,7 @@ def main():
     if args.agent:
         target_agents = [a for a in agents if a['name'] == args.agent]
         if not target_agents:
-            print(f"❌ 找不到 Agent {args.agent} 於配置檔")
+            print(f"❌ Cannot find Agent {args.agent} in config file")
             sys.exit(1)
     elif args.all:
         target_agents = agents
@@ -603,17 +603,17 @@ def main():
         print("❌ Please specify --agent <name> or --all")
         sys.exit(1)
 
-    # 1. 建立目錄 (只針對目標 agent，但 collaboration links 還是全局更新比較好，這裡保持全部更新或只更新部分)
+    # 1. Create directories (only for target agent, but collaboration links update globally)
     for agent in target_agents:
         setup_agent_dirs(agent, script_dir)
 
-    # 3. 建立協作連結 (全局)
+    # 3. Create collaboration links (global)
     setup_collaboration_links(agents, groups)
     
-    # 4. 部署 Skills
+    # 4. Deploy Skills
     deploy_skills(target_agents)
     
-    # 5. 清理注入殘留鎖
+    # 5. Clean up injection residual locks
     for agent in target_agents:
         agent_dir = os.path.join(AGENT_HOME_BASE, agent['name'])
         pending_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_user.txt')
@@ -625,23 +625,23 @@ def main():
     if args.all and os.path.exists(list_path):
         os.remove(list_path)
 
-    # 6. 啟動 Tmux 與注入
+    # 6. Start Tmux and inject
     if args.agent:
         spawn_agent(target_agents[0], script_dir, session_name, is_first=False)
         try:
             from config import SYS_PREFIX, MATRIX_USERNAME
-            test_msg = f"{SYS_PREFIX}執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.webm 發符合當下心情的貼圖，接著執行 python3 toolbox/matrix_notifier.py '{{向 {MATRIX_USERNAME} 問候，並說明你剛從修復程序中重啟}}'"
+            test_msg = f"{SYS_PREFIX}Run python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.webm to send a sticker matching your mood, then run python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME} and state you just restarted from a fix procedure}}'"
             subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:{args.agent}', test_msg], check=True)
             time.sleep(0.5)
             subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:{args.agent}', 'Enter'], check=True)
-            print(f"   ✓ 已發送測試訊息至: {args.agent}")
+            print(f"   ✓ Sent test message to: {args.agent}")
         except Exception as e:
-            print(f"   ⚠️ 發送測試訊息失敗: {e}")
+            print(f"   ⚠️ Failed to send test message: {e}")
     elif args.all:
         for i, agent_config in enumerate(target_agents):
             spawn_agent(agent_config, script_dir, session_name, is_first=(i==0))
 
-    print("✅ 環境初始化與啟動完成")
+    print("✅ Environment initialization and startup complete")
 
 if __name__ == '__main__':
     main()
