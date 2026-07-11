@@ -996,6 +996,12 @@ def draw_overlay(img, mood, fi, nf, body_rgb, blush_style='oval', eyewear='none'
             ew_d.ellipse([rx64-4, ly64-4, rx64+4, ly64+4], outline=_GOLD, width=1)
         elif eyewear == 'monocle_left':
             ew_d.ellipse([lx64-4, ly64-4, lx64+4, ly64+4], outline=_GOLD, width=1)
+        elif eyewear == 'half_rim_glasses':
+            for ex, ey in [(lx64, ly64), (rx64, ly64)]:
+                ew_d.line([ex-4, ey-5, ex+4, ey-5], fill=_B)
+                ew_d.line([ex-4, ey-5, ex-4, ey+1], fill=_B)
+                ew_d.line([ex+4, ey-5, ex+4, ey+1], fill=_B)
+            ew_d.line([lx64+4, ly64-1, rx64-4, ly64-1], fill=_B)
         img.alpha_composite(ew64.resize((512, 512), Image.NEAREST))
 
     return Image.alpha_composite(img.convert('RGBA'), overlay)
