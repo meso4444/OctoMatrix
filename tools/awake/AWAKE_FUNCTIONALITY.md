@@ -30,12 +30,12 @@ python3 toolbox/awake_task_manager.py list
 
 **Expected terminal output**:
 ```text
-=== Awake 任務列表 (共 1 筆) ===
+=== Awake Task List (Total 1) ===
 ID: Daily system cleanup
-  目標: Güpa
-  排程: <CronTrigger (hour=2, minute=0, second=0)>
-  下次執行: 2026-02-20 02:00:00
-  指令: Execute system cleanup
+  Target: Güpa
+  Schedule: <CronTrigger (hour=2, minute=0, second=0)>
+  Next execution: 2026-02-20 02:00:00
+  Command: Execute system cleanup
 ------------------------------
 ```
 
@@ -74,12 +74,12 @@ python3 toolbox/awake_task_manager.py register \
 
 **Success**:
 ```text
-[Success] 任務已註冊: Morning meeting reminder
+[Success] Task registered: Morning meeting reminder
 ```
 
 **Failure**:
 ```text
-[Error] trigger 為 'daily' 或 'cron' 時，必須指定 --hour 與 --minute
+[Error] When trigger is 'daily' or 'cron', --hour and --minute must be specified
 ```
 
 Respond to the user with success or ask for the missing parameters.
@@ -102,7 +102,7 @@ python3 toolbox/awake_task_manager.py update \
 
 **Expected terminal output**:
 ```text
-[Success] 任務已更新: Morning meeting reminder
+[Success] Task updated: Morning meeting reminder
 ```
 
 ---
@@ -119,7 +119,7 @@ python3 toolbox/awake_task_manager.py delete --id "Morning meeting reminder"
 
 **Expected terminal output**:
 ```text
-[Success] 任務已刪除: Morning meeting reminder
+[Success] Task deleted: Morning meeting reminder
 ```
 
 ---
