@@ -129,7 +129,7 @@ def generate_octopus_image(body_rgb=(150, 150, 150),
     elif eyewear == "round_glasses":   draw.ellipse([lx-4,ly-4,lx+4,ly+4],outline=B); draw.ellipse([rx-4,ry-4,rx+4,ry+4],outline=B); draw.line([lx+4,ly,rx-4,ly],fill=B)
     elif eyewear == "half_rim_glasses":
         for ex,ey in [(lx,ly),(rx,ry)]:
-            draw.line([ex-4,ey-3,ex+4,ey-3],fill=B); draw.line([ex-4,ey-3,ex-4,ey+1],fill=B); draw.line([ex+4,ey-3,ex+4,ey+1],fill=B)
+            draw.line([ex-4,ey-5,ex+4,ey-5],fill=B); draw.line([ex-4,ey-5,ex-4,ey+1],fill=B); draw.line([ex+4,ey-5,ex+4,ey+1],fill=B)
         draw.line([lx+4,ly-1,rx-4,ly-1],fill=B)
 
     if   headgear == "grad":         draw.polygon([(32,10),(42,15),(32,20),(22,15)],fill=B)
