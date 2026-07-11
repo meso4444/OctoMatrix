@@ -406,7 +406,7 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
     if os.path.exists(task_memo_path):
         subprocess.run(['chmod', '666', task_memo_path], check=False)
 
-    # === 新增：Overlay Virtual Environment 初始化腳本 ===
+    # === ADD: Overlay Virtual Environment Initialization Script ===
     main_venv_path = os.path.join(script_dir, '.venv')
     main_python = os.path.join(main_venv_path, 'bin', 'python3')
     main_sp_path = ""
