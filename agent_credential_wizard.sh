@@ -50,7 +50,7 @@ run_local_auth() {
     echo "📍 Environment: Local (~)"
     echo "🎯 Target: Isolated authentication via dedicated Linux account"
     echo ""
-    # 從 config.yaml 獲取 agent 清單
+    # Get agent list from config.yaml
     CONFIG_YAML="$SCRIPT_DIR/config.yaml"
     if [ ! -f "$CONFIG_YAML" ]; then
         echo "❌ Cannot find config.yaml. Please complete system setup first."

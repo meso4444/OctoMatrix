@@ -56,7 +56,7 @@ ROUTER_HOST = '0.0.0.0'
 script_dir = os.path.dirname(os.path.abspath(__file__))
 AGENT_HOME_BASE = os.path.join(script_dir, 'agent_home')
 
-# 暫存的 Avatar 更新 Token，格式： { agent_name: {"token": "...", "expires_at": datetime} }
+# Temporary Avatar update Token, format: { agent_name: {"token": "...", "expires_at": datetime} }
 avatar_tokens = {}
 
 # Solidify port information
@@ -369,7 +369,7 @@ class CommandHandler:
                 prompt = f"""{config.USER_MESSAGE_SOP}
 
 Message from {MATRIX_USERNAME}:
-以下是目前 {target} 的狀態，請分析...
+Here is the current status of {target}, please analyze...
 {output}
 
 {SYS_PREFIX} Please strictly follow the [SOP] above to reply."""
@@ -447,7 +447,7 @@ Message from {MATRIX_USERNAME}:
                         f.write("\n\n")
                     f.write(content) # Only store pure user messages
                 if msg.source != 'awake':
-                    self.notifier.notify(msg.source, 'custom', {'content': f'🐚 <b>{target_agent}</b> 正在喚醒深海回音，靜靜聆聽……'})
+                    self.notifier.notify(msg.source, 'custom', {'content': f'🐚 <b>{target_agent}</b> is awakening the deep sea echoes, listening quietly...'})
                     sleepy_webm = os.path.join(agent_dir, 'avatar/emojis/sleepy.webm')
                     sleepy_png = os.path.join(agent_dir, 'avatar/emojis/sleepy.png')
                     sleepy_path = sleepy_webm if os.path.exists(sleepy_webm) else sleepy_png
@@ -826,7 +826,7 @@ def update_avatar():
             del avatar_tokens[agent_name]
             logger.info(f"🔥 [Router] Agent '{agent_name}' Token validation passed. Token has been burned.")
             
-        # [備份舊有 Avatar - 保留 5 代]
+        # [Backup old Avatar - keep 5 generations]
         if os.path.exists(avatar_dir) and not is_first_blood:
             try:
                 import glob
@@ -849,7 +849,7 @@ def update_avatar():
                             hz.write(file_path, arcname)
                 
                 shutil.move(tmp_zip_name, history_zip_path)
-                logger.info(f"💾 [Router] 已備份舊頭像至 {history_zip_path}")
+                logger.info(f"💾 [Router] Backed up old avatar to {history_zip_path}")
                 
                 history_zips = sorted(
                     glob.glob(os.path.join(avatar_dir, "history_*.zip")),
@@ -858,9 +858,9 @@ def update_avatar():
                 while len(history_zips) > 5:
                     oldest = history_zips.pop(0)
                     os.remove(oldest)
-                    logger.info(f"🗑️ [Router] 清理最舊的備份檔: {oldest}")
+                    logger.info(f"🗑️ [Router] Cleaning up oldest backup file: {oldest}")
             except Exception as e:
-                logger.error(f"⚠️ [Router] 備份舊 Avatar 失敗: {e}")
+                logger.error(f"⚠️ [Router] Failed to backup old Avatar: {e}")
 
         # [High-Privilege Archive Unpacking] Read ZIP and extract with overwrite to avatar/ directory
         import zipfile

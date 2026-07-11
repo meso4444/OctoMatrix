@@ -23,7 +23,7 @@
 set -e
 
 # ==============================================================================
-# 環境初始化：動態定位專案根目錄並掛載虛擬環境 (冪等且相容任意子目錄)
+# Environment initialization: dynamically locate project root and mount virtual environment (idempotent and compatible with any subdirectory)
 # ==============================================================================
 if [ -z "$VIRTUAL_ENV" ]; then
     find_project_root() {

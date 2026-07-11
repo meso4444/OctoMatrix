@@ -239,10 +239,10 @@ def get_active_agent():
     """Get current active Agent name"""
     return DEFAULT_ACTIVE_AGENT
 
-# 系統提示前綴
+# System prompt prefix
 SYS_PREFIX = "[System Prompt]"
 
-# Agent 專屬 Linux 帳號密碼 (Local 雙軌隔離用)
+# Agent specific Linux account password (for local dual-track isolation)
 AGENT_PASSWORD = str(os.environ.get("AGENT_PASSWORD", _config.get("agent_password", "octomatrix")))
 
 

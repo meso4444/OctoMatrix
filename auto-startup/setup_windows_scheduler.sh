@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================================================
-# 環境初始化：動態定位專案根目錄並掛載虛擬環境 (冪等且相容任意子目錄)
+# Environment initialization: dynamically locate project root and mount virtual environment (idempotent and compatible with any subdirectory)
 # ==============================================================================
 if [ -z "$VIRTUAL_ENV" ]; then
     find_project_root() {
@@ -36,15 +36,15 @@ echo "🔧 Calling Windows PowerShell to setup autostart..."
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# 0. 尋找 powershell.exe 路徑
+# 0. Find powershell.exe path
 PS_CMD="powershell.exe"
 if ! command -v $PS_CMD &> /dev/null; then
-    # 嘗試常見的 Windows 路徑
+    # Try common Windows paths
     COMMON_PS_PATH="/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
     if [ -f "$COMMON_PS_PATH" ]; then
         PS_CMD="$COMMON_PS_PATH"
     else
-        echo "❌ 錯誤: 找不到 powershell.exe。請確保您在 WSL 環境中且 Windows 路徑已加入 PATH。"
+        echo "❌ Error: powershell.exe not found. Please ensure you are in a WSL environment and Windows paths are added to PATH."
         exit 1
     fi
 fi

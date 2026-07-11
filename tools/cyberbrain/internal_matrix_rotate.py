@@ -346,7 +346,7 @@ Execute the following [SOP]:
 Message from {MATRIX_USERNAME}:
 {pending_content}
 
-{SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
+{SYS_PREFIX}Please strictly follow the above [SOP] to reply."""
                         final_message = sys_prompt
                         escaped = final_message.replace('!', '！').replace('$', '\\$')
                         
@@ -369,7 +369,7 @@ Message from {MATRIX_USERNAME}:
                     with open(PENDING_AGENT_FILE, 'r', encoding='utf-8') as f:
                         pending_content = f.read().strip()
                     if pending_content:
-                        sys_prompt = f"來自其他 Agent 的交互訊息:\n{pending_content}"
+                        sys_prompt = f"Interactive message from other Agent:\n{pending_content}"
                         escaped = sys_prompt.replace('!', '！').replace('$', '\\$')
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", escaped], check=True)

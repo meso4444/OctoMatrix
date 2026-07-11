@@ -370,9 +370,9 @@ MOTION = {
 
 # ─── blink / alternation frames (at 64×64 logical scale, then ×8 resize) ────
 #
-# happy:   smile arc ↔ standard circle (原型眼), no stars
+# happy:   smile arc ↔ standard circle (prototype eye), no stars
 # base:    both eyes close (flat line), no stars
-# wink:    left eye open (原型眼) ↔ left eye closed, stars on close
+# wink:    left eye open (prototype eye) ↔ left eye closed, stars on close
 #
 BLINK_FRAMES          = {4, 5}
 SURPRISED_BIG_FRAMES  = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}   # big eye stays 10 frames (≈83% of cycle)
@@ -390,7 +390,7 @@ def make_blink_frame(mood, body_rgb, headgear, eyewear, item_r, item_l, blush_st
     px = img64.load()
 
     if mood == 'happy':
-        # Alternate smile arcs → standard circles (原型眼), no blink-close, no stars
+        # Alternate smile arcs → standard circles (prototype eye), no blink-close, no stars
         for ex, ey in [(24, 30), (40, 30)]:
             d.ellipse([ex-3, ey-3, ex+3, ey+3], fill=(*body_rgb, 255))  # erase smile arc
             d.ellipse([ex-2, ey-2, ex+2, ey+2], fill=DARK)              # standard circle
@@ -406,7 +406,7 @@ def make_blink_frame(mood, body_rgb, headgear, eyewear, item_r, item_l, blush_st
 
 
 def make_wink_open_frame(body_rgb, headgear, eyewear, item_r, item_l, blush_style='oval'):
-    """Wink open state: left eye shows as standard circle (原型眼), right stays standard."""
+    """Wink open state: left eye shows as standard circle (prototype eye), right stays standard."""
     img64 = generate_octopus_image(
         body_rgb=body_rgb, mood='wink', eyewear=eyewear, headgear=headgear,
         item_r=item_r, item_l=item_l, blush_style=blush_style, size=64, scale=1
@@ -664,13 +664,13 @@ def draw_overlay(img, mood, fi, nf, body_rgb, blush_style='oval', eyewear='none'
         for vx, vy in [(44, 24), (46, 24), (45, 23), (45, 25)]:
             for ix in range(vx * 8, vx * 8 + 8):
                 for iy in range(vy * 8, vy * 8 + 8):
-                    px_a[ix, iy] = (0, 0, 0, 0)   # 透明拔除
+                    px_a[ix, iy] = (0, 0, 0, 0)   # Transparent removal
 
         # 2. Draw eyes (+ brows/blush if V-eye frame) at 64×64 → NEAREST ×8
         face64 = Image.new('RGBA', (64, 64), (0, 0, 0, 0))
         fd = ImageDraw.Draw(face64)
         if angry_eyes:
-            # Filled circle eyes (brow inner tip dips into eye top → natural half-moon 向內)
+            # Filled circle eyes (brow inner tip dips into eye top → natural half-moon inwards)
             for ex, ey in [(24, 30), (40, 30)]:
                 fd.ellipse([ex-2, ey-2, ex+2, ey+2], fill=DARK)
             # V-brows: inner tips press DOWN to eye upper edge → merge with inner-upper eye
@@ -730,7 +730,7 @@ def draw_overlay(img, mood, fi, nf, body_rgb, blush_style='oval', eyewear='none'
 
         img.alpha_composite(face64.resize((512, 512), Image.NEAREST))
 
-        # 3. 含淚: wide oval tear pools below each eye (first ref style)
+        # 3. Tearful: wide oval tear pools below each eye (first ref style)
         TEAR_C = (150, 190, 230, 200)
         for i, cx in enumerate([LX, RX]):
             ty = LY + S(3)   # just below eye
@@ -771,7 +771,7 @@ def draw_overlay(img, mood, fi, nf, body_rgb, blush_style='oval', eyewear='none'
             for j in range(2):
                 d.point([gx + j*2, LY - S(1)], fill=(*WHITE[:3], 170))
 
-        # 帥氣十字光 — flashes at top-right corner of right lens
+        # Handsome cross light — flashes at top-right corner of right lens
         # Right lens top-right corner in 512px: (RX+S(5), LY-S(3)) = (360, 216)
         star_cx = RX + S(5)       # 360
         star_cy = LY - S(3)       # 216
@@ -934,7 +934,7 @@ def draw_overlay(img, mood, fi, nf, body_rgb, blush_style='oval', eyewear='none'
                 for tx in (ox-4, ox-1, ox+2):
                     fd.rectangle([tx, cy_m-1, tx+1, cy_m], fill=BLUSH_C)
             elif blush_style == 'lightning':
-                # r=4 (偶數) → q=2，所有線段均為 45°，完美對稱 W 形
+                # r=4 (even) → q=2, all segments are 45°, perfectly symmetrical W shape
                 rl = 4; ql = 2; half = h_m // 2
                 pts = [ox-rl, by_m, ox-ql, by_m+half, ox, by_m, ox+ql, by_m+half, ox+rl, by_m]
                 fd.line(pts, fill=BLUSH_C, width=max(1, h_m//4))
@@ -963,14 +963,14 @@ def draw_overlay(img, mood, fi, nf, body_rgb, blush_style='oval', eyewear='none'
         ]
         # sd_t already computed above (synced with blush)
         sd_y  = int(22 + sd_t * 5)       # slides y=22→27 in 64×64
-        sd_a  = int(255 * sd_t)           # 先淡再深：透明→不透明，到底最深
+        sd_a  = int(255 * sd_t)           # Fade then deepen: transparent→opaque, deepest at bottom
         SWEAT = (*BLUE[:3], min(255, sd_a))
         if sd_a > 10:
             for dx, dy in SWEAT_PX:
                 px_x, px_y = 47+dx, sd_y+dy
                 if 0 <= px_x < 64 and 0 <= px_y < 64:
                     fd.point([px_x, px_y], fill=SWEAT)
-            if sd_a > 60:   # 降低門檻：讓亮點在半途就出現
+            if sd_a > 60:   # Lower threshold: let highlights appear halfway
                 hl_x, hl_y = 46, sd_y-1
                 if 0 <= hl_x < 64 and 0 <= hl_y < 64:
                     face64.load()[hl_x, hl_y] = (220, 240, 255, min(255, sd_a))
@@ -1067,7 +1067,7 @@ def generate_frame(fi, mood, body_rgb, headgear='crown', eyewear='none',
         ).convert('RGBA')
         img = draw_overlay(img, mood, fi, NFRAMES, body_rgb, blush_style, eyewear)
 
-    # ── 2. Vertical bob + tentacle stretch (上下伸縮, no horizontal sway) ──
+    # ── 2. Vertical bob + tentacle stretch (vertical stretch, no horizontal sway) ──
     if mood == 'angry':
         bob_raw = math.sin(phase) + 0.35 * math.sin(phase * 5)
         bob_px  = round(bob_raw * bob_amp * 0.7)

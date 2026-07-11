@@ -35,7 +35,7 @@ if [ -z "$VIRTUAL_ENV" ]; then
     fi
 fi
 
-# 動態判定 Python 執行檔路徑 (支援 Docker 的全域環境與 Local 的虛擬環境)
+# Dynamically determine Python executable path (supports Docker global env and Local virtual env)
 if [ -n "$PROJECT_ROOT" ] && [ -d "$PROJECT_ROOT/.venv" ]; then
     export PYTHON_CMD="$PROJECT_ROOT/.venv/bin/python3"
 else

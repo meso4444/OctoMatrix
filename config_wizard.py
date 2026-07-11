@@ -33,7 +33,7 @@ def sanitize_dict(d):
     elif isinstance(d, list):
         return [sanitize_dict(v) for v in d]
     elif isinstance(d, str):
-        # 將字串 encode 再 decode，忽略無效字元，從而過濾掉潛在的 surrogate
+        # Encode and then decode string, ignoring invalid characters to filter out potential surrogates
         return d.encode("utf-8", "ignore").decode("utf-8", "ignore")
     else:
         return d
