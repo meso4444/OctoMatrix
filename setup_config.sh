@@ -226,6 +226,7 @@ while true; do
     echo " [6] 🤖 Configure AI Agent Squad and Advanced Parameters"
     echo " [7] 🔐 AI Agent CLI Authentication Settings"
     echo " [8] ⬆️ AI CLI Version Management (Upgrade/Rollback)"
+    echo " [9] 📦 Install Global Agent Skills"
     echo "----------------------------------------"
     echo " [S] 💾 Save Configuration and Start (Save)"
     echo " [C] 🧹 Clear Configuration and Credentials (Clear)"
@@ -412,6 +413,16 @@ while true; do
                     *) echo "⚠️ Invalid selection"; sleep 1 ;;
                 esac
             done
+            ;;
+        9)
+            echo ""
+            echo "📦 Starting Global Skill Cache Build..."
+            if python3 "$SCRIPT_DIR/install_agent_skills.py"; then
+                echo -e "\n✅ Global skill build completed successfully!"
+            else
+                echo -e "\n⚠️ Global skill build failed. Please check the output above."
+            fi
+            read -p "Press Enter to continue..." dummy_key
             ;;
         [Ss])
             echo ""
