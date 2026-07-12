@@ -30,6 +30,26 @@ def compute_hash(filepath):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
 
+
+def flatten_directory(base_dir):
+    """Recursively move contents up if the directory only contains a single subdirectory."""
+    while True:
+        try:
+            items = os.listdir(base_dir)
+            if len(items) == 1:
+                single_item = os.path.join(base_dir, items[0])
+                if os.path.isdir(single_item):
+                    # Move all contents of the single subdirectory to the base_dir
+                    for sub_item in os.listdir(single_item):
+                        shutil.move(os.path.join(single_item, sub_item), os.path.join(base_dir, sub_item))
+                    os.rmdir(single_item)
+                else:
+                    break
+            else:
+                break
+        except Exception:
+            break
+
 def main():
     if not os.path.exists(SKILLS_DIR):
         print(f"Skills directory not found at {SKILLS_DIR}")
@@ -68,6 +88,7 @@ def main():
         os.makedirs(skill_cache_dir, exist_ok=True)
         try:
             shutil.unpack_archive(archive_path, skill_cache_dir)
+        flatten_directory(skill_cache_dir)
         except Exception as e:
             print(f"   ❌ Failed to unpack {skill_name}: {e}")
             continue
