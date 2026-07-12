@@ -205,19 +205,7 @@ def setup_collaboration_links(agents, groups):
                             print(f"   ⚠️ 移除失敗: {e}")
 
 def deploy_skills(agents):
-    """部署 Skills 並實作 Immutable 鎖定"""
-    skills_base_dir = os.path.join(BASE_DIR, 'skills')
-    if not os.path.exists(skills_base_dir):
-        return
-
-    # 先找到主層有哪些壓縮檔
-    available_archives = {}
-    for item in os.listdir(skills_base_dir):
-        if item.endswith('.zip'):
-            available_archives[item[:-4]] = os.path.join(skills_base_dir, item)
-        elif item.endswith('.tar.gz'):
-            available_archives[item[:-7]] = os.path.join(skills_base_dir, item)
-
+    global_cache_dir = os.path.join(AGENT_HOME_BASE, '.global_skills_cache')
     for agent in agents:
         agent_name = agent['name']
         agent_skills = agent.get('skills', [])
@@ -225,34 +213,31 @@ def deploy_skills(agents):
         
         skillbox_dir = os.path.join(AGENT_HOME_BASE, agent_name, 'skillbox')
         
-        # 1. 恢復權限並清空舊的 skills
         if os.path.exists(skillbox_dir):
             subprocess.run(['chmod', '-R', 'u+w', skillbox_dir], check=False)
-            # 清空子目錄
             for item in os.listdir(skillbox_dir):
                 item_path = os.path.join(skillbox_dir, item)
-                if os.path.isdir(item_path):
-                    shutil.rmtree(item_path, ignore_errors=True)
-                else:
-                    try:
-                        os.remove(item_path)
+                if os.path.islink(item_path) or os.path.isfile(item_path):
+                    try: os.remove(item_path)
                     except: pass
+                elif os.path.isdir(item_path):
+                    shutil.rmtree(item_path, ignore_errors=True)
                     
-        # 2. 解壓縮需要的 skills
         for skill in agent_skills:
-            if skill in available_archives:
-                archive_path = available_archives[skill]
-                target_dir = os.path.join(skillbox_dir, skill)
-                os.makedirs(target_dir, exist_ok=True)
+            target_cache_path = os.path.join(global_cache_dir, skill)
+            if os.path.exists(target_cache_path):
+                link_path = os.path.join(skillbox_dir, skill)
+                rel_target = os.path.relpath(target_cache_path, skillbox_dir)
                 try:
-                    shutil.unpack_archive(archive_path, target_dir)
-                    print(f"   📦 {agent_name} 掛載技能: {skill}")
+                    os.symlink(rel_target, link_path)
+                    print(f"   🔗 {agent_name} 掛載技能: {skill}")
                 except Exception as e:
-                    print(f"   ❌ {agent_name} 解壓技能 {skill} 失敗: {e}")
+                    print(f"   ❌ {agent_name} 掛載技能 {skill} 失敗: {e}")
+            else:
+                print(f"   ⚠️ 技能 {skill} 尚未於全域快取中建置，請先執行全域技能建置。")
                     
-        # 3. 鎖定唯讀權限 (移除所有人的寫入權限，保留讀取與執行權限)
-        if os.path.exists(skillbox_dir) and os.listdir(skillbox_dir):
-            subprocess.run(['chmod', '-R', 'a-w,a+rX', skillbox_dir], check=False)
+        if os.path.exists(skillbox_dir):
+            subprocess.run(['chmod', 'a-w', skillbox_dir], check=False)
             print(f"   🔒 {agent_name} 的 skillbox 已鎖定唯讀權限")
 
 def check_permissions():

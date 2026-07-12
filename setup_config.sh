@@ -225,6 +225,7 @@ while true; do
     echo " [6] 🤖 設定 AI Agent 軍團與進階參數"
     echo " [7] 🔐 AI Agent CLI 認證設定"
     echo " [8] ⬆️ AI CLI 版本管理 (升級/退版)"
+    echo " [9] 📦 執行全域技能建置 (Install Agent Skills)"
     echo "----------------------------------------"
     echo " [S] 💾 儲存設定並啟動 (Save)"
     echo " [C] 🧹 清除設定與憑證 (Clear)"
@@ -411,6 +412,16 @@ while true; do
                     *) echo "⚠️ 無效的選擇"; sleep 1 ;;
                 esac
             done
+            ;;
+        9)
+            echo ""
+            echo "📦 啟動全域技能建置程序..."
+            if python3 "$SCRIPT_DIR/install_agent_skills.py"; then
+                echo -e "\n✅ 全域技能建置成功！"
+            else
+                echo -e "\n⚠️ 全域技能建置發生錯誤，請查看上方輸出。"
+            fi
+            read -p "請按 Enter 鍵繼續..." dummy_key
             ;;
         [Ss])
             echo ""
