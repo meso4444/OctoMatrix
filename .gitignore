@@ -34,3 +34,6 @@
 # [Skill Packages] Local shared space only
 /skills/*.tar.gz
 /skills/*.zip
+
+# OctoMatrix Global Skill Cache
+skills/.global_skills_cache/

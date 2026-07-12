@@ -204,42 +204,6 @@ def setup_collaboration_links(agents, groups):
                         except OSError as e:
                             print(f"   ⚠️ Failed to remove link: {e}")
 
-def deploy_skills(agents):
-    global_cache_dir = os.path.join(AGENT_HOME_BASE, '.global_skills_cache')
-    for agent in agents:
-        agent_name = agent['name']
-        agent_skills = agent.get('skills', [])
-        if not agent_skills: continue
-        
-        skillbox_dir = os.path.join(AGENT_HOME_BASE, agent_name, 'skillbox')
-        
-        if os.path.exists(skillbox_dir):
-            subprocess.run(['chmod', '-R', 'u+w', skillbox_dir], check=False)
-            for item in os.listdir(skillbox_dir):
-                item_path = os.path.join(skillbox_dir, item)
-                if os.path.islink(item_path) or os.path.isfile(item_path):
-                    try: os.remove(item_path)
-                    except: pass
-                elif os.path.isdir(item_path):
-                    shutil.rmtree(item_path, ignore_errors=True)
-                    
-        for skill in agent_skills:
-            target_cache_path = os.path.join(global_cache_dir, skill)
-            if os.path.exists(target_cache_path):
-                link_path = os.path.join(skillbox_dir, skill)
-                rel_target = os.path.relpath(target_cache_path, skillbox_dir)
-                try:
-                    os.symlink(rel_target, link_path)
-                    print(f"   🔗 {agent_name} mounted skill: {skill}")
-                except Exception as e:
-                    print(f"   ❌ {agent_name} failed to mount skill {skill}: {e}")
-            else:
-                print(f"   ⚠️ Skill {skill} not found in global cache. Please build global skills first.")
-                    
-        if os.path.exists(skillbox_dir):
-            subprocess.run(['chmod', 'a-w', skillbox_dir], check=False)
-            print(f"   🔒 {agent_name}'s skillbox has been locked to read-only")
-
 def check_permissions():
     """Write permission self-check"""
     home_dir = os.path.expanduser('~')

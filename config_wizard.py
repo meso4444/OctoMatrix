@@ -152,60 +152,6 @@ def prompt_model_choice(engine, current_model=None):
             
         print("Invalid choice, please try again.")
 
-def prompt_skills_choice(current_skills=None):
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    skills_dir = os.path.join(base_dir, 'skills')
-    available_skills = []
-    
-    if os.path.exists(skills_dir):
-        for item in os.listdir(skills_dir):
-            if item.endswith('.zip'):
-                available_skills.append(item[:-4])
-            elif item.endswith('.tar.gz'):
-                available_skills.append(item[:-7])
-                
-    if not available_skills:
-        print("  ⚠️ No available archive files (.zip, .tar.gz) found in the root 'skills' directory.")
-        return current_skills or []
-        
-    print("\n  Mountable Skills List:")
-    for i, skill in enumerate(available_skills):
-        print(f"  [{i+1}] {skill}")
-        
-    current_str = ','.join(current_skills) if current_skills else 'None'
-    prompt_str = f"Enter skill numbers or names to mount, separated by commas (e.g., 1,3) [Current: {current_str}] (Press Enter to keep current): "
-    
-    while True:
-        choice = input(prompt_str).strip()
-        if not choice:
-            return current_skills or []
-            
-        selected = []
-        invalid = False
-        for p in choice.split(','):
-            p = p.strip()
-            if not p: continue
-            if p.isdigit():
-                idx = int(p) - 1
-                if 0 <= idx < len(available_skills):
-                    skill_name = available_skills[idx]
-                    if skill_name not in selected:
-                        selected.append(skill_name)
-                else:
-                    invalid = True
-                    break
-            elif p in available_skills:
-                if p not in selected:
-                    selected.append(p)
-            else:
-                invalid = True
-                break
-                
-        if invalid:
-            print("  ❌ Invalid choice, please try again.")
-        else:
-            return selected
-
 def manage_agents():
     global CONFIG
     if "agents" not in CONFIG or not isinstance(CONFIG["agents"], list):
@@ -233,10 +179,8 @@ def manage_agents():
             model = prompt_model_choice(engine)
             usecase = input("Responsibility (usecase) [for Agent system prompt awareness]: ").strip()
             desc = input("Description (description) [for menu and user identification]: ").strip()
-            skills = prompt_skills_choice()
             new_agent = {"name": name, "engine": engine, "usecase": usecase, "description": desc}
             if model: new_agent["model"] = model
-            if skills: new_agent["skills"] = skills
             CONFIG["agents"].append(new_agent)
             print(f"✅ Agent {name} added!")
             if len(CONFIG["agents"]) == 1:
@@ -268,12 +212,7 @@ def manage_agents():
                     new_desc = input(f"New Description [for menu and user identification] (press Enter to keep '{agent.get('description', '')}'): ").strip()
                     if new_desc: agent['description'] = new_desc
                     
-                    new_skills = prompt_skills_choice(agent.get('skills', []))
-                    if new_skills is not None:
-                        if new_skills:
-                            agent['skills'] = new_skills
-                        else:
-                            agent.pop('skills', None)
+                    
                     
                     CONFIG["agents"][idx] = agent
                     print(f"✅ Agent editing completed!")
