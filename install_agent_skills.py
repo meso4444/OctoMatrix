@@ -88,7 +88,7 @@ def main():
         os.makedirs(skill_cache_dir, exist_ok=True)
         try:
             shutil.unpack_archive(archive_path, skill_cache_dir)
-        flatten_directory(skill_cache_dir)
+            flatten_directory(skill_cache_dir)
         except Exception as e:
             print(f"   ❌ Failed to unpack {skill_name}: {e}")
             continue
