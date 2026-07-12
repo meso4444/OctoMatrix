@@ -204,42 +204,6 @@ def setup_collaboration_links(agents, groups):
                         except OSError as e:
                             print(f"   ⚠️ 移除失敗: {e}")
 
-def deploy_skills(agents):
-    global_cache_dir = os.path.join(AGENT_HOME_BASE, '.global_skills_cache')
-    for agent in agents:
-        agent_name = agent['name']
-        agent_skills = agent.get('skills', [])
-        if not agent_skills: continue
-        
-        skillbox_dir = os.path.join(AGENT_HOME_BASE, agent_name, 'skillbox')
-        
-        if os.path.exists(skillbox_dir):
-            subprocess.run(['chmod', '-R', 'u+w', skillbox_dir], check=False)
-            for item in os.listdir(skillbox_dir):
-                item_path = os.path.join(skillbox_dir, item)
-                if os.path.islink(item_path) or os.path.isfile(item_path):
-                    try: os.remove(item_path)
-                    except: pass
-                elif os.path.isdir(item_path):
-                    shutil.rmtree(item_path, ignore_errors=True)
-                    
-        for skill in agent_skills:
-            target_cache_path = os.path.join(global_cache_dir, skill)
-            if os.path.exists(target_cache_path):
-                link_path = os.path.join(skillbox_dir, skill)
-                rel_target = os.path.relpath(target_cache_path, skillbox_dir)
-                try:
-                    os.symlink(rel_target, link_path)
-                    print(f"   🔗 {agent_name} 掛載技能: {skill}")
-                except Exception as e:
-                    print(f"   ❌ {agent_name} 掛載技能 {skill} 失敗: {e}")
-            else:
-                print(f"   ⚠️ 技能 {skill} 尚未於全域快取中建置，請先執行全域技能建置。")
-                    
-        if os.path.exists(skillbox_dir):
-            subprocess.run(['chmod', 'a-w', skillbox_dir], check=False)
-            print(f"   🔒 {agent_name} 的 skillbox 已鎖定唯讀權限")
-
 def check_permissions():
     """寫入權限自檢"""
     home_dir = os.path.expanduser('~')
@@ -595,8 +559,7 @@ def main():
     # 3. 建立協作連結 (全局)
     setup_collaboration_links(agents, groups)
     
-    # 4. 部署 Skills
-    deploy_skills(target_agents)
+    
     
     # 5. 清理注入殘留鎖
     for agent in target_agents:

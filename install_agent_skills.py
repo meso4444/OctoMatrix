@@ -10,7 +10,7 @@ import subprocess
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SKILLS_DIR = os.path.join(BASE_DIR, 'skills')
 AGENT_HOME_BASE = os.path.join(BASE_DIR, 'agent_home')
-CACHE_DIR = os.path.join(AGENT_HOME_BASE, '.global_skills_cache')
+CACHE_DIR = os.path.join(SKILLS_DIR, '.global_skills_cache')
 
 def get_os_branch():
     if sys.platform == 'darwin': return 'macos'
@@ -88,6 +88,44 @@ def main():
         subprocess.run(['chmod', '-R', '755', skill_cache_dir], check=False)
 
     print("✅ Global Skill Build Complete.")
+
+    # Deploy to all agents unconditionally
+    print("🌍 Deploying skills to all agents...")
+    agent_home_dir = os.path.join(BASE_DIR, 'agent_home')
+    if os.path.exists(agent_home_dir):
+        for agent_name in os.listdir(agent_home_dir):
+            if agent_name.startswith('.'): continue
+            
+            skillbox_dir = os.path.join(agent_home_dir, agent_name, 'skillbox')
+            if not os.path.exists(skillbox_dir):
+                continue
+                
+            subprocess.run(['chmod', '-R', 'u+w', skillbox_dir], check=False, stderr=subprocess.DEVNULL)
+            
+            for item in os.listdir(skillbox_dir):
+                item_path = os.path.join(skillbox_dir, item)
+                if os.path.islink(item_path) or os.path.isfile(item_path):
+                    try: os.remove(item_path)
+                    except: pass
+                elif os.path.isdir(item_path):
+                    shutil.rmtree(item_path, ignore_errors=True)
+                    
+            if os.path.exists(CACHE_DIR):
+                for skill in os.listdir(CACHE_DIR):
+                    target_cache_path = os.path.join(CACHE_DIR, skill)
+                    if os.path.isdir(target_cache_path):
+                        link_path = os.path.join(skillbox_dir, skill)
+                        rel_target = os.path.relpath(target_cache_path, skillbox_dir)
+                        try:
+                            os.symlink(rel_target, link_path)
+                        except Exception:
+                            pass
+            
+            subprocess.run(['chmod', 'a-w', skillbox_dir], check=False, stderr=subprocess.DEVNULL)
+            print(f"   🔗 Mounted all global skills for {agent_name} and locked skillbox.")
+
+    print("✅ Full execution complete.")
+
 
 if __name__ == '__main__':
     main()

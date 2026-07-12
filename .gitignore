@@ -35,3 +35,6 @@
 /skills/*.tar.gz
 /skills/*.zip
 .venv/
+
+# OctoMatrix Global Skill Cache
+skills/.global_skills_cache/

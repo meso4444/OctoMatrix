@@ -152,60 +152,6 @@ def prompt_model_choice(engine, current_model=None):
             
         print("無效選擇，請重新輸入。")
 
-def prompt_skills_choice(current_skills=None):
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    skills_dir = os.path.join(base_dir, 'skills')
-    available_skills = []
-    
-    if os.path.exists(skills_dir):
-        for item in os.listdir(skills_dir):
-            if item.endswith('.zip'):
-                available_skills.append(item[:-4])
-            elif item.endswith('.tar.gz'):
-                available_skills.append(item[:-7])
-                
-    if not available_skills:
-        print("  ⚠️ 主層 'skills' 目錄中找不到可用的壓縮檔 (.zip, .tar.gz)。")
-        return current_skills or []
-        
-    print("\n  可掛載的技能清單 (Skills):")
-    for i, skill in enumerate(available_skills):
-        print(f"  [{i+1}] {skill}")
-        
-    current_str = ','.join(current_skills) if current_skills else '無'
-    prompt_str = f"請輸入要掛載的技能編號或名稱，以逗號分隔 (例如 1,3) [目前: {current_str}] (按 Enter 保留目前設定): "
-    
-    while True:
-        choice = input(prompt_str).strip()
-        if not choice:
-            return current_skills or []
-            
-        selected = []
-        invalid = False
-        for p in choice.split(','):
-            p = p.strip()
-            if not p: continue
-            if p.isdigit():
-                idx = int(p) - 1
-                if 0 <= idx < len(available_skills):
-                    skill_name = available_skills[idx]
-                    if skill_name not in selected:
-                        selected.append(skill_name)
-                else:
-                    invalid = True
-                    break
-            elif p in available_skills:
-                if p not in selected:
-                    selected.append(p)
-            else:
-                invalid = True
-                break
-                
-        if invalid:
-            print("  ❌ 無效的選擇，請重新輸入。")
-        else:
-            return selected
-
 def manage_agents():
     global CONFIG
     if "agents" not in CONFIG or not isinstance(CONFIG["agents"], list):
@@ -233,10 +179,8 @@ def manage_agents():
             model = prompt_model_choice(engine)
             usecase = input("職責 (usecase) [用於 Agent 系統提示認知]: ").strip()
             desc = input("描述 (description) [用於選單與使用者辨認]: ").strip()
-            skills = prompt_skills_choice()
             new_agent = {"name": name, "engine": engine, "usecase": usecase, "description": desc}
             if model: new_agent["model"] = model
-            if skills: new_agent["skills"] = skills
             CONFIG["agents"].append(new_agent)
             print(f"✅ Agent {name} 已新增！")
             if len(CONFIG["agents"]) == 1:
@@ -268,12 +212,7 @@ def manage_agents():
                     new_desc = input(f"新描述 [用於選單與使用者辨認] (按 Enter 保留 '{agent.get('description', '')}'): ").strip()
                     if new_desc: agent['description'] = new_desc
                     
-                    new_skills = prompt_skills_choice(agent.get('skills', []))
-                    if new_skills is not None:
-                        if new_skills:
-                            agent['skills'] = new_skills
-                        else:
-                            agent.pop('skills', None)
+                    
                     
                     CONFIG["agents"][idx] = agent
                     print(f"✅ Agent 修改完成！")
