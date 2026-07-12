@@ -59,11 +59,9 @@ NOISE_PATTERNS = [
     r'▸ Thought for',
     r'\(ctrl\+o to',
     r'^● \w+\(',
-    r'\* Doodling',
-    r'\* Elucidating',
-    r'^(●\s+)?(Reading|Searching|Read|Searched|Ran|Listed|Running)\b',
-    r'\(\d+[ms]( \· \d+ lines)?\)$',
-    r'… \(\d+[sm]\)$',
+    r'^\* .*?… \(',
+    r'^(●\s+)?(Reading|Searching|Read|Searched|Ran|Listed|Listing|Running)\b',
+    r'\(\d+[ms](\s+\d+[ms])?(\s*·.*?)?\)\s*$',
 ]
 
 # ✅ Must-keep features
