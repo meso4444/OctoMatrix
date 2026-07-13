@@ -373,6 +373,7 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
         f.write(f"fi\n")
         f.write(f"if [ -n \"{main_sp_path}\" ] && [ -d \".venv\" ]; then\n")
         f.write(f"    .venv/bin/python3 -c \"import sysconfig, os; p=sysconfig.get_paths()['purelib'] + '/octo_core_overlay.pth'; [os.chmod(p, 0o666) if os.path.exists(p) else None]; open(p, 'w').write('{main_sp_path}\\\\n'); os.chmod(p, 0o444)\"\n")
+        f.write(f"    python3 -c \"import os, site; user_site = site.USER_SITE; os.makedirs(user_site, exist_ok=True); p = os.path.join(user_site, 'octo_shared_venv.pth'); [os.chmod(p, 0o666) if os.path.exists(p) else None]; open(p, 'w').write('{main_sp_path}\\\\n'); os.chmod(p, 0o444)\"\n")
         f.write(f"fi\n")
     subprocess.run(['chmod', '777', init_venv_script], check=False)
     # ====================================================
