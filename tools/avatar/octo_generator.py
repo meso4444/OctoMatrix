@@ -129,8 +129,8 @@ def generate_octopus_image(body_rgb=(150, 150, 150),
     elif eyewear == "round_glasses":   draw.ellipse([lx-4,ly-4,lx+4,ly+4],outline=B); draw.ellipse([rx-4,ry-4,rx+4,ry+4],outline=B); draw.line([lx+4,ly,rx-4,ly],fill=B)
     elif eyewear == "half_rim_glasses":
         for ex,ey in [(lx,ly),(rx,ry)]:
-            draw.line([ex-4,ey-5,ex+4,ey-5],fill=B); draw.line([ex-4,ey-5,ex-4,ey+1],fill=B); draw.line([ex+4,ey-5,ex+4,ey+1],fill=B)
-        draw.line([lx+4,ly-1,rx-4,ly-1],fill=B)
+            draw.line([ex-4,ey-4,ex+4,ey-4],fill=B); draw.line([ex-4,ey-4,ex-4,ey+2],fill=B); draw.line([ex+4,ey-4,ex+4,ey+2],fill=B)
+        draw.line([lx+4,ly,rx-4,ly],fill=B)
 
     if   headgear == "grad":         draw.polygon([(32,10),(42,15),(32,20),(22,15)],fill=B)
     elif headgear == "crown":        draw.polygon([(24,18),(24,12),(28,16),(32,10),(36,16),(40,12),(40,18)],fill=GOLD,outline=B); px[32,14]=RED
@@ -998,10 +998,10 @@ def draw_overlay(img, mood, fi, nf, body_rgb, blush_style='oval', eyewear='none'
             ew_d.ellipse([lx64-4, ly64-4, lx64+4, ly64+4], outline=_GOLD, width=1)
         elif eyewear == 'half_rim_glasses':
             for ex, ey in [(lx64, ly64), (rx64, ly64)]:
-                ew_d.line([ex-4, ey-5, ex+4, ey-5], fill=_B)
-                ew_d.line([ex-4, ey-5, ex-4, ey+1], fill=_B)
-                ew_d.line([ex+4, ey-5, ex+4, ey+1], fill=_B)
-            ew_d.line([lx64+4, ly64-1, rx64-4, ly64-1], fill=_B)
+                ew_d.line([ex-4, ey-4, ex+4, ey-4], fill=_B)
+                ew_d.line([ex-4, ey-4, ex-4, ey+2], fill=_B)
+                ew_d.line([ex+4, ey-4, ex+4, ey+2], fill=_B)
+            ew_d.line([lx64+4, ly64, rx64-4, ly64], fill=_B)
         img.alpha_composite(ew64.resize((512, 512), Image.NEAREST))
 
     return Image.alpha_composite(img.convert('RGBA'), overlay)
