@@ -243,7 +243,8 @@ def get_active_agent():
 SYS_PREFIX = "【系統提示】"
 
 # Agent 專屬 Linux 帳號密碼 (Local 雙軌隔離用)
-AGENT_PASSWORD = str(os.environ.get("AGENT_PASSWORD", _config.get("agent_password", "octomatrix")))
+# 只允許來自環境變數 (.env)，不再從 config.yaml 讀取明文備援，避免密碼隨 config.yaml 一起外洩
+AGENT_PASSWORD = os.environ.get("AGENT_PASSWORD", "")
 
 # ==========================================
 # 額外 Prompt 與 Text 模板
