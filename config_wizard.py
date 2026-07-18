@@ -50,20 +50,22 @@ def prompt_bool(prompt_str, default=True):
             return False
 
 def get_or_create_agent_password(config_path):
-    """從 .env 讀取 AGENT_PASSWORD，若不存在則產生一組隨機密碼並寫入 .env (不寫入 config.yaml)。"""
+    """從 .env 讀取 AGENT_PASSWORD，若不存在則產生一組隨機密碼並寫入 .env (不寫入 config.yaml)。
+    回傳 (password, is_newly_generated)：is_newly_generated 為 True 時，代表這是本次執行才新產生的密碼，
+    呼叫端必須連同「已存在的 agent_user」一併重新 chpasswd，否則舊帳號的實際密碼會跟 .env 對不上。"""
     import secrets
     env_path = os.path.join(os.path.dirname(os.path.abspath(config_path)), '.env')
     if os.path.exists(env_path):
         with open(env_path, 'r', encoding='utf-8') as f:
             for line in f:
                 if line.strip().startswith('AGENT_PASSWORD='):
-                    return line.strip().split('=', 1)[1]
+                    return line.strip().split('=', 1)[1], False
     password = secrets.token_urlsafe(16)
     with open(env_path, 'a', encoding='utf-8') as f:
         f.write(f"AGENT_PASSWORD={password}\n")
     os.chmod(env_path, 0o600)
     print("  🔐 未偵測到 AGENT_PASSWORD，已自動產生隨機密碼並寫入 .env")
-    return password
+    return password, True
 
 def save_config():
     try:
@@ -105,14 +107,15 @@ def save_config():
         # v4: 建立專屬 Linux 帳號 (非容器環境，且排除生成 Docker 部署設定檔的情況)
         if not os.path.exists('/.dockerenv') and 'docker-deploy' not in os.path.abspath(CONFIG_PATH):
             import subprocess
-            password = get_or_create_agent_password(CONFIG_PATH)
+            password, password_is_new = get_or_create_agent_password(CONFIG_PATH)
             print("🔒 正在配置專屬 Linux 帳號隔離...")
             for agent in CONFIG.get('agents', []):
                 agent_name = agent.get('name', '').lower()
                 if agent_name:
                     agent_user = f"agent_{agent_name}"
                     # Check if user exists
-                    if subprocess.run(['id', agent_user], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode != 0:
+                    user_exists = subprocess.run(['id', agent_user], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
+                    if not user_exists:
                         try:
                             subprocess.run(['sudo', 'useradd', '-m', '-s', '/bin/bash', agent_user], check=True)
                             p = subprocess.Popen(['sudo', 'chpasswd'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -120,6 +123,15 @@ def save_config():
                             print(f"  ✅ 建立使用者: {agent_user}")
                         except Exception as e:
                             print(f"  ❌ 建立使用者 {agent_user} 失敗: {e}")
+                    elif password_is_new:
+                        # 密碼是本次才新產生的，既有帳號的實際密碼還停留在舊值，必須同步 chpasswd，
+                        # 否則 .env 裡的密碼會跟這個已存在帳號的真實密碼對不上，導致之後 su - 登入失敗。
+                        try:
+                            p = subprocess.Popen(['sudo', 'chpasswd'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                            p.communicate(input=f"{agent_user}:{password}".encode('utf-8'))
+                            print(f"  🔄 已同步既有使用者密碼: {agent_user}")
+                        except Exception as e:
+                            print(f"  ❌ 同步使用者 {agent_user} 密碼失敗: {e}")
                             
     except Exception as e:
         print(f"❌ 儲存失敗: {e}")
