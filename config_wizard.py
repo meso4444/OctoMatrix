@@ -49,27 +49,8 @@ def prompt_bool(prompt_str, default=True):
         if resp in ['n', 'no']:
             return False
 
-def get_or_create_agent_password(config_path):
-    """Read AGENT_PASSWORD from .env; if absent, generate a random password and write it to .env (never to config.yaml)."""
-    import secrets
-    env_path = os.path.join(os.path.dirname(os.path.abspath(config_path)), '.env')
-    if os.path.exists(env_path):
-        with open(env_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                if line.strip().startswith('AGENT_PASSWORD='):
-                    return line.strip().split('=', 1)[1]
-    password = secrets.token_urlsafe(16)
-    with open(env_path, 'a', encoding='utf-8') as f:
-        f.write(f"AGENT_PASSWORD={password}\n")
-    os.chmod(env_path, 0o600)
-    print("  🔐 No AGENT_PASSWORD detected, generated a random password and wrote it to .env")
-    return password
-
 def save_config():
     try:
-        # agent_password is no longer allowed into config.yaml; it's managed via .env instead
-        CONFIG.pop('agent_password', None)
-
         # Reorder keys to follow 13542 sequence (Agent -> Collaboration -> Menu -> Cyberbrain -> Tmux)
         ordered_config = {}
         # Keep server/router first if they exist
@@ -105,7 +86,7 @@ def save_config():
         # v4: Create dedicated Linux account (Non-container environment, and exclude generating Docker deployment configs)
         if not os.path.exists('/.dockerenv') and 'docker-deploy' not in os.path.abspath(CONFIG_PATH):
             import subprocess
-            password = get_or_create_agent_password(CONFIG_PATH)
+            password = CONFIG.get("agent_password", "octomatrix")
             print("🔒 Configuring dedicated Linux account isolation...")
             for agent in CONFIG.get('agents', []):
                 agent_name = agent.get('name', '').lower()
