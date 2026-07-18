@@ -243,7 +243,9 @@ def get_active_agent():
 SYS_PREFIX = "[System Prompt]"
 
 # Agent specific Linux account password (for local dual-track isolation)
-AGENT_PASSWORD = str(os.environ.get("AGENT_PASSWORD", _config.get("agent_password", "octomatrix")))
+# Only sourced from the environment (.env); no longer falls back to config.yaml,
+# so the password can't leak alongside config.yaml
+AGENT_PASSWORD = os.environ.get("AGENT_PASSWORD", "")
 
 
 # ==========================================
