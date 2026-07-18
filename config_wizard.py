@@ -49,27 +49,8 @@ def prompt_bool(prompt_str, default=True):
         if resp in ['n', 'no']:
             return False
 
-def get_or_create_agent_password(config_path):
-    """從 .env 讀取 AGENT_PASSWORD，若不存在則產生一組隨機密碼並寫入 .env (不寫入 config.yaml)。"""
-    import secrets
-    env_path = os.path.join(os.path.dirname(os.path.abspath(config_path)), '.env')
-    if os.path.exists(env_path):
-        with open(env_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                if line.strip().startswith('AGENT_PASSWORD='):
-                    return line.strip().split('=', 1)[1]
-    password = secrets.token_urlsafe(16)
-    with open(env_path, 'a', encoding='utf-8') as f:
-        f.write(f"AGENT_PASSWORD={password}\n")
-    os.chmod(env_path, 0o600)
-    print("  🔐 未偵測到 AGENT_PASSWORD，已自動產生隨機密碼並寫入 .env")
-    return password
-
 def save_config():
     try:
-        # 不再允許 agent_password 寫入 config.yaml，一律改由 .env 管理
-        CONFIG.pop('agent_password', None)
-
         # Reorder keys to follow 13542 sequence (Agent -> Collaboration -> Menu -> Cyberbrain -> Tmux)
         ordered_config = {}
         # Keep server/router first if they exist
@@ -105,7 +86,7 @@ def save_config():
         # v4: 建立專屬 Linux 帳號 (非容器環境，且排除生成 Docker 部署設定檔的情況)
         if not os.path.exists('/.dockerenv') and 'docker-deploy' not in os.path.abspath(CONFIG_PATH):
             import subprocess
-            password = get_or_create_agent_password(CONFIG_PATH)
+            password = CONFIG.get("agent_password", "octomatrix")
             print("🔒 正在配置專屬 Linux 帳號隔離...")
             for agent in CONFIG.get('agents', []):
                 agent_name = agent.get('name', '').lower()
