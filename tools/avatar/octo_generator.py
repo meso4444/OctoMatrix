@@ -273,6 +273,34 @@ def blink_stars(d, ex, ey):
     draw_star(d, ex+34, ey-22, 9,  GOLD)
     draw_star(d, ex-34, ey-22, 7,  YELLOW)
 
+def _draw_eyewear64(d, eyewear, lx64=24, ly64=30, rx64=40):
+    """Draw eyewear on a 64-unit ImageDraw target. Shared by draw_overlay (redraws on
+    top of mood overlays) and the wink frame builders (redraws on top of the wink
+    eye-region erase/redraw steps) — both need this because whichever draws the eye
+    state last can otherwise punch a body-coloured hole through eyewear that was
+    already baked into the base image (reported by Kenzan: a chunk of the left lens
+    going missing during the wink-closed frame)."""
+    _B    = (44,  44,  44,  255)
+    _GOLD = (255, 215,   0,  255)
+    if eyewear == 'glasses':
+        d.rectangle([lx64-4, ly64-4, lx64+4, ly64+4], outline=_B)
+        d.rectangle([rx64-4, ly64-4, rx64+4, ly64+4], outline=_B)
+        d.line([lx64+4, ly64, rx64-4, ly64], fill=_B)
+    elif eyewear == 'round_glasses':
+        d.ellipse([lx64-4, ly64-4, lx64+4, ly64+4], outline=_B)
+        d.ellipse([rx64-4, ly64-4, rx64+4, ly64+4], outline=_B)
+        d.line([lx64+4, ly64, rx64-4, ly64], fill=_B)
+    elif eyewear == 'monocle':
+        d.ellipse([rx64-4, ly64-4, rx64+4, ly64+4], outline=_GOLD, width=1)
+    elif eyewear == 'monocle_left':
+        d.ellipse([lx64-4, ly64-4, lx64+4, ly64+4], outline=_GOLD, width=1)
+    elif eyewear == 'half_rim_glasses':
+        for ex, ey in [(lx64, ly64), (rx64, ly64)]:
+            d.line([ex-4, ey-4, ex+4, ey-4], fill=_B)
+            d.line([ex-4, ey-4, ex-4, ey+2], fill=_B)
+            d.line([ex+4, ey-4, ex+4, ey+2], fill=_B)
+        d.line([lx64+4, ly64, rx64-4, ly64], fill=_B)
+
 def _draw_blush64(d, px64, ox, style, color, enlarged=False):
     """Draw one cheek blush on a 64×64 pixel-art canvas at cheek x=ox.
     enlarged=True → angry scale (9×7 at y=34-40); False → standard (5×3 at y=36-38)."""
@@ -420,6 +448,12 @@ def make_wink_open_frame(body_rgb, headgear, eyewear, item_r, item_l, blush_styl
     d.ellipse([lx-3, ly-3, lx+3, ly+3], fill=(*body_rgb, 255))  # erase closed-wink eye
     d.ellipse([lx-2, ly-2, lx+2, ly+2], fill=DARK)              # standard circle
     px[lx-1, ly-1] = (255, 255, 255, 255)                       # highlight
+    # Redraw eyewear on top: the erase steps above paint body_rgb over pixels that can
+    # fall on the eyewear border (Kenzan reported a chunk of the left lens going
+    # missing on the wink-closed frame; the open frame's erase radius happens not to
+    # touch the border, but redraw defensively here too for any future radius change).
+    if eyewear != 'none':
+        _draw_eyewear64(d, eyewear)
     return img64.resize((512, 512), Image.NEAREST)
 
 
@@ -429,11 +463,17 @@ def make_wink_closed_frame(body_rgb, headgear, eyewear, item_r, item_l, blush_st
         body_rgb=body_rgb, mood='wink', eyewear=eyewear, headgear=headgear,
         item_r=item_r, item_l=item_l, blush_style=blush_style, size=64, scale=1
     ).convert('RGBA')
+    d  = ImageDraw.Draw(img64)
     px = img64.load()
     lx, ly = 24, 30
     # Erase yellow sparkle pixels from wink mood
     px[lx-4, ly-2] = (*body_rgb, 255)
     px[lx-3, ly-1] = (*body_rgb, 255)
+    # Redraw eyewear on top: (lx-4,ly-2) sits exactly on the left lens border for
+    # 'glasses'/'half_rim_glasses', so the erase above punches a body-coloured notch
+    # into it — this is the bug Kenzan reported (missing chunk of left lens on wink).
+    if eyewear != 'none':
+        _draw_eyewear64(d, eyewear)
     img512 = img64.resize((512, 512), Image.NEAREST)
     ov  = Image.new('RGBA', (512, 512), (0, 0, 0, 0))
     dov = ImageDraw.Draw(ov)
@@ -981,27 +1021,7 @@ def draw_overlay(img, mood, fi, nf, body_rgb, blush_style='oval', eyewear='none'
     if eyewear != 'none' and mood != 'cool':
         ew64 = Image.new('RGBA', (64, 64), (0, 0, 0, 0))
         ew_d = ImageDraw.Draw(ew64)
-        _B    = (44,  44,  44,  255)
-        _GOLD = (255, 215,   0,  255)
-        lx64, ly64, rx64 = 24, 30, 40
-        if eyewear == 'glasses':
-            ew_d.rectangle([lx64-4, ly64-4, lx64+4, ly64+4], outline=_B)
-            ew_d.rectangle([rx64-4, ly64-4, rx64+4, ly64+4], outline=_B)
-            ew_d.line([lx64+4, ly64, rx64-4, ly64], fill=_B)
-        elif eyewear == 'round_glasses':
-            ew_d.ellipse([lx64-4, ly64-4, lx64+4, ly64+4], outline=_B)
-            ew_d.ellipse([rx64-4, ly64-4, rx64+4, ly64+4], outline=_B)
-            ew_d.line([lx64+4, ly64, rx64-4, ly64], fill=_B)
-        elif eyewear == 'monocle':
-            ew_d.ellipse([rx64-4, ly64-4, rx64+4, ly64+4], outline=_GOLD, width=1)
-        elif eyewear == 'monocle_left':
-            ew_d.ellipse([lx64-4, ly64-4, lx64+4, ly64+4], outline=_GOLD, width=1)
-        elif eyewear == 'half_rim_glasses':
-            for ex, ey in [(lx64, ly64), (rx64, ly64)]:
-                ew_d.line([ex-4, ey-4, ex+4, ey-4], fill=_B)
-                ew_d.line([ex-4, ey-4, ex-4, ey+2], fill=_B)
-                ew_d.line([ex+4, ey-4, ex+4, ey+2], fill=_B)
-            ew_d.line([lx64+4, ly64, rx64-4, ly64], fill=_B)
+        _draw_eyewear64(ew_d, eyewear)
         img.alpha_composite(ew64.resize((512, 512), Image.NEAREST))
 
     return Image.alpha_composite(img.convert('RGBA'), overlay)
