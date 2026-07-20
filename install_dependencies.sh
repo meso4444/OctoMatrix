@@ -95,11 +95,11 @@ install_homebrew_if_needed() {
 
 # ===== Basic tools installation =====
 install_basic_tools() {
-    echo "📦 Checking and installing basic tools (curl, wget, jq, tmux, zstd, ffmpeg)..."
+    echo "📦 Checking and installing basic tools (curl, wget, git, jq, tmux, zstd, ffmpeg)..."
 
     if [[ "$ENVIRONMENT" == "macOS" ]]; then
         # macOS: Use brew
-        TOOLS="curl wget jq tmux zstd ffmpeg"
+        TOOLS="curl wget git jq tmux zstd ffmpeg"
         for tool in $TOOLS; do
             if ! command -v $tool &> /dev/null; then
                 echo "   Installing $tool..."
@@ -112,11 +112,11 @@ install_basic_tools() {
         # Linux/WSL: Use apt-get or yum
         if command -v apt-get &> /dev/null; then
             sudo apt-get update
-            sudo apt-get install -y curl wget jq tmux zstd ffmpeg
+            sudo apt-get install -y curl wget git jq tmux zstd ffmpeg
         elif command -v yum &> /dev/null; then
-            sudo yum install -y curl wget jq tmux zstd ffmpeg
+            sudo yum install -y curl wget git jq tmux zstd ffmpeg
         else
-            echo "⚠️  Unable to automatically install basic tools, please manually verify installed: curl, wget, jq, tmux, zstd, ffmpeg"
+            echo "⚠️  Unable to automatically install basic tools, please manually verify installed: curl, wget, git, jq, tmux, zstd, ffmpeg"
         fi
     fi
 }
