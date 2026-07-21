@@ -171,90 +171,106 @@ class AwakeManager:
         return None
 
     def register_job(self, task_data):
-        validation_error = self._validate_job_data(task_data)
-        if validation_error:
-            return validation_error
-            
-        jobs = []
-        if os.path.exists(self.awake_file):
+        try:
+            validation_error = self._validate_job_data(task_data)
+            if validation_error:
+                return validation_error
+
+            jobs = []
+            if os.path.exists(self.awake_file):
+                with open(self.awake_file, 'r', encoding='utf-8') as f:
+                    jobs = yaml.safe_load(f) or []
+            if not isinstance(jobs, list): jobs = []
+            task_id = task_data.get('id') or task_data.get('name')
+            jobs = [t for t in jobs if (t.get('id') or t.get('name')) != task_id]
+            jobs.append(task_data)
+            with open(self.awake_file, 'w', encoding='utf-8') as f:
+                yaml.dump(jobs, f, allow_unicode=True)
+            self._add_task_to_scheduler(task_data)
+            return {"status": "success", "message": f"已註冊喚醒任務: {task_id}"}
+        except Exception as e:
+            print(f"❌ [Awake] register_job 失敗: {e}")
+            return {"status": "error", "message": f"註冊喚醒任務失敗: {e}"}
+
+    def update_job(self, job_id, update_data):
+        try:
+            if not os.path.exists(self.awake_file):
+                return {"status": "error", "message": "檔案不存在"}
+
             with open(self.awake_file, 'r', encoding='utf-8') as f:
                 jobs = yaml.safe_load(f) or []
-        if not isinstance(jobs, list): jobs = []
-        task_id = task_data.get('id') or task_data.get('name')
-        jobs = [t for t in jobs if (t.get('id') or t.get('name')) != task_id]
-        jobs.append(task_data)
-        with open(self.awake_file, 'w', encoding='utf-8') as f:
-            yaml.dump(jobs, f, allow_unicode=True)
-        self._add_task_to_scheduler(task_data)
-        return {"status": "success", "message": f"已註冊喚醒任務: {task_id}"}
-        
-    def update_job(self, job_id, update_data):
-        if not os.path.exists(self.awake_file):
-            return {"status": "error", "message": "檔案不存在"}
-            
-        with open(self.awake_file, 'r', encoding='utf-8') as f:
-            jobs = yaml.safe_load(f) or []
-            
-        target_job = None
-        for job in jobs:
-            if (job.get('id') or job.get('name')) == job_id:
-                target_job = job
-                break
-                
-        if not target_job:
-            return {"status": "error", "message": f"找不到任務: {job_id}"}
-            
-        # Post-Merge Validation
-        merged_job = target_job.copy()
-        for k, v in update_data.items():
-            if v is not None:
-                merged_job[k] = v
-                
-        # Remove empty string or None values that might have been passed to override
-        merged_job = {k: v for k, v in merged_job.items() if v is not None}
-                
-        validation_error = self._validate_job_data(merged_job)
-        if validation_error:
-            return validation_error
-            
-        # Remove old job
-        jobs = [t for t in jobs if (t.get('id') or t.get('name')) != job_id]
-        jobs.append(merged_job)
-        
-        with open(self.awake_file, 'w', encoding='utf-8') as f:
-            yaml.dump(jobs, f, allow_unicode=True)
-            
-        # Update Scheduler
-        try:
-            self.scheduler.remove_job(job_id)
-        except:
-            pass
-        self._add_task_to_scheduler(merged_job)
-        
-        return {"status": "success", "message": f"已更新喚醒任務: {job_id}"}
+
+            target_job = None
+            for job in jobs:
+                if (job.get('id') or job.get('name')) == job_id:
+                    target_job = job
+                    break
+
+            if not target_job:
+                return {"status": "error", "message": f"找不到任務: {job_id}"}
+
+            # Post-Merge Validation
+            merged_job = target_job.copy()
+            for k, v in update_data.items():
+                if v is not None:
+                    merged_job[k] = v
+
+            # Remove empty string or None values that might have been passed to override
+            merged_job = {k: v for k, v in merged_job.items() if v is not None}
+
+            validation_error = self._validate_job_data(merged_job)
+            if validation_error:
+                return validation_error
+
+            # Remove old job
+            jobs = [t for t in jobs if (t.get('id') or t.get('name')) != job_id]
+            jobs.append(merged_job)
+
+            with open(self.awake_file, 'w', encoding='utf-8') as f:
+                yaml.dump(jobs, f, allow_unicode=True)
+
+            # Update Scheduler
+            try:
+                self.scheduler.remove_job(job_id)
+            except:
+                pass
+            self._add_task_to_scheduler(merged_job)
+
+            return {"status": "success", "message": f"已更新喚醒任務: {job_id}"}
+        except Exception as e:
+            print(f"❌ [Awake] update_job 失敗: {e}")
+            return {"status": "error", "message": f"更新喚醒任務失敗: {e}"}
 
     def delete_job(self, job_id):
-        if not os.path.exists(self.awake_file): return {"status": "error", "message": "檔案不存在"}
-        with open(self.awake_file, 'r', encoding='utf-8') as f:
-            jobs = yaml.safe_load(f) or []
-        new_jobs = [t for t in jobs if (t.get('id') or t.get('name')) != job_id]
-        if len(new_jobs) == len(jobs): return {"status": "error", "message": f"找不到任務: {job_id}"}
-        with open(self.awake_file, 'w', encoding='utf-8') as f:
-            yaml.dump(new_jobs, f, allow_unicode=True)
-        try: self.scheduler.remove_job(job_id)
-        except: pass
-        return {"status": "success", "message": f"已刪除喚醒任務: {job_id}"}
+        try:
+            if not os.path.exists(self.awake_file): return {"status": "error", "message": "檔案不存在"}
+            with open(self.awake_file, 'r', encoding='utf-8') as f:
+                jobs = yaml.safe_load(f) or []
+            new_jobs = [t for t in jobs if (t.get('id') or t.get('name')) != job_id]
+            if len(new_jobs) == len(jobs): return {"status": "error", "message": f"找不到任務: {job_id}"}
+            with open(self.awake_file, 'w', encoding='utf-8') as f:
+                yaml.dump(new_jobs, f, allow_unicode=True)
+            try: self.scheduler.remove_job(job_id)
+            except: pass
+            return {"status": "success", "message": f"已刪除喚醒任務: {job_id}"}
+        except Exception as e:
+            print(f"❌ [Awake] delete_job 失敗: {e}")
+            return {"status": "error", "message": f"刪除喚醒任務失敗: {e}"}
 
     def list_jobs(self):
-        jobs_info = []
-        for job in self.scheduler.get_jobs():
-            original_task = job.args[0] if job.args else {}
-            jobs_info.append({
-                "id": job.id,
-                "trigger": str(job.trigger),
-                "next_run_time": job.next_run_time.strftime("%Y-%m-%d %H:%M:%S") if job.next_run_time else "None",
-                "target_agent": original_task.get('target_agent') or original_task.get('agent') or "未指定",
-                "prompt": original_task.get('prompt') or original_task.get('command') or "無指令"
-            })
-        return {"status": "ok", "total": len(jobs_info), "jobs": jobs_info}
+        try:
+            jobs_info = []
+            for job in self.scheduler.get_jobs():
+                original_task = job.args[0] if job.args else {}
+                jobs_info.append({
+                    "id": job.id,
+                    "trigger": str(job.trigger),
+                    "next_run_time": job.next_run_time.strftime("%Y-%m-%d %H:%M:%S") if job.next_run_time else "None",
+                    "target_agent": original_task.get('target_agent') or original_task.get('agent') or "未指定",
+                    "prompt": original_task.get('prompt') or original_task.get('command') or "無指令"
+                })
+            return {"status": "ok", "total": len(jobs_info), "jobs": jobs_info}
+        except Exception as e:
+            print(f"❌ [Awake] list_jobs 失敗: {e}")
+            return {"status": "error", "message": f"列出喚醒任務失敗: {e}"}
 
