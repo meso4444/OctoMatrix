@@ -211,7 +211,7 @@ try:
     session_name = os.environ['TMUX_SESSION_NAME']
     for agent in AGENTS:
         name = agent['name']
-        test_msg = f"{SYS_PREFIX} Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.png` to send a sticker matching your current mood, then execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME}}}'`"
+        test_msg = f"{SYS_PREFIX} Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.webm` to send a sticker matching your current mood, then execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME}}}'`"
         agent_dir = os.path.join(os.environ['SCRIPT_DIR'], 'agent_home', name)
         flag_file = os.path.join(agent_dir, 'octo_cyberbrain', '.rotation_flag')
         pending_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_user.txt')
