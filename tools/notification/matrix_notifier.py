@@ -541,8 +541,12 @@ if __name__ == '__main__':
                     payload['target_id'] = target_id
                     
                 resp = requests.post(f"{router_url}/notify_file", files={'file': (os.path.basename(f.name), f)}, data=payload, timeout=30)
-                if resp.status_code == 200: print(f"✅ File sent via Router to {platform}"); sys.exit(0)
-                else: print(f"❌ Router Error: {resp.status_code}"); sys.exit(1)
+                # Router 對 /notify_file 一律回傳 HTTP 200，實際成敗寫在 JSON body 的 status 欄位，
+                # 只看 status_code 會讓 Telegram 端實際發送失敗時仍誤報成功 (2026-07-24 用戶回報)
+                try: body_status = resp.json().get("status")
+                except Exception: body_status = None
+                if resp.status_code == 200 and body_status == "success": print(f"✅ File sent via Router to {platform}"); sys.exit(0)
+                else: print(f"❌ Router 回報發送失敗: {resp.text}"); sys.exit(1)
         except Exception as e: print(f"❌ Error: {e}"); sys.exit(1)
 
     elif args.message or args.template != 'custom':
@@ -551,8 +555,11 @@ if __name__ == '__main__':
         payload = {'platform': platform, 'template_id': args.template, 'context': context, 'target_id': target_id}
         try:
             resp = requests.post(f"{router_url}/notify", json=payload, timeout=10)
-            if resp.status_code == 200: print(f"✅ Message sent via Router to {platform}"); sys.exit(0)
-            else: print(f"❌ Router Error: {resp.status_code}"); sys.exit(1)
+            # 同上：Router 對 /notify 也是一律回傳 HTTP 200，須另外檢查 JSON body 的 status 欄位
+            try: body_status = resp.json().get("status")
+            except Exception: body_status = None
+            if resp.status_code == 200 and body_status == "success": print(f"✅ Message sent via Router to {platform}"); sys.exit(0)
+            else: print(f"❌ Router 回報發送失敗: {resp.text}"); sys.exit(1)
         except Exception as e: print(f"❌ Error: {e}"); sys.exit(1)
     else:
         parser.print_help()
