@@ -541,8 +541,13 @@ if __name__ == '__main__':
                     payload['target_id'] = target_id
                     
                 resp = requests.post(f"{router_url}/notify_file", files={'file': (os.path.basename(f.name), f)}, data=payload, timeout=30)
-                if resp.status_code == 200: print(f"✅ File sent via Router to {platform}"); sys.exit(0)
-                else: print(f"❌ Router Error: {resp.status_code}"); sys.exit(1)
+                # Router always returns HTTP 200 for /notify_file; the real success/failure is in the
+                # JSON body's status field. Checking status_code alone falsely reports success when the
+                # actual Telegram send failed (reported by a user on 2026-07-24).
+                try: body_status = resp.json().get("status")
+                except Exception: body_status = None
+                if resp.status_code == 200 and body_status == "success": print(f"✅ File sent via Router to {platform}"); sys.exit(0)
+                else: print(f"❌ Router reported delivery failure: {resp.text}"); sys.exit(1)
         except Exception as e: print(f"❌ Error: {e}"); sys.exit(1)
 
     elif args.message or args.template != 'custom':
@@ -551,8 +556,12 @@ if __name__ == '__main__':
         payload = {'platform': platform, 'template_id': args.template, 'context': context, 'target_id': target_id}
         try:
             resp = requests.post(f"{router_url}/notify", json=payload, timeout=10)
-            if resp.status_code == 200: print(f"✅ Message sent via Router to {platform}"); sys.exit(0)
-            else: print(f"❌ Router Error: {resp.status_code}"); sys.exit(1)
+            # Same as above: /notify also always returns HTTP 200, so the JSON body's status field
+            # must be checked separately.
+            try: body_status = resp.json().get("status")
+            except Exception: body_status = None
+            if resp.status_code == 200 and body_status == "success": print(f"✅ Message sent via Router to {platform}"); sys.exit(0)
+            else: print(f"❌ Router reported delivery failure: {resp.text}"); sys.exit(1)
         except Exception as e: print(f"❌ Error: {e}"); sys.exit(1)
     else:
         parser.print_help()
