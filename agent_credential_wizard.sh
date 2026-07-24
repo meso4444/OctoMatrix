@@ -56,7 +56,16 @@ run_local_auth() {
         return
     fi
     
-    AGENT_LIST=$(python3 -c "import yaml; [print(a.get('name', '')) for a in yaml.safe_load(open('$CONFIG_YAML')).get('agents', [])]" 2>/dev/null)
+    if ! AGENT_LIST=$(CONFIG_YAML_ENV="$CONFIG_YAML" python3 -c "
+import os, yaml
+data = yaml.safe_load(open(os.environ['CONFIG_YAML_ENV'])) or {}
+for a in data.get('agents', []):
+    print(a.get('name', ''))
+" 2>&1); then
+        echo "❌ 讀取 config.yaml 的 Agent 清單失敗，請確認檔案格式是否正確:"
+        echo "$AGENT_LIST"
+        return
+    fi
     if [ -z "$AGENT_LIST" ]; then
         echo "❌ 目前沒有建立任何 Agent，請先至系統設定新增 Agent。"
         return
@@ -88,43 +97,55 @@ run_local_auth() {
     
     AGENT_NAME="${AGENT_ARRAY[$((AGENT_CHOICE-1))]}"
     AGENT_USER="agent_${AGENT_NAME,,}"
-    
+
     # 確保帳號存在
     if ! id "$AGENT_USER" &>/dev/null; then
         echo "❌ 找不到專屬帳號 $AGENT_USER。請先透過 setup_config 儲存設定以建立帳號。"
         continue
     fi
 
-    # 自動判斷引擎
-    AGENT_ENGINE=$(python3 -c "import yaml; print(next((a.get('engine', 'gemini') for a in yaml.safe_load(open('$CONFIG_YAML')).get('agents', []) if a.get('name', '') == '$AGENT_NAME'), 'gemini'))" 2>/dev/null)
-    
+    # 動態解析實際 Home 目錄 (Linux 為 /home/xxx，macOS 為 /Users/xxx)，避免寫死路徑
+    AGENT_HOME_DIR="$(eval echo ~"$AGENT_USER")"
+
+    # 自動判斷引擎 (透過環境變數傳遞 AGENT_NAME/CONFIG_YAML，避免特殊字元break Python字串字面值)
+    if ! AGENT_ENGINE=$(AGENT_NAME_ENV="$AGENT_NAME" CONFIG_YAML_ENV="$CONFIG_YAML" python3 -c "
+import os, yaml
+name = os.environ['AGENT_NAME_ENV']
+data = yaml.safe_load(open(os.environ['CONFIG_YAML_ENV'])) or {}
+print(next((a.get('engine', 'gemini') for a in data.get('agents', []) if a.get('name', '') == name), 'gemini'))
+" 2>&1); then
+        echo "⚠️  自動偵測引擎失敗，將使用預設值 gemini。錯誤訊息:"
+        echo "$AGENT_ENGINE"
+        AGENT_ENGINE="gemini"
+    fi
+
     echo ""
     echo "⚙️  自動偵測引擎: $AGENT_ENGINE"
     
     if [[ "${AGENT_ENGINE,,}" == *"claude"* ]]; then
         echo "🚀 啟動 Claude CLI 認證 (身分: $AGENT_USER)..."
-        echo "💡 提示: 完成認證後，憑證將存放在 /home/$AGENT_USER/.claude"
+        echo "💡 提示: 完成認證後，憑證將存放在 $AGENT_HOME_DIR/.claude"
         echo ""
         sudo su - "$AGENT_USER" -c "claude --permission-mode bypassPermissions" || true
         echo ""
         echo "✅ Claude 認證完成！"
     elif [[ "${AGENT_ENGINE,,}" == *"codex"* ]]; then
         echo "🚀 啟動 Codex CLI 認證 (身分: $AGENT_USER)..."
-        echo "💡 提示: 完成認證後，憑證將存放在 /home/$AGENT_USER/.codex"
+        echo "💡 提示: 完成認證後，憑證將存放在 $AGENT_HOME_DIR/.codex"
         echo ""
         sudo su - "$AGENT_USER" -c "codex --yolo" || true
         echo ""
         echo "✅ Codex 認證完成！"
     elif [[ "${AGENT_ENGINE,,}" == *"agy"* ]] || [[ "${AGENT_ENGINE,,}" == *"antigravity"* ]]; then
         echo "🚀 啟動 Antigravity CLI 認證 (身分: $AGENT_USER)..."
-        echo "💡 提示: 完成認證後，憑證將存放在 /home/$AGENT_USER/.gemini"
+        echo "💡 提示: 完成認證後，憑證將存放在 $AGENT_HOME_DIR/.gemini"
         echo ""
         sudo su - "$AGENT_USER" -c "agy --dangerously-skip-permissions" || true
         echo ""
         echo "✅ Antigravity 認證完成！"
     else
         echo "🚀 啟動 Gemini CLI 認證 (身分: $AGENT_USER)..."
-        echo "💡 提示: 完成認證後，憑證將存放在 /home/$AGENT_USER/.gemini"
+        echo "💡 提示: 完成認證後，憑證將存放在 $AGENT_HOME_DIR/.gemini"
         echo ""
         sudo su - "$AGENT_USER" -c "gemini --yolo" || true
         echo ""

@@ -14,6 +14,7 @@
 
 import sys
 import os
+import platform
 import yaml
 import shutil
 try:
@@ -87,7 +88,8 @@ def save_config():
         if not os.path.exists('/.dockerenv') and 'docker-deploy' not in os.path.abspath(CONFIG_PATH):
             import subprocess
             password = CONFIG.get("agent_password", "octomatrix")
-            print("🔒 正在配置專屬 Linux 帳號隔離...")
+            is_macos = platform.system() == 'Darwin'
+            print("🔒 正在配置專屬 macOS 帳號隔離..." if is_macos else "🔒 正在配置專屬 Linux 帳號隔離...")
             for agent in CONFIG.get('agents', []):
                 agent_name = agent.get('name', '').lower()
                 if agent_name:
@@ -95,9 +97,16 @@ def save_config():
                     # Check if user exists
                     if subprocess.run(['id', agent_user], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode != 0:
                         try:
-                            subprocess.run(['sudo', 'useradd', '-m', '-s', '/bin/bash', agent_user], check=True)
-                            p = subprocess.Popen(['sudo', 'chpasswd'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                            p.communicate(input=f"{agent_user}:{password}".encode('utf-8'))
+                            if is_macos:
+                                # useradd/chpasswd 不存在於 macOS，改用 sysadminctl/createhomedir
+                                home_path = f"/Users/{agent_user}"
+                                subprocess.run(['sudo', 'sysadminctl', '-addUser', agent_user, '-password', password, '-home', home_path], check=True)
+                                subprocess.run(['sudo', 'dscl', '.', '-create', f'/Users/{agent_user}', 'UserShell', '/bin/bash'], check=True)
+                                subprocess.run(['sudo', 'createhomedir', '-c', '-u', agent_user], check=True)
+                            else:
+                                subprocess.run(['sudo', 'useradd', '-m', '-s', '/bin/bash', agent_user], check=True)
+                                p = subprocess.Popen(['sudo', 'chpasswd'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                p.communicate(input=f"{agent_user}:{password}".encode('utf-8'))
                             print(f"  ✅ 建立使用者: {agent_user}")
                         except Exception as e:
                             print(f"  ❌ 建立使用者 {agent_user} 失敗: {e}")
