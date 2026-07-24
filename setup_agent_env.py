@@ -559,10 +559,7 @@ def main():
 
     # 3. Create collaboration links (global)
     setup_collaboration_links(agents, groups)
-    
-    # 4. Deploy Skills
-    deploy_skills(target_agents)
-    
+
     # 5. Clean up injection residual locks
     for agent in target_agents:
         agent_dir = os.path.join(AGENT_HOME_BASE, agent['name'])
