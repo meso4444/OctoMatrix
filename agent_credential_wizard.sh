@@ -57,7 +57,16 @@ run_local_auth() {
         return
     fi
     
-    AGENT_LIST=$(python3 -c "import yaml; [print(a.get('name', '')) for a in yaml.safe_load(open('$CONFIG_YAML')).get('agents', [])]" 2>/dev/null)
+    if ! AGENT_LIST=$(CONFIG_YAML_ENV="$CONFIG_YAML" python3 -c "
+import os, yaml
+data = yaml.safe_load(open(os.environ['CONFIG_YAML_ENV'])) or {}
+for a in data.get('agents', []):
+    print(a.get('name', ''))
+" 2>&1); then
+        echo "❌ Failed to read the Agent list from config.yaml. Please check the file format:"
+        echo "$AGENT_LIST"
+        return
+    fi
     if [ -z "$AGENT_LIST" ]; then
         echo "❌ No Agents found. Please add Agents in system setup first."
         return
@@ -96,36 +105,48 @@ run_local_auth() {
         continue
     fi
 
+    # Dynamically resolve actual home dir (Linux: /home/xxx, macOS: /Users/xxx); avoid hardcoding
+    AGENT_HOME_DIR="$(eval echo ~"$AGENT_USER")"
+
     # Auto-detect engine
-    AGENT_ENGINE=$(python3 -c "import yaml; print(next((a.get('engine', 'gemini') for a in yaml.safe_load(open('$CONFIG_YAML')).get('agents', []) if a.get('name', '') == '$AGENT_NAME'), 'gemini'))" 2>/dev/null)
+    if ! AGENT_ENGINE=$(AGENT_NAME_ENV="$AGENT_NAME" CONFIG_YAML_ENV="$CONFIG_YAML" python3 -c "
+import os, yaml
+name = os.environ['AGENT_NAME_ENV']
+data = yaml.safe_load(open(os.environ['CONFIG_YAML_ENV'])) or {}
+print(next((a.get('engine', 'gemini') for a in data.get('agents', []) if a.get('name', '') == name), 'gemini'))
+" 2>&1); then
+        echo "⚠️  Engine auto-detection failed, falling back to default 'gemini'. Error:"
+        echo "$AGENT_ENGINE"
+        AGENT_ENGINE="gemini"
+    fi
     
     echo ""
     echo "⚙️  Auto-detected engine: $AGENT_ENGINE"
     
     if [[ "${AGENT_ENGINE,,}" == *"claude"* ]]; then
         echo "🚀 Starting Claude CLI authentication (Identity: $AGENT_USER)..."
-        echo "💡 Tip: After authentication, credentials will be stored in /home/$AGENT_USER/.claude"
+        echo "💡 Tip: After authentication, credentials will be stored in $AGENT_HOME_DIR/.claude"
         echo ""
         sudo su - "$AGENT_USER" -c "claude --permission-mode bypassPermissions" || true
         echo ""
         echo "✅ Claude authentication complete!"
     elif [[ "${AGENT_ENGINE,,}" == *"codex"* ]]; then
         echo "🚀 Starting Codex CLI authentication (Identity: $AGENT_USER)..."
-        echo "💡 Tip: After authentication, credentials will be stored in /home/$AGENT_USER/.codex"
+        echo "💡 Tip: After authentication, credentials will be stored in $AGENT_HOME_DIR/.codex"
         echo ""
         sudo su - "$AGENT_USER" -c "codex --yolo" || true
         echo ""
         echo "✅ Codex authentication complete!"
     elif [[ "${AGENT_ENGINE,,}" == *"agy"* ]] || [[ "${AGENT_ENGINE,,}" == *"antigravity"* ]]; then
         echo "🚀 Starting Antigravity CLI authentication (Identity: $AGENT_USER)..."
-        echo "💡 Tip: After authentication, credentials will be stored in /home/$AGENT_USER/.gemini"
+        echo "💡 Tip: After authentication, credentials will be stored in $AGENT_HOME_DIR/.gemini"
         echo ""
         sudo su - "$AGENT_USER" -c "agy --dangerously-skip-permissions" || true
         echo ""
         echo "✅ Antigravity authentication complete!"
     else
         echo "🚀 Starting Gemini CLI authentication (Identity: $AGENT_USER)..."
-        echo "💡 Tip: After authentication, credentials will be stored in /home/$AGENT_USER/.gemini"
+        echo "💡 Tip: After authentication, credentials will be stored in $AGENT_HOME_DIR/.gemini"
         echo ""
         sudo su - "$AGENT_USER" -c "gemini --yolo" || true
         echo ""
