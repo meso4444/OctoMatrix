@@ -324,6 +324,8 @@ while true; do
         7)
             echo ""
             bash "$SCRIPT_DIR/agent_credential_wizard.sh" --local
+            echo ""
+            read -p "Press Enter to continue..." dummy_key
             ;;
         8)
             while true; do

@@ -97,7 +97,8 @@ for a in data.get('agents', []):
     fi
     
     AGENT_NAME="${AGENT_ARRAY[$((AGENT_CHOICE-1))]}"
-    AGENT_USER="agent_${AGENT_NAME,,}"
+    # Use tr instead of ${VAR,,}: that syntax needs Bash 4+, but macOS ships /bin/bash 3.2, which errors out on it
+    AGENT_USER="agent_$(echo "$AGENT_NAME" | tr '[:upper:]' '[:lower:]')"
     
     # Check if user exists
     if ! id "$AGENT_USER" &>/dev/null; then
@@ -123,21 +124,24 @@ print(next((a.get('engine', 'gemini') for a in data.get('agents', []) if a.get('
     echo ""
     echo "⚙️  Auto-detected engine: $AGENT_ENGINE"
     
-    if [[ "${AGENT_ENGINE,,}" == *"claude"* ]]; then
+    # Use tr instead of ${VAR,,}: that syntax needs Bash 4+, but macOS ships /bin/bash 3.2, which errors out on it
+    AGENT_ENGINE_LOWER=$(echo "$AGENT_ENGINE" | tr '[:upper:]' '[:lower:]')
+
+    if [[ "$AGENT_ENGINE_LOWER" == *"claude"* ]]; then
         echo "🚀 Starting Claude CLI authentication (Identity: $AGENT_USER)..."
         echo "💡 Tip: After authentication, credentials will be stored in $AGENT_HOME_DIR/.claude"
         echo ""
         sudo su - "$AGENT_USER" -c "claude --permission-mode bypassPermissions" || true
         echo ""
         echo "✅ Claude authentication complete!"
-    elif [[ "${AGENT_ENGINE,,}" == *"codex"* ]]; then
+    elif [[ "$AGENT_ENGINE_LOWER" == *"codex"* ]]; then
         echo "🚀 Starting Codex CLI authentication (Identity: $AGENT_USER)..."
         echo "💡 Tip: After authentication, credentials will be stored in $AGENT_HOME_DIR/.codex"
         echo ""
         sudo su - "$AGENT_USER" -c "codex --yolo" || true
         echo ""
         echo "✅ Codex authentication complete!"
-    elif [[ "${AGENT_ENGINE,,}" == *"agy"* ]] || [[ "${AGENT_ENGINE,,}" == *"antigravity"* ]]; then
+    elif [[ "$AGENT_ENGINE_LOWER" == *"agy"* ]] || [[ "$AGENT_ENGINE_LOWER" == *"antigravity"* ]]; then
         echo "🚀 Starting Antigravity CLI authentication (Identity: $AGENT_USER)..."
         echo "💡 Tip: After authentication, credentials will be stored in $AGENT_HOME_DIR/.gemini"
         echo ""
