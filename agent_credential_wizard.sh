@@ -96,7 +96,8 @@ for a in data.get('agents', []):
     fi
     
     AGENT_NAME="${AGENT_ARRAY[$((AGENT_CHOICE-1))]}"
-    AGENT_USER="agent_${AGENT_NAME,,}"
+    # 用 tr 取代 ${VAR,,}，因為該語法僅 Bash 4+ 支援，macOS 內建 /bin/bash 為 3.2 版會直接報錯退出
+    AGENT_USER="agent_$(echo "$AGENT_NAME" | tr '[:upper:]' '[:lower:]')"
 
     # 確保帳號存在
     if ! id "$AGENT_USER" &>/dev/null; then
@@ -121,22 +122,24 @@ print(next((a.get('engine', 'gemini') for a in data.get('agents', []) if a.get('
 
     echo ""
     echo "⚙️  自動偵測引擎: $AGENT_ENGINE"
-    
-    if [[ "${AGENT_ENGINE,,}" == *"claude"* ]]; then
+    # 用 tr 取代 ${VAR,,}，因為該語法僅 Bash 4+ 支援，macOS 內建 /bin/bash 為 3.2 版會直接報錯退出
+    AGENT_ENGINE_LOWER=$(echo "$AGENT_ENGINE" | tr '[:upper:]' '[:lower:]')
+
+    if [[ "$AGENT_ENGINE_LOWER" == *"claude"* ]]; then
         echo "🚀 啟動 Claude CLI 認證 (身分: $AGENT_USER)..."
         echo "💡 提示: 完成認證後，憑證將存放在 $AGENT_HOME_DIR/.claude"
         echo ""
         sudo su - "$AGENT_USER" -c "claude --permission-mode bypassPermissions" || true
         echo ""
         echo "✅ Claude 認證完成！"
-    elif [[ "${AGENT_ENGINE,,}" == *"codex"* ]]; then
+    elif [[ "$AGENT_ENGINE_LOWER" == *"codex"* ]]; then
         echo "🚀 啟動 Codex CLI 認證 (身分: $AGENT_USER)..."
         echo "💡 提示: 完成認證後，憑證將存放在 $AGENT_HOME_DIR/.codex"
         echo ""
         sudo su - "$AGENT_USER" -c "codex --yolo" || true
         echo ""
         echo "✅ Codex 認證完成！"
-    elif [[ "${AGENT_ENGINE,,}" == *"agy"* ]] || [[ "${AGENT_ENGINE,,}" == *"antigravity"* ]]; then
+    elif [[ "$AGENT_ENGINE_LOWER" == *"agy"* ]] || [[ "$AGENT_ENGINE_LOWER" == *"antigravity"* ]]; then
         echo "🚀 啟動 Antigravity CLI 認證 (身分: $AGENT_USER)..."
         echo "💡 提示: 完成認證後，憑證將存放在 $AGENT_HOME_DIR/.gemini"
         echo ""
