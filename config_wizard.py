@@ -98,10 +98,19 @@ def save_config():
                     if subprocess.run(['id', agent_user], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode != 0:
                         try:
                             if is_macos:
-                                # useradd/chpasswd don't exist on macOS; use sysadminctl/createhomedir instead
+                                # useradd/chpasswd don't exist on macOS; use sysadminctl/createhomedir instead.
+                                # Deliberately not setting UserShell, so the new account keeps the system
+                                # default shell (zsh since macOS Catalina) instead of being forced to bash.
+                                # 2026-07-28 real-device comparison: a manually created account with no shell
+                                # override (defaults to zsh) authenticates fine; an account previously forced
+                                # to /bin/bash by setup_config hit "command not found" when
+                                # agent_credential_wizard.sh called it via su - user -c "claude ...". The
+                                # default system PATH (including Homebrew's /opt/homebrew/bin) is provided by
+                                # /etc/zprofile's path_helper, and both accounts' interactive login PATH was
+                                # confirmed identical, so no extra .bash_profile/.zprofile brew-shellenv patch
+                                # is needed.
                                 home_path = f"/Users/{agent_user}"
                                 subprocess.run(['sudo', 'sysadminctl', '-addUser', agent_user, '-password', password, '-home', home_path], check=True)
-                                subprocess.run(['sudo', 'dscl', '.', '-create', f'/Users/{agent_user}', 'UserShell', '/bin/bash'], check=True)
                                 subprocess.run(['sudo', 'createhomedir', '-c', '-u', agent_user], check=True)
                             else:
                                 subprocess.run(['sudo', 'useradd', '-m', '-s', '/bin/bash', agent_user], check=True)
