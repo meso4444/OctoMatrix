@@ -98,10 +98,16 @@ def save_config():
                     if subprocess.run(['id', agent_user], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode != 0:
                         try:
                             if is_macos:
-                                # useradd/chpasswd 不存在於 macOS，改用 sysadminctl/createhomedir
+                                # useradd/chpasswd 不存在於 macOS，改用 sysadminctl/createhomedir。
+                                # 刻意不指定 UserShell，讓新帳號沿用系統預設 shell（macOS Catalina 起
+                                # 為 zsh）——不強制寫死 /bin/bash。2026-07-28 實測比對：手動建立、未指定
+                                # shell 的帳號（沿用預設 zsh）認證流程正常；setup_config 先前強制指定
+                                # /bin/bash 的帳號在 agent_credential_wizard.sh 用 su - user -c "claude ..."
+                                # 呼叫時會 command not found。系統預設 PATH（含 Homebrew /opt/homebrew/bin）
+                                # 由 /etc/zprofile 的 path_helper 提供，兩者互動式登入 PATH 已驗證完全相同，
+                                # 不需要額外寫 .bash_profile/.zprofile 補 brew shellenv。
                                 home_path = f"/Users/{agent_user}"
                                 subprocess.run(['sudo', 'sysadminctl', '-addUser', agent_user, '-password', password, '-home', home_path], check=True)
-                                subprocess.run(['sudo', 'dscl', '.', '-create', f'/Users/{agent_user}', 'UserShell', '/bin/bash'], check=True)
                                 subprocess.run(['sudo', 'createhomedir', '-c', '-u', agent_user], check=True)
                             else:
                                 subprocess.run(['sudo', 'useradd', '-m', '-s', '/bin/bash', agent_user], check=True)
