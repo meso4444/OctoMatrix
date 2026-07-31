@@ -254,6 +254,16 @@ class TelegramSender:
                 if caption:
                     data['caption'] = caption[:1000]
                 resp = requests.post(f"{self.api_url}/{method}", files={param: f}, data=data, timeout=30)
+                # Truncating the caption to 1000 chars, or stray <, > characters in it, can cut off
+                # or misfire an HTML tag, causing a Telegram 400. send() already retries as plain
+                # text; add the same fallback here (2026-07-31).
+                if resp.status_code != 200 and 'parse_mode' in data:
+                    logger.warning(f"[Notifier] Telegram file caption parse error ({resp.status_code}), retrying as plain text. Error: {resp.text}")
+                    del data['parse_mode']
+                    f.seek(0)
+                    resp = requests.post(f"{self.api_url}/{method}", files={param: f}, data=data, timeout=30)
+                    if resp.status_code != 200:
+                        logger.error(f"[Notifier] Telegram plain-text file retry failed: {resp.text}")
                 return resp.status_code == 200
         except Exception as e:
             logger.error(f"[Notifier] Telegram failed to send file: {e}")
