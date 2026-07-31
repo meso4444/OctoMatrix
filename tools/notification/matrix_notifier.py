@@ -28,6 +28,7 @@
 import os
 import sys
 import json
+import html
 import logging
 import argparse
 from typing import Dict, Any, Optional, List
@@ -541,6 +542,12 @@ if __name__ == '__main__':
     if args.file:
         f_type, f_path = args.file
         caption = (args.caption or " ".join(args.message)).replace('\\n', '\n')
+        if platform == 'telegram':
+            # Telegram parse_mode=HTML 會把字面 <, >, & 當標籤解析；CLI 呼叫端 (agent 自己打字／貼程式碼
+            # 片段) 不會刻意寫真標籤，一律跳脫可避免程式碼片段觸發 400 (2026-07-31 實測：octocodex 短時間
+            # 內觸發 14 次)。只在 Telegram 才跳脫，避免 Discord/Slack 顯示出 &lt; 這類字面實體。router
+            # 內部直接呼叫 notifier.notify() 組出的系統訊息 (刻意用 <b>/<code>) 不經過這裡，不受影響。
+            caption = html.escape(caption, quote=False)
         if not os.path.exists(f_path): print(f"❌ File not found: {f_path}"); sys.exit(1)
         try:
             with open(f_path, 'rb') as f:
@@ -560,6 +567,10 @@ if __name__ == '__main__':
 
     elif args.message or args.template != 'custom':
         msg_content = " ".join(args.message).replace('\\n', '\n')
+        if platform == 'telegram':
+            # 同上：只跳脫 CLI 呼叫端打的文字且僅限 Telegram，router 自己組的系統訊息 (走 notifier.notify()
+            # 內部呼叫) 與 Discord/Slack 都不受影響
+            msg_content = html.escape(msg_content, quote=False)
         context['content'] = msg_content
         payload = {'platform': platform, 'template_id': args.template, 'context': context, 'target_id': target_id}
         try:
