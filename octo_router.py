@@ -703,7 +703,11 @@ def awake_list(): return jsonify(awake.list_jobs())
 def notify_proxy():
     data = request.get_json()
     success = notifier.notify(data.get('platform', 'telegram'), data.get('template_id', 'custom'), data.get('context', {}), data.get('target_id'))
-    return jsonify({"status": "success" if success else "failed"}), 200
+    # 2026-07-31: return 502 on internal send failure instead of always 200. The body's status
+    # field already flagged success/failure, and the caller (matrix_notifier.py) already checks
+    # both status_code and body status, so this just makes the HTTP semantics match reality too --
+    # a defensive hardening, not a behavior change for existing callers.
+    return jsonify({"status": "success" if success else "failed"}), 200 if success else 502
 
 @app.route('/notify_file', methods=['POST'])
 def notify_file_proxy():
@@ -712,7 +716,7 @@ def notify_file_proxy():
     file = request.files['file']; temp = os.path.join('/tmp', file.filename); file.save(temp)
     try:
         success = notifier.notify_file(p, temp, ft, c, tid); os.remove(temp)
-        return jsonify({"status": "success" if success else "failed"}), 200
+        return jsonify({"status": "success" if success else "failed"}), 200 if success else 502
     except Exception as e:
         if os.path.exists(temp): os.remove(temp)
         return jsonify({"status": "failed", "error": str(e)}), 500
