@@ -703,7 +703,10 @@ def awake_list(): return jsonify(awake.list_jobs())
 def notify_proxy():
     data = request.get_json()
     success = notifier.notify(data.get('platform', 'telegram'), data.get('template_id', 'custom'), data.get('context', {}), data.get('target_id'))
-    return jsonify({"status": "success" if success else "failed"}), 200
+    # 2026-07-31：內部發送失敗時回傳 502，而非一律 200。body 的 status 欄位本來就已標記成敗，
+    # 呼叫端 (matrix_notifier.py) 也已改為同時檢查 status_code 與 body status，這裡讓 HTTP
+    # 語意本身也如實反映內部結果，屬防禦性補強，不影響既有呼叫端判斷邏輯。
+    return jsonify({"status": "success" if success else "failed"}), 200 if success else 502
 
 @app.route('/notify_file', methods=['POST'])
 def notify_file_proxy():
@@ -712,7 +715,7 @@ def notify_file_proxy():
     file = request.files['file']; temp = os.path.join('/tmp', file.filename); file.save(temp)
     try:
         success = notifier.notify_file(p, temp, ft, c, tid); os.remove(temp)
-        return jsonify({"status": "success" if success else "failed"}), 200
+        return jsonify({"status": "success" if success else "failed"}), 200 if success else 502
     except Exception as e:
         if os.path.exists(temp): os.remove(temp)
         return jsonify({"status": "failed", "error": str(e)}), 500
