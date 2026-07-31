@@ -28,6 +28,7 @@ Responsibilities:
 import os
 import sys
 import json
+import html
 import logging
 import argparse
 from typing import Dict, Any, Optional, List
@@ -542,6 +543,13 @@ if __name__ == '__main__':
     if args.file:
         f_type, f_path = args.file
         caption = (args.caption or " ".join(args.message)).replace('\\n', '\n')
+        if platform == 'telegram':
+            # Telegram parse_mode=HTML treats literal <, >, & as markup. CLI callers (an agent typing
+            # or pasting a code snippet) never intend real tags, so escaping unconditionally avoids code
+            # snippets triggering a 400 (2026-07-31: octocodex hit this 14 times in a short window).
+            # Only escape for Telegram, so Discord/Slack don't show literal &lt; entities. Router-internal
+            # calls to notifier.notify() (which deliberately use <b>/<code>) never go through here.
+            caption = html.escape(caption, quote=False)
         if not os.path.exists(f_path): print(f"❌ File not found: {f_path}"); sys.exit(1)
         try:
             with open(f_path, 'rb') as f:
@@ -562,6 +570,10 @@ if __name__ == '__main__':
 
     elif args.message or args.template != 'custom':
         msg_content = " ".join(args.message).replace('\\n', '\n')
+        if platform == 'telegram':
+            # Same as above: only escape CLI-typed text and only for Telegram; router-internal system
+            # messages and Discord/Slack are unaffected.
+            msg_content = html.escape(msg_content, quote=False)
         context['content'] = msg_content
         payload = {'platform': platform, 'template_id': args.template, 'context': context, 'target_id': target_id}
         try:
