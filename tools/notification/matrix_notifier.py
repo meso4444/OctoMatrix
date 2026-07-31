@@ -254,6 +254,15 @@ class TelegramSender:
                 if caption:
                     data['caption'] = caption[:1000]
                 resp = requests.post(f"{self.api_url}/{method}", files={param: f}, data=data, timeout=30)
+                # caption 被截斷到 1000 字或內含 <, > 等字元時，可能切斷/誤觸發 HTML 標籤，
+                # 導致 Telegram 400；send() 早就有純文字重發，這裡補上同樣的防護 (2026-07-31)
+                if resp.status_code != 200 and 'parse_mode' in data:
+                    logger.warning(f"[Notifier] Telegram 檔案 caption 解析錯誤 ({resp.status_code})，正嘗試以純文字模式重發。錯誤: {resp.text}")
+                    del data['parse_mode']
+                    f.seek(0)
+                    resp = requests.post(f"{self.api_url}/{method}", files={param: f}, data=data, timeout=30)
+                    if resp.status_code != 200:
+                        logger.error(f"[Notifier] Telegram 檔案純文字重發失敗: {resp.text}")
                 return resp.status_code == 200
         except Exception as e:
             logger.error(f"[Notifier] Telegram 發送檔案失敗: {e}")
