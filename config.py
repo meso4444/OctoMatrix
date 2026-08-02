@@ -240,7 +240,7 @@ def get_active_agent():
     return DEFAULT_ACTIVE_AGENT
 
 # System prompt prefix
-SYS_PREFIX = "[System Prompt]"
+SYS_PREFIX = "IMPORTANT"
 
 # Agent specific Linux account password (for local dual-track isolation)
 AGENT_PASSWORD = str(os.environ.get("AGENT_PASSWORD", _config.get("agent_password", "octomatrix")))
