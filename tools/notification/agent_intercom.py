@@ -35,7 +35,7 @@ for _ in range(5):
 try:
     from config import SYS_PREFIX
 except ImportError:
-    SYS_PREFIX = "重要"
+    SYS_PREFIX = "【重要】"
 
 def get_router_url() -> str:
     curr = os.path.dirname(os.path.abspath(__file__))
