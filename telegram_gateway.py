@@ -18,6 +18,7 @@ import json
 import os
 import requests
 import logging
+import subprocess
 from datetime import datetime
 from config import (
     SYS_PREFIX,
@@ -68,7 +69,14 @@ class ImageManager:
             content = requests.get(download_url, timeout=20).content
             with open(local_path, 'wb') as f:
                 f.write(content)
-            
+
+            # telegram_gateway.py 以啟動服務的使用者身分執行，下載出來的檔案預設歸屬
+            # 該使用者；但檔案最終是交給對應的 Agent（以自己的 agent_<name> OS 使用者
+            # 身分透過 su - 執行，見 setup_agent_env.py 的 spawn_agent()）讀取處理，
+            # 故下載完成後須將所有權轉移給該 Agent，否則會讀不到檔案。
+            agent_user = f"agent_{agent_name.lower()}"
+            subprocess.run(["sudo", "chown", f"{agent_user}:{agent_user}", local_path], check=True)
+
             logger.info(f"📸 圖片已下載至 [{agent_name}]: {local_path}")
             return local_path
         except Exception as e:
