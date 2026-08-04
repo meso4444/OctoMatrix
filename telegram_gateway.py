@@ -18,6 +18,7 @@ import json
 import os
 import requests
 import logging
+import subprocess
 from datetime import datetime
 from config import (
     SYS_PREFIX,
@@ -68,6 +69,15 @@ class ImageManager:
             content = requests.get(download_url, timeout=20).content
             with open(local_path, 'wb') as f:
                 f.write(content)
+
+            # telegram_gateway.py runs as whichever user started the service, so
+            # the downloaded file is owned by that user by default; but it's
+            # ultimately handed to the target Agent, which runs under its own
+            # agent_<name> OS user via `su -` (see spawn_agent() in
+            # setup_agent_env.py), to read and process. Transfer ownership to
+            # that Agent after download, otherwise it can't read the file.
+            agent_user = f"agent_{agent_name.lower()}"
+            subprocess.run(["sudo", "chown", f"{agent_user}:{agent_user}", local_path], check=True)
 
             logger.info(f"📸 Image downloaded to [{agent_name}]: {local_path}")
             return local_path
