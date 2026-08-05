@@ -39,6 +39,13 @@ This directory contains all core tools related to Agent GHOST system. Agents sho
         they're cold memory, and judging relevance is the Agent's job after
         reading the full list; output stays alphabetized for easy manual
         browsing.
+    *   Keywords output at every level automatically have leading `-`
+        stripped (e.g. `-C預設50改20` displays as `C預設50改20`), so that
+        keywords which happen to look like CLI argument fragments don't get
+        misparsed as options by `dive_into_the_shell.py`'s argparse and
+        break the whole command. Stripping only affects the leading
+        character(s) and doesn't reduce `dive_into_the_shell.py`'s
+        substring-match retrieval accuracy.
 *   **Execution examples**:
     *   *Wake / general context reconstruction*: `python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot`
     *   *Page further back when nothing relevant is found*: `python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot --range 31-100`

@@ -33,7 +33,12 @@ def format_markdown(data, title, sort_keywords=True):
     print(f"# {title}\n")
     if data.get("keywords"):
         print("## ⚓ Keyword Tags (Keywords)")
-        kws = sorted(data["keywords"]) if sort_keywords else data["keywords"]
+        # Strip leading "-": prevents keywords (often self-referential CLI
+        # argument fragments like "-C"/"--range") from being misparsed as
+        # options by dive_into_the_shell.py's argparse. Substring matching
+        # guarantees stripping can only keep or increase hits, never lose any.
+        kws = [kw.lstrip("-") for kw in data["keywords"]]
+        kws = sorted(kws) if sort_keywords else kws
         for kw in kws:
             print(f"- {kw}")
         print()
