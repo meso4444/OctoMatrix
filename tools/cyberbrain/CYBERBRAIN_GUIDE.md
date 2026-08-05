@@ -34,6 +34,11 @@
     *   monthly／yearly 屬於冷記憶，沒有依主題篩選的能力，也刻意不做——
         篩選相關性本來就是 Agent 讀完清單後自己判斷的責任，維持字母排序方便
         人工瀏覽窄域關鍵字。
+    *   所有層級輸出的關鍵字都會自動剝除開頭的 `-`（例如 `-C預設50改20`
+        會顯示成 `C預設50改20`），避免關鍵字本身長得像 CLI 參數片段時，
+        被 `dive_into_the_shell.py` 的 argparse 誤判為選項而導致整條指令
+        解析失敗。剝除只影響開頭字元，不影響 `dive_into_the_shell.py`
+        底層子字串比對的檢索精準度。
 *   **執行範例**：
     *   *甦醒／一般脈絡重塑*：`python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot`
     *   *找不到相關關鍵字時往回翻頁*：`python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot --range 31-100`

@@ -33,7 +33,11 @@ def format_markdown(data, title, sort_keywords=True):
     print(f"# {title}\n")
     if data.get("keywords"):
         print("## ⚓ 關鍵字標籤 (Keywords)")
-        kws = sorted(data["keywords"]) if sort_keywords else data["keywords"]
+        # 剝除開頭的 "-"：避免關鍵字（常是自我指涉的 CLI 參數片段，如 "-C"／"--range"）
+        # 被 dive_into_the_shell.py 的 argparse 誤判為選項而解析失敗。子字串比對的
+        # 特性保證剝除後比對命中只會持平或變多，不會漏收。
+        kws = [kw.lstrip("-") for kw in data["keywords"]]
+        kws = sorted(kws) if sort_keywords else kws
         for kw in kws:
             print(f"- {kw}")
         print()
