@@ -32,7 +32,7 @@ This directory contains all core tools related to Agent GHOST system. Agents sho
     *   monthly/yearly have no topic filtering; output is alphabetized —
         judge relevance yourself.
     *   Keywords at every level have leading `-` stripped automatically
-        (e.g. `-C預設50改20` → `C預設50改20`) to avoid being misparsed as
+        (e.g. `-C20` → `C20`) to avoid being misparsed as
         options by `dive_into_the_shell.py`.
 *   **Execution examples**:
     *   *Wake / general context reconstruction*: `python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot`
