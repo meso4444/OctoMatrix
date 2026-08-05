@@ -106,11 +106,16 @@ def main():
             ghost_data.setdefault("semantic_outline", []).append(outline_text)
 
     # 2. Keywords processing
+    # Replace unordered set with an order-preserving structure: later position
+    # means more recently touched, used by read_snapshot()'s --range pagination
+    # to sort by recency.
     if kw_input:
         new_kws = [k.strip() for k in kw_input.split(',') if k.strip()]
-        kw_set = set(ghost_data.get("keywords", []))
-        kw_set.update(new_kws)
-        ghost_data["keywords"] = list(kw_set)
+        kw_dict = dict.fromkeys(ghost_data.get("keywords", []))
+        for k in new_kws:
+            kw_dict.pop(k, None)   # if already present, drop old position
+            kw_dict[k] = None      # reinsert at the end = mark as most recent
+        ghost_data["keywords"] = list(kw_dict)
 
     # 3. File paths processing
     if path_input:
