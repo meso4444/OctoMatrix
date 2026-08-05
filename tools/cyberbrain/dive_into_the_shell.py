@@ -23,9 +23,11 @@ import re
 def main():
     parser = argparse.ArgumentParser(description="深潛檢索工具 (Dive into the Shell)")
     parser.add_argument("--level", choices=["current", "snapshot", "monthly", "yearly"], default="snapshot", help="檢索層級")
-    parser.add_argument("-C", "--context", type=int, default=50, help="前後文行數 (預設: 50)")
+    parser.add_argument("-C", "--context", type=int, default=20, help="前後文行數 (預設: 20)")
     parser.add_argument("--keyword", nargs='+', required=True, help="檢索關鍵字 (支援多個，將取聯集)")
     parser.add_argument("--offset", type=int, default=0, help="跳過最後的行數，用於分頁追溯更深層 GHOST (預設: 0)")
+    parser.add_argument("--month", type=str, default=None, help="[monthly 專用] 指定月份 YYYY-MM，必填")
+    parser.add_argument("--year", type=str, default=None, help="[yearly 專用] 指定年份 YYYY，必填")
     args = parser.parse_args()
 
     LIMIT = 1000
@@ -38,10 +40,16 @@ def main():
         # Filter out monthly/yearly
         files = [f for f in files if len(os.path.basename(f).split('.')) > 3 and '-' in os.path.basename(f)]
     elif args.level == "monthly":
-        files = sorted(glob.glob("octo_cyberbrain/shell/octo_shell.log.????-??.zst"))
+        if not args.month:
+            print("❌ --level monthly 需要指定 --month YYYY-MM")
+            return
+        files = [f"octo_cyberbrain/shell/octo_shell.log.{args.month}.zst"]
     else:
-        files = sorted(glob.glob("octo_cyberbrain/shell/octo_shell.log.????.zst"))
-        
+        if not args.year:
+            print("❌ --level yearly 需要指定 --year YYYY")
+            return
+        files = [f"octo_cyberbrain/shell/octo_shell.log.{args.year}.zst"]
+
     existing_files = [f for f in files if os.path.exists(f)]
     
     if not existing_files:

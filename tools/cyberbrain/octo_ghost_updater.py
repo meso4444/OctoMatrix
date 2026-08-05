@@ -106,11 +106,15 @@ def main():
             ghost_data.setdefault("semantic_outline", []).append(outline_text)
 
     # 2. 處理關鍵字 (Keywords Processing)
+    # 用保留「最後觸及順序」的結構取代無序 set：越後面代表越晚被觸及，
+    # 供 read_snapshot() 的 --range 分頁機制依新鮮度排序使用。
     if kw_input:
         new_kws = [k.strip() for k in kw_input.split(',') if k.strip()]
-        kw_set = set(ghost_data.get("keywords", []))
-        kw_set.update(new_kws)
-        ghost_data["keywords"] = list(kw_set)
+        kw_dict = dict.fromkeys(ghost_data.get("keywords", []))
+        for k in new_kws:
+            kw_dict.pop(k, None)   # 若已存在，先移除舊位置
+            kw_dict[k] = None      # 重新插入到最後 = 標記為最新
+        ghost_data["keywords"] = list(kw_dict)
         
     # 3. 處理檔案路徑 (File Paths Processing)
     if path_input:
