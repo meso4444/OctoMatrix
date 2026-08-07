@@ -84,7 +84,7 @@ def main():
     }
 
     try:
-        response = requests.post(router_url, json=payload, timeout=30)
+        response = requests.post(router_url, json=payload, timeout=60)
         response.raise_for_status()
         result = response.json()
         if result.get("status") == "success":
