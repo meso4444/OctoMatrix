@@ -253,7 +253,7 @@ OctoMatrix 提供高度模組化的技能擴充機制。完整封裝規範請參
    * `SKILL.md`（必備）：Agent 讀取技能用法的唯一說明書。
    * `requirements.txt`（選配）：宣告所需的 Python 依賴。
    * `setup.sh`（選配）：用於安裝系統層級的依賴包（如 apt-get 套件）或 Node.js 等其他套件。
-3. **建置技能**：透過 `./setup_config.sh` 設定精靈的 **[9] 執行全域技能建置**，或直接執行 `python3 install_agent_skills.py`。此操作會將 `skills` 目錄下所有技能包解壓至全域快取並**無條件部署給所有 Agent**（無法選擇僅供特定 Agent 使用）。若使用 Docker 部署，這些技能的依賴會在 Image 建置階段自動完成安裝與預編譯。
+3. **建置技能**：透過 `./setup_config.sh` 設定精靈的 **[9] 執行全域技能建置**。此操作會將 `skills` 目錄下所有技能包解壓至全域快取並**部署給所有 Agent**。若使用 Docker 部署，這些技能的依賴會在 Image 建置階段自動完成安裝與預編譯。
 
 ---
 
