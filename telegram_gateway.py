@@ -18,7 +18,6 @@ import json
 import os
 import requests
 import logging
-import subprocess
 from datetime import datetime
 from config import (
     SYS_PREFIX,
@@ -74,10 +73,12 @@ class ImageManager:
             # the downloaded file is owned by that user by default; but it's
             # ultimately handed to the target Agent, which runs under its own
             # agent_<name> OS user via `su -` (see spawn_agent() in
-            # setup_agent_env.py), to read and process. Transfer ownership to
-            # that Agent after download, otherwise it can't read the file.
-            agent_user = f"agent_{agent_name.lower()}"
-            subprocess.run(["sudo", "chown", f"{agent_user}:{agent_user}", local_path], check=True)
+            # setup_agent_env.py), to read and process. Previously used sudo
+            # chown to transfer ownership, but sudo isn't configured NOPASSWD
+            # here and hangs waiting for a password, blocking the whole gateway.
+            # chmod to open "other" read/write avoids sudo entirely while still
+            # letting the Agent read/write the file content.
+            os.chmod(local_path, 0o666)
 
             logger.info(f"📸 Image downloaded to [{agent_name}]: {local_path}")
             return local_path
