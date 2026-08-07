@@ -194,13 +194,14 @@ while true; do
     echo " [4] 🌍 設定時區 (TZ)"
     echo " [5] 🤖 設定 AI Agent 軍團與進階參數"
     echo " [6] 🔐 AI Agent CLI 認證設定"
+    echo " [7] 📦 執行全域技能建置 (Install Agent Skills)"
     echo "----------------------------------------"
     echo " [S] 💾 儲存並生成配置 (Start)"
     echo " [C] 🧹 清除設定與憑證 (Clear)"
     echo " [Q] ❌ 放棄變更退出 (Quit)"
     echo "=========================================="
-    
-    read -p "請選擇操作 [1-6, U, S, C, Q]: " choice
+
+    read -p "請選擇操作 [1-7, U, S, C, Q]: " choice
     
     case $choice in
         [Uu])
@@ -288,6 +289,29 @@ while true; do
         6)
             echo ""
             bash "$SCRIPT_DIR/../agent_credential_wizard.sh" --container "$INSTANCE_NAME"
+            ;;
+        7)
+            echo ""
+            if [ ! -f "$SCRIPT_DIR/config.${INSTANCE_NAME}.yaml" ]; then
+                echo "❌ 錯誤：尚未產生 Agent 設定檔，請先執行 [5] 設定 AI Agent 軍團與進階參數。"
+                read -p "按 Enter 鍵繼續..." dummy
+                continue
+            fi
+            # 先建好每個 Agent 的 skillbox 目錄（可能尚未執行過 setup_agent_env.py），
+            # 否則 install_agent_skills.py 找不到任何 Agent 目錄可以部署技能。
+            python3 -c "
+import yaml, os
+config = yaml.safe_load(open('$SCRIPT_DIR/config.${INSTANCE_NAME}.yaml'))
+for agent in config.get('agents', []):
+    os.makedirs(os.path.join('$SCRIPT_DIR', '..', 'agent_home', agent['name'], 'skillbox'), exist_ok=True)
+" 2>/dev/null
+            echo "📦 啟動全域技能建置程序..."
+            if python3 "$SCRIPT_DIR/../install_agent_skills.py"; then
+                echo -e "\n✅ 全域技能建置成功！"
+            else
+                echo -e "\n⚠️ 全域技能建置發生錯誤，請查看上方輸出。"
+            fi
+            read -p "請按 Enter 鍵繼續..." dummy_key
             ;;
         [Ss])
             echo ""
