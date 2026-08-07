@@ -245,12 +245,13 @@ OctoMatrix supports configuring the service as a background daemon (Phoenix Mode
 
 ## 🎒 Skill Expansion
 
-OctoMatrix provides a highly modular skill expansion mechanism.
+OctoMatrix provides a highly modular skill expansion mechanism. See [`skills/octo_skill_packaging_guidelines.md`](./skills/octo_skill_packaging_guidelines.md) for the full packaging specification.
 
 1. **Adding Skill Packages**: Simply place your developed skill packages (supports `.tar.gz` or `.zip` formats) into the [`skills`](./skills) directory.
-2. **Recommended Structure**: To ensure skills run seamlessly across all environments, it is strongly recommended that your skill package includes:
-   * `requirements.txt`: To declare required Python dependencies.
-   * `setup.sh`: To install system-level dependencies (like apt-get packages) or other packages such as Node.js.
+2. **Recommended Structure**: To ensure skills run seamlessly across all environments, your skill package should include:
+   * `SKILL.md` (required): The Agent's sole reference for how to use the skill.
+   * `requirements.txt` (optional): To declare required Python dependencies.
+   * `setup.sh` (optional): To install system-level dependencies (like apt-get packages) or other packages such as Node.js.
 3. **Registering Skills**: Through the `./setup_config.sh` wizard, you can select and register specific skill packages for individual Agents. If using Docker deployment, the dependencies for these skills will be automatically installed and pre-compiled during the Image build phase.
 
 ---
