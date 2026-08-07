@@ -323,7 +323,20 @@ while true; do
             
             TMUX_SESSION=$(python3 -c "import yaml; print(yaml.safe_load(open('$SCRIPT_DIR/config.${INSTANCE_NAME}.yaml'))['tmux']['session_name'])" 2>/dev/null || echo "ai_${INSTANCE_NAME}")
             CURRENT_USER=$(whoami)
-            
+
+            # 先建好每個 Agent 的 skillbox 目錄，再建置並部署技能包，讓 host 端
+            # agent_home/{name}/skillbox 在使用者執行 docker build 之前就已就緒
+            # （含 .global_skills_cache），確保 Dockerfile 的 COPY skills/ 能把
+            # 已建置好的快取一併打包進映像檔。
+            python3 -c "
+import yaml, os
+config = yaml.safe_load(open('$SCRIPT_DIR/config.${INSTANCE_NAME}.yaml'))
+for agent in config.get('agents', []):
+    os.makedirs(os.path.join('$SCRIPT_DIR', '..', 'agent_home', agent['name'], 'skillbox'), exist_ok=True)
+" 2>/dev/null
+            echo "📦 正在建置並部署技能包..."
+            python3 "$SCRIPT_DIR/../install_agent_skills.py"
+
             echo "✅ 實例設置完成！"
             echo "=========================================="
             echo "🚀 接下來，您可以執行以下指令來操作您的 AI 軍團："

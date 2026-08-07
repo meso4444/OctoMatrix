@@ -109,10 +109,6 @@ export TMUX_SESSION_NAME
 echo "🧬  正在初始化 Agent 生態環境…"
 python3 "$SCRIPT_DIR/setup_agent_env.py" --all
 
-# 1.5 建置並部署技能包（具冪等性，已安裝且雜湊值相符的技能會自動跳過）
-echo "📦  正在建置並部署技能包…"
-python3 "$SCRIPT_DIR/install_agent_skills.py"
-
 # 2. 動態啟動 AI Agent 軍團
 echo "🤖 正在部署 AI Agent 軍團…"
 

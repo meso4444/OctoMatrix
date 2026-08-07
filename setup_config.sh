@@ -417,6 +417,14 @@ while true; do
             ;;
         9)
             echo ""
+            # 先建好每個 Agent 的 skillbox 目錄（可能尚未執行過 setup_agent_env.py），
+            # 否則 install_agent_skills.py 找不到任何 Agent 目錄可以部署技能。
+            python3 -c "
+import yaml, os
+config = yaml.safe_load(open('$CONFIG_YAML'))
+for agent in config.get('agents', []):
+    os.makedirs(os.path.join('$SCRIPT_DIR', 'agent_home', agent['name'], 'skillbox'), exist_ok=True)
+" 2>/dev/null
             echo "📦 啟動全域技能建置程序..."
             if python3 "$SCRIPT_DIR/install_agent_skills.py"; then
                 echo -e "\n✅ 全域技能建置成功！"
