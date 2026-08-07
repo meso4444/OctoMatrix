@@ -253,7 +253,7 @@ OctoMatrix provides a highly modular skill expansion mechanism. See [`skills/oct
    * `SKILL.md` (required): The Agent's sole reference for how to use the skill.
    * `requirements.txt` (optional): To declare required Python dependencies.
    * `setup.sh` (optional): To install system-level dependencies (like apt-get packages) or other packages such as Node.js.
-3. **Building Skills**: Run **[9] Install Global Agent Skills** in the `./setup_config.sh` wizard. This unpacks every skill package in the `skills` directory into the global cache and **deploys them to every Agent**. If using Docker deployment, the dependencies for these skills will be automatically installed and pre-compiled during the Image build phase.
+3. **Building Skills**: Run **[9] Install Global Agent Skills** in the `./setup_config.sh` wizard. This unpacks every skill package in the `skills` directory into the global cache and **deploys them to every Agent**. If using Docker deployment, the same build step runs automatically every time the container starts, deploying skills to every Agent.
 
 ---
 
