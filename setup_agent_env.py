@@ -83,6 +83,12 @@ def setup_agent_dirs(agent_config, script_dir):
         os.makedirs(path, exist_ok=True)
         if d in ['avatar', 'avatar/emojis']:
             subprocess.run(['chmod', '755', path], check=False)
+        elif d == 'downloads_temp':
+            # 不設 sticky bit：telegram/discord/slack gateway 下載的檔案擁有者是
+            # 啟動服務的系統使用者，Agent 需要能刪除/搬移自己收到的檔案，若保留
+            # sticky bit 會被 Linux 核心擋下（只有檔案擁有者、目錄擁有者或 root
+            # 能在 sticky 目錄刪除他人檔案）。
+            subprocess.run(['chmod', '777', path], check=False)
         else:
             subprocess.run(['chmod', '1777', path], check=False)
 
