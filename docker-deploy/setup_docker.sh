@@ -195,13 +195,14 @@ while true; do
     echo " [4] 🌍 Configure Timezone (TZ)"
     echo " [5] 🤖 Configure AI Agent Army & Advanced Parameters"
     echo " [6] 🔐 AI Agent CLI Credential Settings"
+    echo " [7] 📦 Install Global Agent Skills"
     echo "----------------------------------------"
     echo " [S] 💾 Save & Generate Configuration (Start)"
     echo " [C] 🧹 Clear Settings & Credentials (Clear)"
     echo " [Q] ❌ Quit without saving (Quit)"
     echo "=========================================="
-    
-    read -p "Select option [1-6, U, S, C, Q]: " choice
+
+    read -p "Select option [1-7, U, S, C, Q]: " choice
     
     case $choice in
         [Uu])
@@ -289,6 +290,30 @@ while true; do
         6)
             echo ""
             bash "$SCRIPT_DIR/../agent_credential_wizard.sh" --container "$INSTANCE_NAME"
+            ;;
+        7)
+            echo ""
+            if [ ! -f "$SCRIPT_DIR/config.${INSTANCE_NAME}.yaml" ]; then
+                echo "❌ Error: no Agent config file yet -- please run [5] Configure AI Agent Army & Advanced Parameters first."
+                read -p "Press Enter to continue..." dummy
+                continue
+            fi
+            # Ensure each Agent's skillbox directory exists first (setup_agent_env.py
+            # may not have run yet), otherwise install_agent_skills.py finds no
+            # Agent directories to deploy skills into.
+            python3 -c "
+import yaml, os
+config = yaml.safe_load(open('$SCRIPT_DIR/config.${INSTANCE_NAME}.yaml'))
+for agent in config.get('agents', []):
+    os.makedirs(os.path.join('$SCRIPT_DIR', '..', 'agent_home', agent['name'], 'skillbox'), exist_ok=True)
+" 2>/dev/null
+            echo "📦 Starting Global Skill Cache Build..."
+            if python3 "$SCRIPT_DIR/../install_agent_skills.py"; then
+                echo -e "\n✅ Global skill build completed successfully!"
+            else
+                echo -e "\n⚠️ Global skill build failed. Please check the output above."
+            fi
+            read -p "Press Enter to continue..." dummy_key
             ;;
         [Ss])
             echo ""
