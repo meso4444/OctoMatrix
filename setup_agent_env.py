@@ -83,6 +83,14 @@ def setup_agent_dirs(agent_config, script_dir):
         os.makedirs(path, exist_ok=True)
         if d in ['avatar', 'avatar/emojis']:
             subprocess.run(['chmod', '755', path], check=False)
+        elif d == 'downloads_temp':
+            # No sticky bit: files downloaded by the telegram/discord/slack
+            # gateways are owned by whichever system user runs that service, and
+            # the Agent needs to be able to delete/move files it receives. A
+            # sticky bit would block that at the kernel level (only the file
+            # owner, directory owner, or root may delete another user's file in
+            # a sticky directory).
+            subprocess.run(['chmod', '777', path], check=False)
         else:
             subprocess.run(['chmod', '1777', path], check=False)
 
