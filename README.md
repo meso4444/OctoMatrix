@@ -245,12 +245,13 @@ OctoMatrix 支援將服務設定為系統常駐（不死鳥模式），讓您的
 
 ## 🎒 技能擴充 (Skills)
 
-OctoMatrix 提供高度模組化的技能擴充機制。
+OctoMatrix 提供高度模組化的技能擴充機制。完整封裝規範請參考 [`skills/octo_skill_packaging_guidelines.md`](./skills/octo_skill_packaging_guidelines.md)。
 
 1. **新增技能包**：只需將開發好的技能包（支援 `.tar.gz` 或 `.zip` 格式）放置於 [`skills`](./skills) 目錄下即可。
-2. **建議架構**：為了確保技能能在各環境中無縫運作，強烈建議您的技能包內包含：
-   * `requirements.txt`：宣告所需的 Python 依賴。
-   * `setup.sh`：用於安裝系統層級的依賴包（如 apt-get 套件）或 Node.js 等其他套件。
+2. **建議架構**：為了確保技能能在各環境中無縫運作，您的技能包應包含：
+   * `SKILL.md`（必備）：Agent 讀取技能用法的唯一說明書。
+   * `requirements.txt`（選配）：宣告所需的 Python 依賴。
+   * `setup.sh`（選配）：用於安裝系統層級的依賴包（如 apt-get 套件）或 Node.js 等其他套件。
 3. **註冊技能**：透過 `./setup_config.sh` 設定精靈，您可以為個別的 Agent 勾選並註冊其專屬的技能包。若使用 Docker 部署，這些技能的依賴會在 Image 建置階段自動完成安裝與預編譯。
 
 ---
