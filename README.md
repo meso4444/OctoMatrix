@@ -212,6 +212,7 @@ After dependencies are installed, start the interactive configuration wizard. Yo
     *   **Communication Menu Configuration**: In addition to the system's built-in basic menu, you can "customize dedicated buttons" to bind commonly used prompts or commands to graphical buttons for one-click sending.
 *   **[7] 🔐 AI Agent CLI Authentication Setup**: Built-in authentication flow to help you with one-click authorization from Google, Anthropic, or OpenAI to complete terminal login.
 *   **[8] ⬆️ AI CLI Version Management (Upgrade/Rollback)**: Built-in mechanism to upgrade or rollback various AI CLI tools, ensuring optimal compatibility between underlying tools and the project.
+*   **[9] 📦 Install Global Agent Skills**: Unpacks skill packages from the [`skills`](./skills) directory into the global cache and automatically deploys them to every Agent.
 
 ### 3. Start the System (Native Local Mode)
 After completing the wizard setup and authentication above, you can directly start the AI matrix locally!
@@ -252,7 +253,7 @@ OctoMatrix provides a highly modular skill expansion mechanism. See [`skills/oct
    * `SKILL.md` (required): The Agent's sole reference for how to use the skill.
    * `requirements.txt` (optional): To declare required Python dependencies.
    * `setup.sh` (optional): To install system-level dependencies (like apt-get packages) or other packages such as Node.js.
-3. **Registering Skills**: Through the `./setup_config.sh` wizard, you can select and register specific skill packages for individual Agents. If using Docker deployment, the dependencies for these skills will be automatically installed and pre-compiled during the Image build phase.
+3. **Building Skills**: Run **[9] Install Global Agent Skills** in the `./setup_config.sh` wizard, or run `python3 install_agent_skills.py` directly. This unpacks every skill package in the `skills` directory into the global cache and **deploys them to every Agent unconditionally** (there is no way to scope a skill to specific Agents only). If using Docker deployment, the dependencies for these skills will be automatically installed and pre-compiled during the Image build phase.
 
 ---
 
