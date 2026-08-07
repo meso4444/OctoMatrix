@@ -59,7 +59,6 @@ COPY awake_manager.py /app/octomatrix/
 COPY octo_reaper.py /app/octomatrix/
 COPY auto_permission_responder.py /app/octomatrix/
 COPY setup_agent_env.py /app/octomatrix/
-COPY install_agent_skills.py /app/octomatrix/
 
 # 5. Copy startup and management scripts
 COPY start_octo_services.sh /app/octomatrix/

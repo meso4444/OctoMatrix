@@ -418,6 +418,15 @@ while true; do
             ;;
         9)
             echo ""
+            # Ensure each Agent's skillbox directory exists first (setup_agent_env.py
+            # may not have run yet), otherwise install_agent_skills.py finds no
+            # Agent directories to deploy skills into.
+            python3 -c "
+import yaml, os
+config = yaml.safe_load(open('$CONFIG_YAML'))
+for agent in config.get('agents', []):
+    os.makedirs(os.path.join('$SCRIPT_DIR', 'agent_home', agent['name'], 'skillbox'), exist_ok=True)
+" 2>/dev/null
             echo "📦 Starting Global Skill Cache Build..."
             if python3 "$SCRIPT_DIR/install_agent_skills.py"; then
                 echo -e "\n✅ Global skill build completed successfully!"

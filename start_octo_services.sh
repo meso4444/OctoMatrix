@@ -109,11 +109,6 @@ export TMUX_SESSION_NAME
 echo "🧬  Initializing Agent ecosystem environment…"
 python3 "$SCRIPT_DIR/setup_agent_env.py" --all
 
-# 1.5 Build and deploy skill packages (idempotent -- already-installed skills
-# whose hash still matches are automatically skipped)
-echo "📦  Building and deploying skill packages…"
-python3 "$SCRIPT_DIR/install_agent_skills.py"
-
 # 2. Dynamically start AI Agent squad
 echo "🤖 Deploying AI Agent squad…"
 

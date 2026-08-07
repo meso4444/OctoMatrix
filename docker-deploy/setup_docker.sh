@@ -324,7 +324,20 @@ while true; do
             
             TMUX_SESSION=$(python3 -c "import yaml; print(yaml.safe_load(open('$SCRIPT_DIR/config.${INSTANCE_NAME}.yaml'))['tmux']['session_name'])" 2>/dev/null || echo "ai_${INSTANCE_NAME}")
             CURRENT_USER=$(whoami)
-            
+
+            # Ensure each Agent's skillbox directory exists, then build and deploy
+            # skill packages, so the host-side agent_home/{name}/skillbox (including
+            # .global_skills_cache) is ready before the user runs docker build --
+            # this lets the Dockerfile's COPY skills/ bake the built cache into the image.
+            python3 -c "
+import yaml, os
+config = yaml.safe_load(open('$SCRIPT_DIR/config.${INSTANCE_NAME}.yaml'))
+for agent in config.get('agents', []):
+    os.makedirs(os.path.join('$SCRIPT_DIR', '..', 'agent_home', agent['name'], 'skillbox'), exist_ok=True)
+" 2>/dev/null
+            echo "📦 Building and deploying skill packages..."
+            python3 "$SCRIPT_DIR/../install_agent_skills.py"
+
             echo "✅ Instance setup complete!"
             echo "=========================================="
             echo "🚀 Next steps, you can use the following commands to operate your AI Army:"
