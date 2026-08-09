@@ -224,6 +224,65 @@ def telegram_webhook():
 
                 forward_to_router(audio_prompt, user_id, username, metadata={'file_type': 'audio', 'local_path': local_path})
 
+        # 🎙️ Handle voice messages (Voice)
+        elif 'voice' in msg_data:
+            current_agent = get_current_agent()
+            voice = msg_data['voice']
+            file_id = voice['file_id']
+
+            local_path = image_manager.download_telegram_photo(file_id, current_agent)
+            if local_path:
+                caption = msg_data.get('caption', '').strip()
+                voice_prompt = f"{SYS_PREFIX} Please process this voice message, file path: `{local_path}`"
+
+                if caption:
+                    voice_prompt += f"\n\nUser explanation/question:\n{caption}"
+
+                forward_to_router(voice_prompt, user_id, username, metadata={'file_type': 'voice', 'local_path': local_path})
+
+        # 🎬 Handle video files (Video)
+        elif 'video' in msg_data:
+            current_agent = get_current_agent()
+            video = msg_data['video']
+            file_id = video['file_id']
+
+            local_path = image_manager.download_telegram_photo(file_id, current_agent)
+            if local_path:
+                caption = msg_data.get('caption', '').strip()
+                video_prompt = f"{SYS_PREFIX} Please process this video file, file path: `{local_path}`"
+
+                if caption:
+                    video_prompt += f"\n\nUser explanation/question:\n{caption}"
+
+                forward_to_router(video_prompt, user_id, username, metadata={'file_type': 'video', 'local_path': local_path})
+
+        # 📹 Handle round video messages (Video Note)
+        elif 'video_note' in msg_data:
+            current_agent = get_current_agent()
+            video_note = msg_data['video_note']
+            file_id = video_note['file_id']
+
+            local_path = image_manager.download_telegram_photo(file_id, current_agent)
+            if local_path:
+                video_note_prompt = f"{SYS_PREFIX} Please process this video note, file path: `{local_path}`"
+                forward_to_router(video_note_prompt, user_id, username, metadata={'file_type': 'video_note', 'local_path': local_path})
+
+        # 🎞️ Handle animations (Animation / GIF)
+        elif 'animation' in msg_data:
+            current_agent = get_current_agent()
+            animation = msg_data['animation']
+            file_id = animation['file_id']
+
+            local_path = image_manager.download_telegram_photo(file_id, current_agent)
+            if local_path:
+                caption = msg_data.get('caption', '').strip()
+                animation_prompt = f"{SYS_PREFIX} Please process this animation (GIF), file path: `{local_path}`"
+
+                if caption:
+                    animation_prompt += f"\n\nUser explanation/question:\n{caption}"
+
+                forward_to_router(animation_prompt, user_id, username, metadata={'file_type': 'animation', 'local_path': local_path})
+
         # 🎭 Handle Sticker
         elif 'sticker' in msg_data:
             sticker = msg_data['sticker']
