@@ -207,7 +207,23 @@ def telegram_webhook():
                     doc_prompt += f"\n\nUser explanation/question:\n{caption}"
 
                 forward_to_router(doc_prompt, user_id, username, metadata={'file_type': 'file', 'local_path': local_path})
-        
+
+        # 🎵 Handle audio files (Audio / MP3)
+        elif 'audio' in msg_data:
+            current_agent = get_current_agent()
+            audio = msg_data['audio']
+            file_id = audio['file_id']
+
+            local_path = image_manager.download_telegram_photo(file_id, current_agent)
+            if local_path:
+                caption = msg_data.get('caption', '').strip()
+                audio_prompt = f"{SYS_PREFIX} Please process this audio file, file path: `{local_path}`"
+
+                if caption:
+                    audio_prompt += f"\n\nUser explanation/question:\n{caption}"
+
+                forward_to_router(audio_prompt, user_id, username, metadata={'file_type': 'audio', 'local_path': local_path})
+
         # 🎭 Handle Sticker
         elif 'sticker' in msg_data:
             sticker = msg_data['sticker']
