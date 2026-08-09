@@ -292,10 +292,10 @@ templates:
   # 【矩陣連線確認】
   matrix_connected:
     telegram: |
-      🐙 <b>{agent_name}</b> 聽見了你的呼喚 🐾
+      🐙 <b>{agent_name}</b> 聽見了你的呼喚 🐚
 
     discord: |
-      🐙 **{agent_name}** 聽見了你的呼喚 🐾
+      🐙 **{agent_name}** 聽見了你的呼喚 🐚
 
     slack: |
-      🐙 {agent_name} 聽見了你的呼喚 🐾
+      🐙 {agent_name} 聽見了你的呼喚 🐚
