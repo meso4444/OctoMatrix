@@ -347,22 +347,6 @@ while true; do
                 echo "=========================================="
                 read -p "請選擇操作 [1-9, R]: " cli_choice
 
-                # 在 nvm 等使用者層級 Node 版本管理工具下，npm 全域安裝路徑通常歸使用者自己所有，
-                # 此時若還加 sudo，會變成 sudo 底下的 npm 用自己的一套 PATH（通常不含 nvm shim）
-                # 解析到系統版 npm，裝到 /usr 等完全不同的路徑，跟實際被執行到的 nvm 版本是兩份互不相干
-                # 的安裝，導致「升級/退版」看起來成功卻永遠碰不到真正在跑的那個版本。
-                # 因此：npm prefix 可寫就不用 sudo；不可寫（系統層級安裝）才用 sudo，且強制指定成呼叫
-                # 當下解析到的同一份 npm（而不是讓 sudo 自己重新找一個）。
-                npm_install_g() {
-                    local npm_prefix
-                    npm_prefix=$(npm config get prefix 2>/dev/null)
-                    if [ -n "$npm_prefix" ] && [ -w "$npm_prefix" ]; then
-                        npm install -g "$1"
-                    else
-                        sudo "$(command -v npm)" install -g "$1"
-                    fi
-                }
-
                 do_update() {
                     local pkg="$1"
                     local name="$2"
@@ -373,8 +357,8 @@ while true; do
                         echo "$current_ver" > "$SCRIPT_DIR/.cli_versions_bak/${pkg//\//_}_version.bak"
                         echo "✅ 已備份 $name 版本: $current_ver"
                     fi
-                    echo "🚀 正在全域升級 $name..."
-                    npm_install_g "${pkg}@latest"
+                    echo "🚀 正在全域升級 $name (需要 sudo 權限)..."
+                    sudo npm install -g "${pkg}@latest"
                     echo "✅ $name 升級完成！"
                     read -p "請按 Enter 鍵繼續..." dummy_key
                 }
@@ -397,8 +381,8 @@ while true; do
                     local bak_file="$SCRIPT_DIR/.cli_versions_bak/${pkg//\//_}_version.bak"
                     if [ -f "$bak_file" ]; then
                         local old_ver=$(cat "$bak_file")
-                        echo "⏪ 準備將 $name 退回版本: $old_ver..."
-                        npm_install_g "${pkg}@${old_ver}"
+                        echo "⏪ 準備將 $name 退回版本: $old_ver (需要 sudo 權限)..."
+                        sudo npm install -g "${pkg}@${old_ver}"
                         echo "✅ $name 退版完成！"
                         rm -f "$bak_file"
                     else
