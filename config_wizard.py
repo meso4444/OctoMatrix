@@ -134,7 +134,10 @@ def prompt_model_choice(engine, current_model=None):
         options = [("gpt-5.4-mini", "gpt-5.4-mini (Default)"), ("gpt-5.4", "gpt-5.4")]
     elif 'agy' in engine or 'antigravity' in engine:
         options = [
-            ("Gemini 3.5 Flash (Medium)", "Gemini 3.5 Flash (Medium) (Default)"),
+            ("Gemini 3.6 Flash (Medium)", "Gemini 3.6 Flash (Medium) (Default)"),
+            ("Gemini 3.6 Flash (High)", "Gemini 3.6 Flash (High)"),
+            ("Gemini 3.6 Flash (Low)", "Gemini 3.6 Flash (Low)"),
+            ("Gemini 3.5 Flash (Medium)", "Gemini 3.5 Flash (Medium)"),
             ("Gemini 3.5 Flash (High)", "Gemini 3.5 Flash (High)"),
             ("Gemini 3.5 Flash (Low)", "Gemini 3.5 Flash (Low)"),
             ("Gemini 3.1 Pro (Low)", "Gemini 3.1 Pro (Low)"),
