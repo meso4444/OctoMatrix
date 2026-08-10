@@ -348,25 +348,6 @@ while true; do
                 echo "=========================================="
                 read -p "Please select an operation [1-9, R]: " cli_choice
 
-                # Under user-level Node version managers like nvm, the npm global install path is
-                # usually writable by the user themselves. Adding sudo on top makes sudo's npm use
-                # its own PATH (which usually excludes the nvm shim), resolving to the system npm
-                # and installing under a completely different path like /usr — an entirely separate
-                # installation from the one actually being executed. This makes upgrades/rollbacks
-                # appear to succeed while the version actually running never changes.
-                # So: skip sudo when the npm prefix is writable; only use sudo when it isn't
-                # (system-level install), and explicitly target the npm resolved right now
-                # (rather than letting sudo re-resolve a different one).
-                npm_install_g() {
-                    local npm_prefix
-                    npm_prefix=$(npm config get prefix 2>/dev/null)
-                    if [ -n "$npm_prefix" ] && [ -w "$npm_prefix" ]; then
-                        npm install -g "$1"
-                    else
-                        sudo "$(command -v npm)" install -g "$1"
-                    fi
-                }
-
                 do_update() {
                     local pkg="$1"
                     local name="$2"
@@ -377,8 +358,8 @@ while true; do
                         echo "$current_ver" > "$SCRIPT_DIR/.cli_versions_bak/${pkg//\//_}_version.bak"
                         echo "✅ Successfully backed up $name version: $current_ver"
                     fi
-                    echo "🚀 Performing global upgrade for $name..."
-                    npm_install_g "${pkg}@latest"
+                    echo "🚀 Performing global upgrade for $name (requires sudo permission)..."
+                    sudo npm install -g "${pkg}@latest"
                     echo "✅ $name upgrade complete!"
                     read -p "Press Enter to continue..." dummy_key
                 }
@@ -401,8 +382,8 @@ while true; do
                     local bak_file="$SCRIPT_DIR/.cli_versions_bak/${pkg//\//_}_version.bak"
                     if [ -f "$bak_file" ]; then
                         local old_ver=$(cat "$bak_file")
-                        echo "⏪ Preparing to rollback $name to version: $old_ver..."
-                        npm_install_g "${pkg}@${old_ver}"
+                        echo "⏪ Preparing to rollback $name to version: $old_ver (requires sudo permission)..."
+                        sudo npm install -g "${pkg}@${old_ver}"
                         echo "✅ $name rollback complete!"
                         rm -f "$bak_file"
                     else
