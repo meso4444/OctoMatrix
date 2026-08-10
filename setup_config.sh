@@ -359,7 +359,7 @@ while true; do
                         echo "✅ Successfully backed up $name version: $current_ver"
                     fi
                     echo "🚀 Performing global upgrade for $name (requires sudo permission)..."
-                    sudo npm update -g "$pkg"
+                    sudo npm install -g "${pkg}@latest"
                     echo "✅ $name upgrade complete!"
                     read -p "Press Enter to continue..." dummy_key
                 }
