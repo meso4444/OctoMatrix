@@ -357,6 +357,9 @@ while true; do
                         echo "$current_ver" > "$SCRIPT_DIR/.cli_versions_bak/${pkg//\//_}_version.bak"
                         echo "✅ 已備份 $name 版本: $current_ver"
                     fi
+                    # 比照 install_dependencies.sh 既有作法：升級前先清除當前使用者個人環境(如 nvm)
+                    # 下可能殘留的舊版全域安裝，避免該使用者自己的 shell 之後仍解析到未更新的舊版
+                    npm uninstall -g "$pkg" 2>/dev/null || true
                     echo "🚀 正在全域升級 $name (需要 sudo 權限)..."
                     sudo npm install -g "${pkg}@latest"
                     echo "✅ $name 升級完成！"
@@ -382,6 +385,7 @@ while true; do
                     if [ -f "$bak_file" ]; then
                         local old_ver=$(cat "$bak_file")
                         echo "⏪ 準備將 $name 退回版本: $old_ver (需要 sudo 權限)..."
+                        npm uninstall -g "$pkg" 2>/dev/null || true
                         sudo npm install -g "${pkg}@${old_ver}"
                         echo "✅ $name 退版完成！"
                         rm -f "$bak_file"
