@@ -358,7 +358,7 @@ while true; do
                         echo "✅ 已備份 $name 版本: $current_ver"
                     fi
                     echo "🚀 正在全域升級 $name (需要 sudo 權限)..."
-                    sudo npm update -g "$pkg"
+                    sudo npm install -g "${pkg}@latest"
                     echo "✅ $name 升級完成！"
                     read -p "請按 Enter 鍵繼續..." dummy_key
                 }
