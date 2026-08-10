@@ -358,6 +358,10 @@ while true; do
                         echo "$current_ver" > "$SCRIPT_DIR/.cli_versions_bak/${pkg//\//_}_version.bak"
                         echo "✅ Successfully backed up $name version: $current_ver"
                     fi
+                    # Mirror install_dependencies.sh's existing behavior: before upgrading, clear any
+                    # stale global install left in the current user's personal environment (e.g. nvm),
+                    # so that user's own shell doesn't keep resolving to the un-updated old copy.
+                    npm uninstall -g "$pkg" 2>/dev/null || true
                     echo "🚀 Performing global upgrade for $name (requires sudo permission)..."
                     sudo npm install -g "${pkg}@latest"
                     echo "✅ $name upgrade complete!"
@@ -383,6 +387,7 @@ while true; do
                     if [ -f "$bak_file" ]; then
                         local old_ver=$(cat "$bak_file")
                         echo "⏪ Preparing to rollback $name to version: $old_ver (requires sudo permission)..."
+                        npm uninstall -g "$pkg" 2>/dev/null || true
                         sudo npm install -g "${pkg}@${old_ver}"
                         echo "✅ $name rollback complete!"
                         rm -f "$bak_file"
