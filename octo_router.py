@@ -715,8 +715,11 @@ def notify_file_proxy():
     p = request.form.get('platform', 'telegram'); ft = request.form.get('file_type', 'document'); c = request.form.get('caption', ''); tid = request.form.get('target_id')
     if 'file' not in request.files: return jsonify({"status": "failed", "error": "No file"}), 400
     file = request.files['file']
-    # secure_filename 剝除路徑穿越片段(如 ../)，前綴 uuid 避免併發請求檔名互相覆寫
-    safe_name = secure_filename(file.filename) or 'upload'
+    # secure_filename 會整段剝除非 ASCII 字元，中日韓檔名(如「報告.pdf」)會連副檔名一起被吃掉，
+    # 因此先分離副檔名單獨保留，只對檔名主體做路徑穿越防護；uuid 前綴避免併發請求檔名互相覆寫
+    orig_base, orig_ext = os.path.splitext(file.filename or '')
+    safe_ext = ''.join(c for c in orig_ext if c.isalnum() or c == '.')[:10]
+    safe_name = (secure_filename(orig_base) or 'upload') + safe_ext
     temp = os.path.join('/tmp', f"{uuid.uuid4().hex}_{safe_name}")
     file.save(temp)
     try:

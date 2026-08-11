@@ -91,8 +91,11 @@ class ImageManager:
             agent_img_dir = os.path.join(self.base_dir, 'agent_home', agent_name, 'downloads_temp')
             os.makedirs(agent_img_dir, exist_ok=True)
 
-            # secure_filename 剝除路徑穿越片段，Discord 附件檔名理論上不會帶 ../，但不假設第三方平台輸入乾淨
-            safe_name = secure_filename(attachment.filename) or 'attachment'
+            # secure_filename 會整段剝除非 ASCII 字元，中日韓檔名(如「測試.jpg」)會連副檔名一起被吃掉，
+            # 因此先分離副檔名單獨保留，只對檔名主體做路徑穿越防護
+            orig_base, orig_ext = os.path.splitext(attachment.filename or '')
+            safe_ext = ''.join(c for c in orig_ext if c.isalnum() or c == '.')[:10]
+            safe_name = (secure_filename(orig_base) or 'attachment') + safe_ext
             filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{safe_name}"
             local_path = os.path.join(agent_img_dir, filename)
 

@@ -100,8 +100,11 @@ class ImageManager:
             os.makedirs(agent_img_dir, exist_ok=True)
 
             url = file_info.get('url_private')
-            # secure_filename 剝除路徑穿越片段，Slack 檔名理論上不會帶 ../，但不假設第三方平台輸入乾淨
-            safe_name = secure_filename(file_info.get('name', '')) or 'upload'
+            # secure_filename 會整段剝除非 ASCII 字元，中日韓檔名(如「測試.jpg」)會連副檔名一起被吃掉，
+            # 因此先分離副檔名單獨保留，只對檔名主體做路徑穿越防護
+            orig_base, orig_ext = os.path.splitext(file_info.get('name', '') or '')
+            safe_ext = ''.join(c for c in orig_ext if c.isalnum() or c == '.')[:10]
+            safe_name = (secure_filename(orig_base) or 'upload') + safe_ext
             filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{safe_name}"
             local_path = os.path.join(agent_img_dir, filename)
 
