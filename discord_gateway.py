@@ -36,7 +36,6 @@ import asyncio
 import logging
 from typing import Optional, Set
 from datetime import datetime
-from werkzeug.utils import secure_filename
 
 import discord
 from discord.ext import commands
@@ -91,11 +90,12 @@ class ImageManager:
             agent_img_dir = os.path.join(self.base_dir, 'agent_home', agent_name, 'downloads_temp')
             os.makedirs(agent_img_dir, exist_ok=True)
 
-            # secure_filename 會整段剝除非 ASCII 字元，中日韓檔名(如「測試.jpg」)會連副檔名一起被吃掉，
-            # 因此先分離副檔名單獨保留，只對檔名主體做路徑穿越防護
+            # 個人使用服務，僅過濾路徑穿越相關的危險字元(/ \ 控制字元)，
+            # 其餘 Unicode 字元(含中日韓檔名)原樣保留
             orig_base, orig_ext = os.path.splitext(attachment.filename or '')
             safe_ext = ''.join(c for c in orig_ext if c.isalnum() or c == '.')[:10]
-            safe_name = (secure_filename(orig_base) or 'attachment') + safe_ext
+            safe_base = ''.join(c for c in orig_base.replace('/', '_').replace('\\', '_') if ord(c) >= 32).strip().strip('.')
+            safe_name = (safe_base or 'attachment') + safe_ext
             filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{safe_name}"
             local_path = os.path.join(agent_img_dir, filename)
 

@@ -32,7 +32,6 @@ from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, asdict
 
 from flask import Flask, request, jsonify
-from werkzeug.utils import secure_filename
 from config import (
     SYS_PREFIX,
     TELEGRAM_GATEWAY_PORT,
@@ -715,11 +714,12 @@ def notify_file_proxy():
     p = request.form.get('platform', 'telegram'); ft = request.form.get('file_type', 'document'); c = request.form.get('caption', ''); tid = request.form.get('target_id')
     if 'file' not in request.files: return jsonify({"status": "failed", "error": "No file"}), 400
     file = request.files['file']
-    # secure_filename 會整段剝除非 ASCII 字元，中日韓檔名(如「報告.pdf」)會連副檔名一起被吃掉，
-    # 因此先分離副檔名單獨保留，只對檔名主體做路徑穿越防護；uuid 前綴避免併發請求檔名互相覆寫
+    # 個人使用服務、router 已鎖 127.0.0.1，僅過濾路徑穿越相關的危險字元(/ \ 控制字元)，
+    # 其餘 Unicode 字元(含中日韓檔名)原樣保留；uuid 前綴避免併發請求檔名互相覆寫
     orig_base, orig_ext = os.path.splitext(file.filename or '')
     safe_ext = ''.join(c for c in orig_ext if c.isalnum() or c == '.')[:10]
-    safe_name = (secure_filename(orig_base) or 'upload') + safe_ext
+    safe_base = ''.join(c for c in orig_base.replace('/', '_').replace('\\', '_') if ord(c) >= 32).strip().strip('.')
+    safe_name = (safe_base or 'upload') + safe_ext
     temp = os.path.join('/tmp', f"{uuid.uuid4().hex}_{safe_name}")
     file.save(temp)
     try:
