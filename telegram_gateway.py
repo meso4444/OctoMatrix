@@ -43,6 +43,11 @@ ROUTER_URL = f"http://{ROUTER_HOST}:{ROUTER_PORT}"
 ROUTER_INJECT_ENDPOINT = f"{ROUTER_URL}/inject"
 ROUTER_STATUS_ENDPOINT = f"{ROUTER_URL}/status"
 
+# This service's own listen address: defaults to localhost only (127.0.0.1);
+# only Docker-containerized deployments need external (0.0.0.0), overridden
+# by the deployment layer via the TELEGRAM_GATEWAY_HOST env var
+TELEGRAM_GATEWAY_HOST = os.getenv('TELEGRAM_GATEWAY_HOST', '127.0.0.1')
+
 class ImageManager:
     """Image Manager: Responsible for downloading images from various platforms to specified Agent directory"""
     def __init__(self, base_dir):
@@ -297,4 +302,4 @@ def telegram_webhook():
 
 if __name__ == '__main__':
     logger.info(f"🚀 OctoMatrix Telegram Gateway Hardened Version Starting (Port: {TELEGRAM_GATEWAY_PORT})")
-    app.run(host='0.0.0.0', port=TELEGRAM_GATEWAY_PORT, debug=False)
+    app.run(host=TELEGRAM_GATEWAY_HOST, port=TELEGRAM_GATEWAY_PORT, debug=False)

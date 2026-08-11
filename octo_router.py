@@ -52,7 +52,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 ROUTER_PORT = int(os.getenv('ROUTER_PORT', 12210))
-ROUTER_HOST = '0.0.0.0'
+# Defaults to localhost only (127.0.0.1); only Docker-containerized deployments
+# need external (0.0.0.0), overridden by the deployment layer via env var
+ROUTER_HOST = os.getenv('ROUTER_HOST', '127.0.0.1')
 script_dir = os.path.dirname(os.path.abspath(__file__))
 AGENT_HOME_BASE = os.path.join(script_dir, 'agent_home')
 
