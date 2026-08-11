@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from flask import Flask, request, jsonify
+import hmac
 import json
 import os
 import requests
@@ -46,6 +47,11 @@ ROUTER_STATUS_ENDPOINT = f"{ROUTER_URL}/status"
 # 本服務自己的監聽位址：預設僅本機(127.0.0.1)，Docker 容器化部署才需要對外(0.0.0.0)，
 # 由部署層透過環境變數 TELEGRAM_GATEWAY_HOST 覆寫
 TELEGRAM_GATEWAY_HOST = os.getenv('TELEGRAM_GATEWAY_HOST', '127.0.0.1')
+
+# start_octo_services.sh 產生並 export 的 Webhook Secret，start_ngrok.sh 已用同一把
+# 秘密金鑰向 Telegram 註冊 secret_token；若有設定，webhook 處理函式必須驗證每筆請求
+# 的 X-Telegram-Bot-Api-Secret-Token 標頭是否吻合，避免任何人偽造 webhook 請求
+WEBHOOK_SECRET_TOKEN = os.getenv('WEBHOOK_SECRET_TOKEN', '')
 
 class ImageManager:
     """圖片管理員：負責從各平臺下載圖片至指定 Agent 目錄"""
@@ -147,6 +153,13 @@ def health_check(): return 'OK', 200
 @app.route('/telegram_webhook', methods=['POST'])
 def telegram_webhook():
     try:
+        # 驗證 Telegram 帶來的 secret_token，避免任何人偽造 webhook 請求直接注入訊息
+        if WEBHOOK_SECRET_TOKEN:
+            incoming_secret = request.headers.get('X-Telegram-Bot-Api-Secret-Token', '')
+            if not hmac.compare_digest(incoming_secret, WEBHOOK_SECRET_TOKEN):
+                logger.warning("❌ Webhook 請求 secret_token 驗證失敗，拒絕處理")
+                return jsonify({'status': 'unauthorized'}), 403
+
         webhook_data = request.get_json()
         if not webhook_data or 'message' not in webhook_data:
             return jsonify({'status': 'ok'})
