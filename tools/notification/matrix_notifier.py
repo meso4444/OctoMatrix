@@ -250,18 +250,22 @@ class TelegramSender:
                 method = 'sendAnimation'
                 param = 'animation'
             
+            # display_name：使用者應該看到的檔名。呼叫端(例如 /notify_file 的暫存檔)可能因為本機
+            # 需求(避免併發覆寫)在磁碟檔名前面加了 uuid 之類的前綴，這裡一律以 display_name 為準，
+            # 不直接採用 target_path 的檔名，避免內部實作細節外洩到使用者看到的檔名
+            display_name = kwargs.get('display_name') or os.path.basename(target_path)
             with open(target_path, 'rb') as f:
                 data = {'chat_id': chat_id, 'parse_mode': 'HTML'}
                 if caption:
                     data['caption'] = caption[:1000]
-                resp = requests.post(f"{self.api_url}/{method}", files={param: f}, data=data, timeout=30)
+                resp = requests.post(f"{self.api_url}/{method}", files={param: (display_name, f)}, data=data, timeout=30)
                 # caption 被截斷到 1000 字或內含 <, > 等字元時，可能切斷/誤觸發 HTML 標籤，
                 # 導致 Telegram 400；send() 早就有純文字重發，這裡補上同樣的防護 (2026-07-31)
                 if resp.status_code != 200 and 'parse_mode' in data:
                     logger.warning(f"[Notifier] Telegram 檔案 caption 解析錯誤 ({resp.status_code})，正嘗試以純文字模式重發。錯誤: {resp.text}")
                     del data['parse_mode']
                     f.seek(0)
-                    resp = requests.post(f"{self.api_url}/{method}", files={param: f}, data=data, timeout=30)
+                    resp = requests.post(f"{self.api_url}/{method}", files={param: (display_name, f)}, data=data, timeout=30)
                     if resp.status_code != 200:
                         logger.error(f"[Notifier] Telegram 檔案純文字重發失敗: {resp.text}")
                 return resp.status_code == 200
@@ -306,9 +310,10 @@ class DiscordSender:
                         target_path = file_path  # 轉換失敗時將路徑還原
                 caption = "" # 貼圖模式不帶文字
 
+            display_name = kwargs.get('display_name') or os.path.basename(target_path)
             with open(target_path, 'rb') as f:
                 data = {'content': caption[:1900]}
-                resp = requests.post(f"{DISCORD_API_URL}/channels/{channel_id}/messages", files={'file': (os.path.basename(target_path), f)}, data=data, headers=self.headers, timeout=30)
+                resp = requests.post(f"{DISCORD_API_URL}/channels/{channel_id}/messages", files={'file': (display_name, f)}, data=data, headers=self.headers, timeout=30)
                 return resp.status_code in [200, 201]
         except: return False
         finally:
@@ -358,12 +363,14 @@ class SlackSender:
                         target_path = file_path  # 轉換失敗時將路徑還原
                 caption = "" # 貼圖模式不帶文字
 
+            display_name = kwargs.get('display_name') or os.path.basename(target_path)
             # 使用 files_upload_v2 自動處理全新的三階段上傳流程 (2025+ 規範)
             resp = self.client.files_upload_v2(
                 channel=channel_id,
                 file=target_path,
+                filename=display_name,
                 initial_comment=caption[:1900] if caption else None,
-                title=os.path.basename(target_path)
+                title=display_name
             )
             return resp.get('ok', False)
         except Exception as e:
@@ -419,7 +426,7 @@ class MatrixNotifier:
         # 傳遞所有 platform-specific 參數
         return sender.send(target_id, message, **context.get('_platform_kwargs', {}))
 
-    def notify_file(self, target_platform: str, file_path: str, file_type: str = 'document', caption: str = '', target_id: Optional[str] = None) -> bool:
+    def notify_file(self, target_platform: str, file_path: str, file_type: str = 'document', caption: str = '', target_id: Optional[str] = None, display_name: Optional[str] = None) -> bool:
         # 檢查平臺是否啟用
         try:
             from config import PLATFORMS_ENABLED
@@ -434,7 +441,7 @@ class MatrixNotifier:
         if not target_id: target_id = self._get_target_id(target_platform)
         if not target_id: return False
         
-        return sender.send_file(target_id, file_path, file_type, caption)
+        return sender.send_file(target_id, file_path, file_type, caption, display_name=display_name)
 
 
 def get_router_url() -> str:
