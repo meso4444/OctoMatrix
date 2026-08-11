@@ -727,7 +727,7 @@ def notify_file_proxy():
     temp = os.path.join('/tmp', f"{uuid.uuid4().hex}_{safe_name}")
     file.save(temp)
     try:
-        success = notifier.notify_file(p, temp, ft, c, tid); os.remove(temp)
+        success = notifier.notify_file(p, temp, ft, c, tid, display_name=safe_name); os.remove(temp)
         return jsonify({"status": "success" if success else "failed"}), 200 if success else 502
     except Exception as e:
         if os.path.exists(temp): os.remove(temp)

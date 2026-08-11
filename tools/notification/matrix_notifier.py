@@ -250,11 +250,16 @@ class TelegramSender:
                 method = 'sendAnimation'
                 param = 'animation'
             
+            # display_name: the filename the end user should see. Callers (e.g. /notify_file's
+            # temp file) may have prefixed the on-disk filename with a uuid for local needs
+            # (avoiding concurrent-request collisions); always prefer display_name over
+            # target_path's basename so that internal implementation details don't leak out
+            display_name = kwargs.get('display_name') or os.path.basename(target_path)
             with open(target_path, 'rb') as f:
                 data = {'chat_id': chat_id, 'parse_mode': 'HTML'}
                 if caption:
                     data['caption'] = caption[:1000]
-                resp = requests.post(f"{self.api_url}/{method}", files={param: f}, data=data, timeout=30)
+                resp = requests.post(f"{self.api_url}/{method}", files={param: (display_name, f)}, data=data, timeout=30)
                 # Truncating the caption to 1000 chars, or stray <, > characters in it, can cut off
                 # or misfire an HTML tag, causing a Telegram 400. send() already retries as plain
                 # text; add the same fallback here (2026-07-31).
@@ -262,7 +267,7 @@ class TelegramSender:
                     logger.warning(f"[Notifier] Telegram file caption parse error ({resp.status_code}), retrying as plain text. Error: {resp.text}")
                     del data['parse_mode']
                     f.seek(0)
-                    resp = requests.post(f"{self.api_url}/{method}", files={param: f}, data=data, timeout=30)
+                    resp = requests.post(f"{self.api_url}/{method}", files={param: (display_name, f)}, data=data, timeout=30)
                     if resp.status_code != 200:
                         logger.error(f"[Notifier] Telegram plain-text file retry failed: {resp.text}")
                 return resp.status_code == 200
@@ -307,9 +312,10 @@ class DiscordSender:
                         target_path = file_path  # Restore path if conversion fails
                 caption = "" # Sticker mode has no text
 
+            display_name = kwargs.get('display_name') or os.path.basename(target_path)
             with open(target_path, 'rb') as f:
                 data = {'content': caption[:1900]}
-                resp = requests.post(f"{DISCORD_API_URL}/channels/{channel_id}/messages", files={'file': (os.path.basename(target_path), f)}, data=data, headers=self.headers, timeout=30)
+                resp = requests.post(f"{DISCORD_API_URL}/channels/{channel_id}/messages", files={'file': (display_name, f)}, data=data, headers=self.headers, timeout=30)
                 return resp.status_code in [200, 201]
         except: return False
         finally:
@@ -359,12 +365,14 @@ class SlackSender:
                         target_path = file_path  # Restore path if conversion fails
                 caption = "" # Sticker mode has no text
 
+            display_name = kwargs.get('display_name') or os.path.basename(target_path)
             # Use files_upload_v2 to automatically handle the new 3-stage upload process (2025+ spec)
             resp = self.client.files_upload_v2(
                 channel=channel_id,
                 file=target_path,
+                filename=display_name,
                 initial_comment=caption[:1900] if caption else None,
-                title=os.path.basename(target_path)
+                title=display_name
             )
             return resp.get('ok', False)
         except Exception as e:
@@ -420,7 +428,7 @@ class MatrixNotifier:
         # Pass all platform-specific parameters
         return sender.send(target_id, message, **context.get('_platform_kwargs', {}))
 
-    def notify_file(self, target_platform: str, file_path: str, file_type: str = 'document', caption: str = '', target_id: Optional[str] = None) -> bool:
+    def notify_file(self, target_platform: str, file_path: str, file_type: str = 'document', caption: str = '', target_id: Optional[str] = None, display_name: Optional[str] = None) -> bool:
         # Check if platform is enabled
         try:
             from config import PLATFORMS_ENABLED
@@ -435,7 +443,7 @@ class MatrixNotifier:
         if not target_id: target_id = self._get_target_id(target_platform)
         if not target_id: return False
         
-        return sender.send_file(target_id, file_path, file_type, caption)
+        return sender.send_file(target_id, file_path, file_type, caption, display_name=display_name)
 
 
 def get_router_url() -> str:
