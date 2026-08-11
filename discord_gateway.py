@@ -36,6 +36,7 @@ import asyncio
 import logging
 from typing import Optional, Set
 from datetime import datetime
+from werkzeug.utils import secure_filename
 
 import discord
 from discord.ext import commands
@@ -90,7 +91,10 @@ class ImageManager:
             agent_img_dir = os.path.join(self.base_dir, 'agent_home', agent_name, 'downloads_temp')
             os.makedirs(agent_img_dir, exist_ok=True)
 
-            filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{attachment.filename}"
+            # secure_filename strips path-traversal segments; Discord attachment names
+            # shouldn't contain ../ in practice, but don't assume third-party input is clean
+            safe_name = secure_filename(attachment.filename) or 'attachment'
+            filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{safe_name}"
             local_path = os.path.join(agent_img_dir, filename)
 
             await attachment.save(local_path)
@@ -338,10 +342,11 @@ class DiscordGateway(commands.Cog):
         if message.author == self.bot.user or message.author.bot:
             return
 
-        # Check channel authorization (temporarily disabled for debugging)
-        # if self.authorized_channels and message.channel.id not in self.authorized_channels:
-        #     logger.debug(f"[Discord] Channel not authorized: {message.channel.id}")
-        #     return
+        # Channel authorization check (was left disabled after a debugging session; this
+        # security re-audit found it was never re-enabled, restoring it now)
+        if self.authorized_channels and message.channel.id not in self.authorized_channels:
+            logger.debug(f"[Discord] Channel not authorized: {message.channel.id}")
+            return
 
         # Check user authorization
         if self.authorized_users and message.author.id not in self.authorized_users:
