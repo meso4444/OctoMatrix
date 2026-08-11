@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from flask import Flask, request, jsonify
+import hmac
 import json
 import os
 import requests
@@ -47,6 +48,12 @@ ROUTER_STATUS_ENDPOINT = f"{ROUTER_URL}/status"
 # only Docker-containerized deployments need external (0.0.0.0), overridden
 # by the deployment layer via the TELEGRAM_GATEWAY_HOST env var
 TELEGRAM_GATEWAY_HOST = os.getenv('TELEGRAM_GATEWAY_HOST', '127.0.0.1')
+
+# Webhook secret generated and exported by start_octo_services.sh; start_ngrok.sh
+# registers this same secret with Telegram as secret_token. If set, the webhook
+# handler must verify each request's X-Telegram-Bot-Api-Secret-Token header
+# matches, otherwise anyone could forge webhook requests.
+WEBHOOK_SECRET_TOKEN = os.getenv('WEBHOOK_SECRET_TOKEN', '')
 
 class ImageManager:
     """Image Manager: Responsible for downloading images from various platforms to specified Agent directory"""
@@ -151,6 +158,14 @@ def health_check(): return 'OK', 200
 @app.route('/telegram_webhook', methods=['POST'])
 def telegram_webhook():
     try:
+        # Verify Telegram's secret_token so nobody can forge a webhook request
+        # and inject a message directly
+        if WEBHOOK_SECRET_TOKEN:
+            incoming_secret = request.headers.get('X-Telegram-Bot-Api-Secret-Token', '')
+            if not hmac.compare_digest(incoming_secret, WEBHOOK_SECRET_TOKEN):
+                logger.warning("❌ Webhook request failed secret_token verification, rejecting")
+                return jsonify({'status': 'unauthorized'}), 403
+
         webhook_data = request.get_json()
         if not webhook_data or 'message' not in webhook_data:
             return jsonify({'status': 'ok'})

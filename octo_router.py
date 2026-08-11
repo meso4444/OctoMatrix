@@ -32,6 +32,7 @@ from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, asdict
 
 from flask import Flask, request, jsonify
+from werkzeug.utils import secure_filename
 from config import (
     SYS_PREFIX,
     TELEGRAM_GATEWAY_PORT,
@@ -715,7 +716,12 @@ def notify_proxy():
 def notify_file_proxy():
     p = request.form.get('platform', 'telegram'); ft = request.form.get('file_type', 'document'); c = request.form.get('caption', ''); tid = request.form.get('target_id')
     if 'file' not in request.files: return jsonify({"status": "failed", "error": "No file"}), 400
-    file = request.files['file']; temp = os.path.join('/tmp', file.filename); file.save(temp)
+    file = request.files['file']
+    # secure_filename strips path-traversal segments (e.g. ../); uuid prefix
+    # avoids concurrent requests overwriting each other's temp file
+    safe_name = secure_filename(file.filename) or 'upload'
+    temp = os.path.join('/tmp', f"{uuid.uuid4().hex}_{safe_name}")
+    file.save(temp)
     try:
         success = notifier.notify_file(p, temp, ft, c, tid); os.remove(temp)
         return jsonify({"status": "success" if success else "failed"}), 200 if success else 502
