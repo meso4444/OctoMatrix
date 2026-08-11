@@ -36,6 +36,7 @@ import asyncio
 import logging
 from typing import Optional, Set
 from datetime import datetime
+from werkzeug.utils import secure_filename
 
 import discord
 from discord.ext import commands
@@ -90,7 +91,9 @@ class ImageManager:
             agent_img_dir = os.path.join(self.base_dir, 'agent_home', agent_name, 'downloads_temp')
             os.makedirs(agent_img_dir, exist_ok=True)
 
-            filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{attachment.filename}"
+            # secure_filename 剝除路徑穿越片段，Discord 附件檔名理論上不會帶 ../，但不假設第三方平台輸入乾淨
+            safe_name = secure_filename(attachment.filename) or 'attachment'
+            filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{safe_name}"
             local_path = os.path.join(agent_img_dir, filename)
 
             await attachment.save(local_path)
@@ -338,10 +341,10 @@ class DiscordGateway(commands.Cog):
         if message.author == self.bot.user or message.author.bot:
             return
 
-        # 檢查頻道授權 (暫時停用以便 Debug)
-        # if self.authorized_channels and message.channel.id not in self.authorized_channels:
-        #     logger.debug(f"[Discord] 頻道未授權: {message.channel.id}")
-        #     return
+        # 檢查頻道授權（原本為除錯而暫時停用，此次資安複查發現一直沒有重新啟用，予以恢復）
+        if self.authorized_channels and message.channel.id not in self.authorized_channels:
+            logger.debug(f"[Discord] 頻道未授權: {message.channel.id}")
+            return
 
         # 檢查用戶授權
         if self.authorized_users and message.author.id not in self.authorized_users:

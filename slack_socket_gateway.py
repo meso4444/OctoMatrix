@@ -41,6 +41,7 @@ import logging
 import time
 from datetime import datetime
 from typing import Optional, Set, Dict, Any
+from werkzeug.utils import secure_filename
 
 from slack_sdk import WebClient
 from slack_sdk.socket_mode import SocketModeClient
@@ -99,7 +100,9 @@ class ImageManager:
             os.makedirs(agent_img_dir, exist_ok=True)
 
             url = file_info.get('url_private')
-            filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{file_info.get('name')}"
+            # secure_filename 剝除路徑穿越片段，Slack 檔名理論上不會帶 ../，但不假設第三方平台輸入乾淨
+            safe_name = secure_filename(file_info.get('name', '')) or 'upload'
+            filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{safe_name}"
             local_path = os.path.join(agent_img_dir, filename)
 
             # 🔐 關鍵：下載 Slack 私有檔案需附上 Bot Token
