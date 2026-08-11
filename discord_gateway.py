@@ -36,7 +36,6 @@ import asyncio
 import logging
 from typing import Optional, Set
 from datetime import datetime
-from werkzeug.utils import secure_filename
 
 import discord
 from discord.ext import commands
@@ -91,12 +90,13 @@ class ImageManager:
             agent_img_dir = os.path.join(self.base_dir, 'agent_home', agent_name, 'downloads_temp')
             os.makedirs(agent_img_dir, exist_ok=True)
 
-            # secure_filename strips all non-ASCII characters, so CJK filenames (e.g. "測試.jpg")
-            # lose their extension entirely; split the extension off first and sanitize it
-            # separately so path-traversal protection doesn't also destroy the extension
+            # Personal-use service — only filter path-traversal-dangerous characters
+            # (/ \ control chars); keep other Unicode characters (including CJK
+            # filenames) as-is
             orig_base, orig_ext = os.path.splitext(attachment.filename or '')
             safe_ext = ''.join(c for c in orig_ext if c.isalnum() or c == '.')[:10]
-            safe_name = (secure_filename(orig_base) or 'attachment') + safe_ext
+            safe_base = ''.join(c for c in orig_base.replace('/', '_').replace('\\', '_') if ord(c) >= 32).strip().strip('.')
+            safe_name = (safe_base or 'attachment') + safe_ext
             filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{safe_name}"
             local_path = os.path.join(agent_img_dir, filename)
 

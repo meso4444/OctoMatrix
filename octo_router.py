@@ -32,7 +32,6 @@ from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, asdict
 
 from flask import Flask, request, jsonify
-from werkzeug.utils import secure_filename
 from config import (
     SYS_PREFIX,
     TELEGRAM_GATEWAY_PORT,
@@ -717,13 +716,14 @@ def notify_file_proxy():
     p = request.form.get('platform', 'telegram'); ft = request.form.get('file_type', 'document'); c = request.form.get('caption', ''); tid = request.form.get('target_id')
     if 'file' not in request.files: return jsonify({"status": "failed", "error": "No file"}), 400
     file = request.files['file']
-    # secure_filename strips all non-ASCII characters, so CJK filenames (e.g. "報告.pdf")
-    # lose their extension entirely; split the extension off first and sanitize it
-    # separately so path-traversal protection doesn't also destroy the extension.
-    # uuid prefix avoids concurrent requests overwriting each other's temp file
+    # Personal-use service, router is already bound to 127.0.0.1 — only filter
+    # path-traversal-dangerous characters (/ \ control chars); keep other Unicode
+    # characters (including CJK filenames) as-is. uuid prefix avoids concurrent
+    # requests overwriting each other's temp file
     orig_base, orig_ext = os.path.splitext(file.filename or '')
     safe_ext = ''.join(c for c in orig_ext if c.isalnum() or c == '.')[:10]
-    safe_name = (secure_filename(orig_base) or 'upload') + safe_ext
+    safe_base = ''.join(c for c in orig_base.replace('/', '_').replace('\\', '_') if ord(c) >= 32).strip().strip('.')
+    safe_name = (safe_base or 'upload') + safe_ext
     temp = os.path.join('/tmp', f"{uuid.uuid4().hex}_{safe_name}")
     file.save(temp)
     try:

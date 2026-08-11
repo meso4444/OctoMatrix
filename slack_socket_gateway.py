@@ -41,7 +41,6 @@ import logging
 import time
 from datetime import datetime
 from typing import Optional, Set, Dict, Any
-from werkzeug.utils import secure_filename
 
 from slack_sdk import WebClient
 from slack_sdk.socket_mode import SocketModeClient
@@ -100,12 +99,13 @@ class ImageManager:
             os.makedirs(agent_img_dir, exist_ok=True)
 
             url = file_info.get('url_private')
-            # secure_filename strips all non-ASCII characters, so CJK filenames (e.g. "測試.jpg")
-            # lose their extension entirely; split the extension off first and sanitize it
-            # separately so path-traversal protection doesn't also destroy the extension
+            # Personal-use service — only filter path-traversal-dangerous characters
+            # (/ \ control chars); keep other Unicode characters (including CJK
+            # filenames) as-is
             orig_base, orig_ext = os.path.splitext(file_info.get('name', '') or '')
             safe_ext = ''.join(c for c in orig_ext if c.isalnum() or c == '.')[:10]
-            safe_name = (secure_filename(orig_base) or 'upload') + safe_ext
+            safe_base = ''.join(c for c in orig_base.replace('/', '_').replace('\\', '_') if ord(c) >= 32).strip().strip('.')
+            safe_name = (safe_base or 'upload') + safe_ext
             filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{safe_name}"
             local_path = os.path.join(agent_img_dir, filename)
 
