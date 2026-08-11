@@ -100,9 +100,12 @@ class ImageManager:
             os.makedirs(agent_img_dir, exist_ok=True)
 
             url = file_info.get('url_private')
-            # secure_filename strips path-traversal segments; Slack file names shouldn't
-            # contain ../ in practice, but don't assume third-party input is clean
-            safe_name = secure_filename(file_info.get('name', '')) or 'upload'
+            # secure_filename strips all non-ASCII characters, so CJK filenames (e.g. "測試.jpg")
+            # lose their extension entirely; split the extension off first and sanitize it
+            # separately so path-traversal protection doesn't also destroy the extension
+            orig_base, orig_ext = os.path.splitext(file_info.get('name', '') or '')
+            safe_ext = ''.join(c for c in orig_ext if c.isalnum() or c == '.')[:10]
+            safe_name = (secure_filename(orig_base) or 'upload') + safe_ext
             filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{safe_name}"
             local_path = os.path.join(agent_img_dir, filename)
 
