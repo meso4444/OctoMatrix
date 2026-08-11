@@ -43,6 +43,10 @@ ROUTER_URL = f"http://{ROUTER_HOST}:{ROUTER_PORT}"
 ROUTER_INJECT_ENDPOINT = f"{ROUTER_URL}/inject"
 ROUTER_STATUS_ENDPOINT = f"{ROUTER_URL}/status"
 
+# 本服務自己的監聽位址：預設僅本機(127.0.0.1)，Docker 容器化部署才需要對外(0.0.0.0)，
+# 由部署層透過環境變數 TELEGRAM_GATEWAY_HOST 覆寫
+TELEGRAM_GATEWAY_HOST = os.getenv('TELEGRAM_GATEWAY_HOST', '127.0.0.1')
+
 class ImageManager:
     """圖片管理員：負責從各平臺下載圖片至指定 Agent 目錄"""
     def __init__(self, base_dir):
@@ -294,4 +298,4 @@ def telegram_webhook():
 
 if __name__ == '__main__':
     logger.info(f"🚀 OctoMatrix Telegram Gateway 硬化版啟動 (Port: {TELEGRAM_GATEWAY_PORT})")
-    app.run(host='0.0.0.0', port=TELEGRAM_GATEWAY_PORT, debug=False)
+    app.run(host=TELEGRAM_GATEWAY_HOST, port=TELEGRAM_GATEWAY_PORT, debug=False)

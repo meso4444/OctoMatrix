@@ -52,7 +52,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 ROUTER_PORT = int(os.getenv('ROUTER_PORT', 12210))
-ROUTER_HOST = '0.0.0.0'
+# 預設僅本機(127.0.0.1)，Docker 容器化部署才需要對外(0.0.0.0)，由部署層透過環境變數覆寫
+ROUTER_HOST = os.getenv('ROUTER_HOST', '127.0.0.1')
 script_dir = os.path.dirname(os.path.abspath(__file__))
 AGENT_HOME_BASE = os.path.join(script_dir, 'agent_home')
 

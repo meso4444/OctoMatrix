@@ -41,6 +41,7 @@ def generate_docker_compose(instance, user, script_dir, router_port=12210):
                     f"INSTANCE_NAME={instance}",
                     f"APP_USER={user}",
                     "ROUTER_HOST=0.0.0.0",
+                    "TELEGRAM_GATEWAY_HOST=0.0.0.0",
                     f"ROUTER_PORT={router_port}",
                     "TZ=${TZ:-Asia/Taipei}"
                 ],
