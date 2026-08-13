@@ -72,7 +72,9 @@ STABLE_HISTORY = deque(maxlen=1000)
 def get_screen_snapshot():
     """Capture screen snapshot and trim bottom 9 lines"""
     try:
-        cmd = TMUX_BASE + ["capture-pane", "-p", "-t", TARGET_WINDOW]
+        # -S -300: include the last 300 lines of scrollback, not just the current viewport,
+        # so a small terminal window (e.g. 29 rows) can't push real content out before it's captured
+        cmd = TMUX_BASE + ["capture-pane", "-p", "-S", "-300", "-t", TARGET_WINDOW]
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         lines = result.stdout.splitlines()
 
