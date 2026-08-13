@@ -72,7 +72,9 @@ STABLE_HISTORY = deque(maxlen=1000)
 def get_screen_snapshot():
     """抓取螢幕快照並裁切底部 9 行"""
     try:
-        cmd = TMUX_BASE + ["capture-pane", "-p", "-t", TARGET_WINDOW]
+        # -S -300：連同最近 300 行 scrollback 一起抓，不再只看當下可視畫面，
+        # 避免視窗較小(例如目前連線終端機只有29行)時忙碌畫面把真正內容擠出視窗導致完全漏抓
+        cmd = TMUX_BASE + ["capture-pane", "-p", "-S", "-300", "-t", TARGET_WINDOW]
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         lines = result.stdout.splitlines()
         
