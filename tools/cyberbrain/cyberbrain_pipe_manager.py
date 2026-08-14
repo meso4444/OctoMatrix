@@ -117,6 +117,7 @@ try:
         while True:
             chunk = os.read(sys.stdin.fileno(), 1024)
             if not chunk:
+                print("[DEBUG-TEMP pipe_manager] stdin returned empty bytes (natural EOF), exiting loop normally", flush=True)
                 break
             # 💡 Pure log recording, removed keyword detection and auto-send Enter logic
             # (independently handled by auto_permission_responder.py)
@@ -140,7 +141,9 @@ try:
                 
                 last_sync_time = time.time()
 
-except (EOFError, KeyboardInterrupt, BrokenPipeError):
+except (EOFError, KeyboardInterrupt, BrokenPipeError) as e:
+    print(f"[DEBUG-TEMP pipe_manager] treated as clean exit: {type(e).__name__}: {e}", flush=True)
     sys.exit(0)
-except Exception:
+except Exception as e:
+    print(f"[DEBUG-TEMP pipe_manager] unexpected exception: {type(e).__name__}: {e}", flush=True)
     sys.exit(1)
