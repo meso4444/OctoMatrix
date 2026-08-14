@@ -117,7 +117,6 @@ try:
         while True:
             chunk = os.read(sys.stdin.fileno(), 1024)
             if not chunk:
-                print("[DEBUG-TEMP pipe_manager] stdin回傳空bytes(自然EOF)，正常結束迴圈", flush=True)
                 break
             # 💡 純粹記錄日誌，移除關鍵字偵測與自動發送 Enter 邏輯
             # (由 auto_permission_responder.py 獨立負責)
@@ -141,9 +140,7 @@ try:
                 
                 last_sync_time = time.time()
 
-except (EOFError, KeyboardInterrupt, BrokenPipeError) as e:
-    print(f"[DEBUG-TEMP pipe_manager] 被判定為正常結束的例外: {type(e).__name__}: {e}", flush=True)
+except (EOFError, KeyboardInterrupt, BrokenPipeError):
     sys.exit(0)
-except Exception as e:
-    print(f"[DEBUG-TEMP pipe_manager] 未預期例外: {type(e).__name__}: {e}", flush=True)
+except Exception:
     sys.exit(1)
