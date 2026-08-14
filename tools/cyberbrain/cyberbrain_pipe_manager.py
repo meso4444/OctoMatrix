@@ -21,21 +21,15 @@ import time
 import signal
 from collections import deque
 
-# [DEBUG-TEMP] 暫時性除錯：stdout/stderr 會被導向 /dev/null 或被下游吃掉，
-# 一律改成明確寫入獨立檔案，才能真的被讀到。查完根因後請務必 git revert 本次 commit 移除這段。
-def _debug_temp_log(msg):
-    try:
-        target = sys.argv[2] if len(sys.argv) > 2 else 'unknown'
-        path = f"/tmp/octo_debug_pipe_manager_{target.replace(':', '_')}.log"
-        with open(path, 'a', encoding='utf-8') as f:
-            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
-    except Exception:
-        pass
-
+# [DEBUG-TEMP] 暫時性訊號攔截，用於實測 pipe-pane 管線是否被外部訊號(SIGTERM/SIGHUP)中途終止。
+# 查完根因後請務必 git revert 本次 commit 移除這段。
 def _debug_temp_signal_handler(signum, frame):
     sig_name = signal.Signals(signum).name
-    _debug_temp_log(
-        f"收到訊號 {sig_name}({signum})，PID={os.getpid()} PPID={os.getppid()}，即將終止"
+    print(
+        f"[DEBUG-TEMP pipe_manager] 收到訊號 {sig_name}({signum})，"
+        f"PID={os.getpid()} PPID={os.getppid()}，"
+        f"時間={time.strftime('%Y-%m-%d %H:%M:%S')}，即將終止",
+        flush=True
     )
     sys.exit(0)
 
@@ -139,7 +133,7 @@ try:
         while True:
             chunk = os.read(sys.stdin.fileno(), 1024)
             if not chunk:
-                _debug_temp_log("stdin回傳空bytes(自然EOF)，正常結束迴圈")
+                print("[DEBUG-TEMP pipe_manager] stdin回傳空bytes(自然EOF)，正常結束迴圈", flush=True)
                 break
             # 💡 純粹記錄日誌，移除關鍵字偵測與自動發送 Enter 邏輯
             # (由 auto_permission_responder.py 獨立負責)
@@ -164,9 +158,8 @@ try:
                 last_sync_time = time.time()
 
 except (EOFError, KeyboardInterrupt, BrokenPipeError) as e:
-    _debug_temp_log(f"被判定為正常結束的例外: {type(e).__name__}: {e}")
+    print(f"[DEBUG-TEMP pipe_manager] 被判定為正常結束的例外: {type(e).__name__}: {e}", flush=True)
     sys.exit(0)
 except Exception as e:
-    import traceback
-    _debug_temp_log(f"未預期例外: {type(e).__name__}: {e}\n{traceback.format_exc()}")
+    print(f"[DEBUG-TEMP pipe_manager] 未預期例外: {type(e).__name__}: {e}", flush=True)
     sys.exit(1)
