@@ -18,23 +18,7 @@ import subprocess
 import re
 import os
 import time
-import signal
 from collections import deque
-
-# [DEBUG-TEMP] 暫時性訊號攔截，用於實測 pipe-pane 管線是否被外部訊號(SIGTERM/SIGHUP)中途終止。
-# 查完根因後請務必 git revert 本次 commit 移除這段。
-def _debug_temp_signal_handler(signum, frame):
-    sig_name = signal.Signals(signum).name
-    print(
-        f"[DEBUG-TEMP pipe_manager] 收到訊號 {sig_name}({signum})，"
-        f"PID={os.getpid()} PPID={os.getppid()}，"
-        f"時間={time.strftime('%Y-%m-%d %H:%M:%S')}，即將終止",
-        flush=True
-    )
-    sys.exit(0)
-
-signal.signal(signal.SIGTERM, _debug_temp_signal_handler)
-signal.signal(signal.SIGHUP, _debug_temp_signal_handler)
 
 # ============================================================================
 # Cyberbrain Pipe Manager (Environment-Adaptive & Multi-Layer Purge)
