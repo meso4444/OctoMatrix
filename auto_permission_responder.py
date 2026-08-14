@@ -22,6 +22,12 @@ import re
 import os
 from config import SYS_PREFIX
 
+# stdin 預設用嚴格模式解碼 UTF-8，某些 CLI(如 agy) 的畫面輸出偶爾會把多位元組字元
+# 切在管道讀取的 chunk 邊界上，導致 UnicodeDecodeError 讓整支監控程式安靜崩潰、
+# 連帶讓 tee/tmux 收到 SIGPIPE、pipe-pane 被拆掉。改用容錯解碼避免整支程式因單一
+# 無法解碼的位元組而終止。
+sys.stdin.reconfigure(errors='replace')
+
 import threading
 
 # 🎯 Target window (e.g., session:Gupa)
