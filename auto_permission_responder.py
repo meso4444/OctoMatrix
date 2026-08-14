@@ -26,15 +26,21 @@ from config import SYS_PREFIX
 
 import threading
 
-# [DEBUG-TEMP] 暫時性訊號攔截，用於實測 auto_permission_responder.py 是否被外部訊號(SIGTERM/SIGHUP)中途終止。
-# 查完根因後請務必 git revert 本次 commit 移除這段。
+# [DEBUG-TEMP] 暫時性除錯：stdout 會被下游的 tee/pipe_manager 吃掉、stderr 被導向 /dev/null，
+# 一律改成明確寫入獨立檔案，才能真的被讀到。查完根因後請務必 git revert 本次 commit 移除這段。
+def _debug_temp_log(msg):
+    try:
+        target = sys.argv[1] if len(sys.argv) > 1 else 'unknown'
+        path = f"/tmp/octo_debug_responder_{target.replace(':', '_')}.log"
+        with open(path, 'a', encoding='utf-8') as f:
+            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
+    except Exception:
+        pass
+
 def _debug_temp_signal_handler(signum, frame):
     sig_name = signal.Signals(signum).name
-    print(
-        f"[DEBUG-TEMP responder] 收到訊號 {sig_name}({signum})，"
-        f"PID={os.getpid()} PPID={os.getppid()}，"
-        f"時間={time.strftime('%Y-%m-%d %H:%M:%S')}，即將終止",
-        flush=True
+    _debug_temp_log(
+        f"收到訊號 {sig_name}({signum})，PID={os.getpid()} PPID={os.getppid()}，即將終止"
     )
     sys.exit(0)
 
@@ -156,7 +162,7 @@ stuck_thread.start()
 
 try:
     log(f"🚀 Monitor started for {TARGET} (Waiting for input...)")
-    print(f"[DEBUG-TEMP responder] 主迴圈啟動，PID={os.getpid()} PPID={os.getppid()}", flush=True)
+    _debug_temp_log(f"主迴圈啟動，PID={os.getpid()} PPID={os.getppid()}")
     for line in sys.stdin:
         clean_line = clean(line)
 
@@ -180,12 +186,11 @@ try:
             finally:
                 monitoring = False
 
-    print(f"[DEBUG-TEMP responder] for-loop正常結束(stdin EOF，非例外路徑)，即將自然結束程式", flush=True)
+    _debug_temp_log("for-loop正常結束(stdin EOF，非例外路徑)，即將自然結束程式")
 except (EOFError, KeyboardInterrupt, BrokenPipeError) as e:
-    print(f"[DEBUG-TEMP responder] 被判定為正常結束的例外: {type(e).__name__}: {e}", flush=True)
+    _debug_temp_log(f"被判定為正常結束的例外: {type(e).__name__}: {e}")
     sys.exit(0)
 except Exception as e:
-    print(f"[DEBUG-TEMP responder] 未預期例外: {type(e).__name__}: {e}", flush=True)
-    traceback.print_exc()
+    _debug_temp_log(f"未預期例外: {type(e).__name__}: {e}\n{traceback.format_exc()}")
     log(f"❌ Error: {e}")
     sys.exit(1)
