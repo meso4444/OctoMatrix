@@ -20,9 +20,26 @@ import subprocess
 import time
 import re
 import os
+import signal
+import traceback
 from config import SYS_PREFIX
 
 import threading
+
+# [DEBUG-TEMP] 暫時性訊號攔截，用於實測 auto_permission_responder.py 是否被外部訊號(SIGTERM/SIGHUP)中途終止。
+# 查完根因後請務必 git revert 本次 commit 移除這段。
+def _debug_temp_signal_handler(signum, frame):
+    sig_name = signal.Signals(signum).name
+    print(
+        f"[DEBUG-TEMP responder] 收到訊號 {sig_name}({signum})，"
+        f"PID={os.getpid()} PPID={os.getppid()}，"
+        f"時間={time.strftime('%Y-%m-%d %H:%M:%S')}，即將終止",
+        flush=True
+    )
+    sys.exit(0)
+
+signal.signal(signal.SIGTERM, _debug_temp_signal_handler)
+signal.signal(signal.SIGHUP, _debug_temp_signal_handler)
 
 # 🎯 Target window (e.g., session:Gupa)
 TARGET = sys.argv[1]
@@ -139,6 +156,7 @@ stuck_thread.start()
 
 try:
     log(f"🚀 Monitor started for {TARGET} (Waiting for input...)")
+    print(f"[DEBUG-TEMP responder] 主迴圈啟動，PID={os.getpid()} PPID={os.getppid()}", flush=True)
     for line in sys.stdin:
         clean_line = clean(line)
 
@@ -162,8 +180,12 @@ try:
             finally:
                 monitoring = False
 
-except (EOFError, KeyboardInterrupt, BrokenPipeError):
+    print(f"[DEBUG-TEMP responder] for-loop正常結束(stdin EOF，非例外路徑)，即將自然結束程式", flush=True)
+except (EOFError, KeyboardInterrupt, BrokenPipeError) as e:
+    print(f"[DEBUG-TEMP responder] 被判定為正常結束的例外: {type(e).__name__}: {e}", flush=True)
     sys.exit(0)
 except Exception as e:
+    print(f"[DEBUG-TEMP responder] 未預期例外: {type(e).__name__}: {e}", flush=True)
+    traceback.print_exc()
     log(f"❌ Error: {e}")
     sys.exit(1)
