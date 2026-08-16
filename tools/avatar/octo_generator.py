@@ -27,7 +27,7 @@ CLI (mirrors v1 exactly):
     python3 octo_generator_v2.py --color 130 80 200 --eyewear glasses --blush_style hearts --token abc123
 """
 
-import os, sys, io, zipfile, argparse, requests
+import os, sys, io, re, zipfile, argparse, requests
 
 
 import math, subprocess, shutil
@@ -1268,13 +1268,25 @@ ALL_MOODS = _ALL_MOODS   # ['base','happy','love',...,'embarrassed']
 
 BLUSH_STYLES = ['oval', 'dots', 'hearts', 'lightning', 'stars', 'swirls']
 
-HEADGEAR_OPTS = [
-    'none','antenna','apple','bear_ears','beret','bucket_hat','bunny_ears','cap','cap_black','cap_red','chef','cherry','cowboy_hat','cowboy_hat_brown','crown','fish','flower_crown','frog','grad','halo','hard_hat','headphones','ice_crown','jester','kabuto','kabuto_black','kabuto_red','magic_hat','mushroom','ninja','nurse','paper_boat','pirate','police','propeller','ribbon','santa','shiitake','sombrero','straw_hat','tophat','traffic_cone','viking','wizard',
-]
+def _scan_option_ids(var_name):
+    """Derive a flat option-ID list (for --help text / doc generation) straight from
+    this file's own `{var_name} == "..."` elif branches, so HEADGEAR_OPTS/ITEM_OPTS can
+    never silently drift out of sync with the real drawing logic the way a separately
+    hand-maintained list did in the past (sumikko's headgear/item_type update once
+    landed without these lists being updated alongside it)."""
+    with open(__file__, encoding='utf-8') as f:
+        src = f.read()
+    seen = []
+    for m in re.finditer(rf'\b{var_name}\s*==\s*"([a-zA-Z0-9_]+)"', src):
+        if m.group(1) not in seen:
+            seen.append(m.group(1))
+    return ['none'] + seen
+
+HEADGEAR_OPTS = _scan_option_ids('headgear')
 
 EYEWEAR_OPTS  = ['none','glasses','round_glasses','monocle','monocle_left']
 
-ITEM_OPTS     = ['none','flower','alarm_clock','alarm_clock_red','alarm_clock_yellow','axe','baguette','balloon','battery','bell','book','book_blue','book_magic','book_pink','bouquet_green','bouquet_kraft','bouquet_lavender','bow','brush_a','burger','cake','camera_a','camera_b','camera_c','candy','candy_blue','candy_orange','candy_pink','candy_purple','candy_yellow','coffee_cup','compass','crystal_ball','donut_a','donut_b','donut_c','drumstick','duck','dumbbell','fan_a','fan_b','fan_c','gameboy','gift_box_blue','gift_box_purple','gift_box_red','guitar','handbag_a','handbag_b','handbag_c','ice_cream','journal','key','lantern','laptop','letter','lollipop','magnifier','medal','medal_star','microphone','onigiri','plant_cactus','plant_leaf','potion_green','potion_purple','potion_red','shield','smartphone','spear','switch','sword','telescope','textbook','umbrella','wand']
+ITEM_OPTS     = _scan_option_ids('item_type')
 
 
 # ── router helpers (mirrors v1) ───────────────────────────────────────────────

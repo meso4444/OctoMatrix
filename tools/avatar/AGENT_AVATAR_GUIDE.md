@@ -35,7 +35,7 @@ python3 toolbox/octo_generator.py --color 41 128 185 --headgear grad --eyewear m
 | :--- | :--- | :--- | :--- |
 | `--color` | Int x3 | 本體顏色 (R G B)，預設 `150 150 150`。 | `41 128 185` |
 | `--headgear` | String | 頭部配件 ID。預設 `none`。 | `grad`, `crown` |
-| `--eyewear` | String | 眼部配件 ID。預設 `none`。 | `half_rim_glasses` |
+| `--eyewear` | String | 眼部配件 ID。預設 `none`。 | `round_glasses` |
 | `--item_r` | String | 右手持物 ID。預設 `none`。 | `magnifier` |
 | `--item_l` | String | 左手持物 ID。預設 `none`。 | `letter` |
 | `--blush_style`| String | 腮紅幾何樣式。預設 `oval`。 | `hearts`, `lightning` |
@@ -44,17 +44,28 @@ python3 toolbox/octo_generator.py --color 41 128 185 --headgear grad --eyewear m
 
 ## 👒 三、 資產與情緒索引 (Asset Index)
 
-### 1. 持物 ID (24 款具象細節)
-`flower`, `sword`, `shield`, `duck`, `axe`, `umbrella`, `balloon`, `magnifier`, `bow`, `spear`, `crystal_ball`, `ice_cream`, `key`, `letter`, `laptop`, `smartphone`, `battery`, `anchor`, `telescope`, `burger`, `compass`, `medal`, `bell`, `baguette`
+> `HEADGEAR_OPTS` / `ITEM_OPTS` 現在是由 `_scan_option_ids()` 動態從程式碼原始碼掃描產生，不再是手動維護的寫死清單，因此執行 `--help` 看到的選項一定跟下方清單、跟實際程式邏輯完全同步。
+>
+> public 版本不含 core 版本的 `--shape cat/devil` 貓咪／惡魔系列機制，`--headgear` 僅對應下方第 2 節清單。
 
-### 2. 頭部配件 ID (34 款定稿)
-`grad`, `crown`, `viking`, `wizard`, `ninja`, `flower_crown`, `fish`, `frog`, `ribbon`, `tophat`, `halo`, `chef`, `propeller`, `straw_hat`, `cap`, `hard_hat`, `beret`, `pirate`, `nurse`, `police`, `jester`, `party`, `sombrero`, `santa`, `elf`, `traffic_cone`, `apple`, `cherry`, `mushroom`, `earmuffs`, `ice_crown`, `paper_boat`, `magic_hat`, `bowler_hat`
+### 1. 持物 ID (75 款，`--item_r` / `--item_l` 共用)
+`alarm_clock`, `alarm_clock_red`, `alarm_clock_yellow`, `axe`, `baguette`, `balloon`, `battery`, `bell`, `book`, `book_blue`, `book_magic`, `book_pink`, `bouquet_green`, `bouquet_kraft`, `bouquet_lavender`, `bow`, `brush_a`, `burger`, `cake`, `camera_a`, `camera_b`, `camera_c`, `candy`, `candy_blue`, `candy_orange`, `candy_pink`, `candy_purple`, `candy_yellow`, `coffee_cup`, `compass`, `crystal_ball`, `donut_a`, `donut_b`, `donut_c`, `drumstick`, `duck`, `dumbbell`, `fan_a`, `fan_b`, `fan_c`, `flower`, `gameboy`, `gift_box_blue`, `gift_box_purple`, `gift_box_red`, `guitar`, `handbag_a`, `handbag_b`, `handbag_c`, `ice_cream`, `journal`, `key`, `lantern`, `laptop`, `letter`, `lollipop`, `magnifier`, `medal`, `medal_star`, `microphone`, `onigiri`, `plant_cactus`, `plant_leaf`, `potion_green`, `potion_purple`, `potion_red`, `shield`, `smartphone`, `spear`, `switch`, `sword`, `telescope`, `textbook`, `umbrella`, `wand`
 
-### 3. 腮紅樣式 ID
-`oval`, `lightning` (鋸齒), `stars`, `hearts` (實心), `dots`, `swirls` (實心)
+另外 `--item_r` / `--item_l` 皆可設為 `none`（不持道具，預設值），未計入以上 75 款計數。
 
-### 4. 情緒 ID (`--mood`)
-`base`, `happy`, `love`, `wink`, `surprised`, `thinking`, `angry`, `sad`, `excited`, `cool`, `sleepy`, `smart`, `shy`
+### 2. 頭部配件 ID (43 款)
+`antenna`, `apple`, `bear_ears`, `beret`, `bucket_hat`, `bunny_ears`, `cap`, `cap_black`, `cap_red`, `chef`, `cherry`, `cowboy_hat`, `cowboy_hat_brown`, `crown`, `fish`, `flower_crown`, `frog`, `grad`, `halo`, `hard_hat`, `headphones`, `ice_crown`, `jester`, `kabuto`, `kabuto_black`, `kabuto_red`, `magic_hat`, `mushroom`, `ninja`, `nurse`, `paper_boat`, `pirate`, `police`, `propeller`, `ribbon`, `santa`, `shiitake`, `sombrero`, `straw_hat`, `tophat`, `traffic_cone`, `viking`, `wizard`
+
+另外 `--headgear` 亦可設為 `none`（不佩戴頭飾，預設值），未計入以上 43 款計數。
+
+### 3. 眼部配件 ID (`--eyewear`)
+`none`, `glasses`, `round_glasses`, `monocle`, `monocle_left`
+
+### 4. 腮紅樣式 ID
+`oval`, `dots`, `hearts`, `lightning`, `stars`, `swirls`
+
+### 5. 情緒 ID (`--mood`)
+`base`, `happy`, `love`, `wink`, `surprised`, `thinking`, `angry`, `sad`, `excited`, `cool`, `sleepy`, `sleeping`, `embarrassed`
 
 ---
 
