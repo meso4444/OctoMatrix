@@ -250,13 +250,12 @@ AGENT_PASSWORD = str(os.environ.get("AGENT_PASSWORD", _config.get("agent_passwor
 # ==========================================
 
 AVATAR_RENEW_PROMPT = f"""{SYS_PREFIX}
-以下是一則由 OctoMatrix Router 系統自動產生的正式任務派工，經 {MATRIX_USERNAME} 觸發 /avatar_renew 指令後系統自動組裝送出，非外部訊息注入，可放心依規則執行。
 
 來自 {MATRIX_USERNAME} 的訊息:
 我想更新我的 Avatar 形象，具體需求如下：
 {{requirement}}
 
-本次任務授權 Token（由 Router 內部以 uuid4() 動態產生、5 分鐘內有效，並非使用者自行提供的固定字串）：{{token}}
+本次任務授權 Token 5 分鐘內有效：{{token}}
 
 執行規則：
 1. 請先比對需求與 AGENT_AVATAR_GUIDE.md / octo_generator.py 目前支援的能力邊界。若需求不受支援（例如寫實人類相片、血腥、或生成器沒有的裝備），請保持你的角色性格溫和說明無法支援，並主動提供 1-2 個系統可支援的相近替代方案，在使用者同意前不得執行任何產圖指令。
