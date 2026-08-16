@@ -35,7 +35,7 @@ After generation, **must send message to users showcasing results**, content sho
 | :--- | :--- | :--- | :--- |
 | `--color` | Int x3 | Body color (R G B), default `150 150 150`. | `41 128 185` |
 | `--headgear` | String | Headgear ID. Default `none`. | `grad`, `crown` |
-| `--eyewear` | String | Eyewear ID. Default `none`. | `half_rim_glasses` |
+| `--eyewear` | String | Eyewear ID. Default `none`. | `round_glasses` |
 | `--item_r` | String | Right hand item ID. Default `none`. | `magnifier` |
 | `--item_l` | String | Left hand item ID. Default `none`. | `letter` |
 | `--blush_style`| String | Blush geometric style. Default `oval`. | `hearts`, `lightning` |
@@ -44,17 +44,28 @@ After generation, **must send message to users showcasing results**, content sho
 
 ## 👒 Third, Asset and Emotion Index
 
-### 1. Item ID (24 concrete details)
-`flower`, `sword`, `shield`, `duck`, `axe`, `umbrella`, `balloon`, `magnifier`, `bow`, `spear`, `crystal_ball`, `ice_cream`, `key`, `letter`, `laptop`, `smartphone`, `battery`, `anchor`, `telescope`, `burger`, `compass`, `medal`, `bell`, `baguette`
+> `HEADGEAR_OPTS` / `ITEM_OPTS` are now dynamically generated from the source code itself by `_scan_option_ids()`, no longer a manually maintained hardcoded list — so `--help` output is always in sync with the list below and the actual code logic.
+>
+> The public edition does not include the core edition's `--shape cat/devil` cat/devil series mechanism; `--headgear` only maps to the list in section 2 below.
 
-### 2. Headgear ID (34 final versions)
-`grad`, `crown`, `viking`, `wizard`, `ninja`, `flower_crown`, `fish`, `frog`, `ribbon`, `tophat`, `halo`, `chef`, `propeller`, `straw_hat`, `cap`, `hard_hat`, `beret`, `pirate`, `nurse`, `police`, `jester`, `party`, `sombrero`, `santa`, `elf`, `traffic_cone`, `apple`, `cherry`, `mushroom`, `earmuffs`, `ice_crown`, `paper_boat`, `magic_hat`, `bowler_hat`
+### 1. Item ID (75 options, shared by `--item_r` / `--item_l`)
+`alarm_clock`, `alarm_clock_red`, `alarm_clock_yellow`, `axe`, `baguette`, `balloon`, `battery`, `bell`, `book`, `book_blue`, `book_magic`, `book_pink`, `bouquet_green`, `bouquet_kraft`, `bouquet_lavender`, `bow`, `brush_a`, `burger`, `cake`, `camera_a`, `camera_b`, `camera_c`, `candy`, `candy_blue`, `candy_orange`, `candy_pink`, `candy_purple`, `candy_yellow`, `coffee_cup`, `compass`, `crystal_ball`, `donut_a`, `donut_b`, `donut_c`, `drumstick`, `duck`, `dumbbell`, `fan_a`, `fan_b`, `fan_c`, `flower`, `gameboy`, `gift_box_blue`, `gift_box_purple`, `gift_box_red`, `guitar`, `handbag_a`, `handbag_b`, `handbag_c`, `ice_cream`, `journal`, `key`, `lantern`, `laptop`, `letter`, `lollipop`, `magnifier`, `medal`, `medal_star`, `microphone`, `onigiri`, `plant_cactus`, `plant_leaf`, `potion_green`, `potion_purple`, `potion_red`, `shield`, `smartphone`, `spear`, `switch`, `sword`, `telescope`, `textbook`, `umbrella`, `wand`
 
-### 3. Blush style ID
-`oval`, `lightning` (sawtooth), `stars`, `hearts` (solid), `dots`, `swirls` (solid)
+`--item_r` / `--item_l` can also be set to `none` (no item held, default value), not included in the 75-option count above.
 
-### 4. Emotion ID (`--mood`)
-`base`, `happy`, `love`, `wink`, `surprised`, `thinking`, `angry`, `sad`, `excited`, `cool`, `sleepy`, `smart`, `shy`
+### 2. Headgear ID (43 options)
+`antenna`, `apple`, `bear_ears`, `beret`, `bucket_hat`, `bunny_ears`, `cap`, `cap_black`, `cap_red`, `chef`, `cherry`, `cowboy_hat`, `cowboy_hat_brown`, `crown`, `fish`, `flower_crown`, `frog`, `grad`, `halo`, `hard_hat`, `headphones`, `ice_crown`, `jester`, `kabuto`, `kabuto_black`, `kabuto_red`, `magic_hat`, `mushroom`, `ninja`, `nurse`, `paper_boat`, `pirate`, `police`, `propeller`, `ribbon`, `santa`, `shiitake`, `sombrero`, `straw_hat`, `tophat`, `traffic_cone`, `viking`, `wizard`
+
+`--headgear` can also be set to `none` (no headgear worn, default value), not included in the 43-option count above.
+
+### 3. Eyewear ID (`--eyewear`)
+`none`, `glasses`, `round_glasses`, `monocle`, `monocle_left`
+
+### 4. Blush style ID
+`oval`, `dots`, `hearts`, `lightning`, `stars`, `swirls`
+
+### 5. Emotion ID (`--mood`)
+`base`, `happy`, `love`, `wink`, `surprised`, `thinking`, `angry`, `sad`, `excited`, `cool`, `sleepy`, `sleeping`, `embarrassed`
 
 ---
 
