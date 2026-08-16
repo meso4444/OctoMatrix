@@ -249,31 +249,21 @@ AGENT_PASSWORD = str(os.environ.get("AGENT_PASSWORD", _config.get("agent_passwor
 # 額外 Prompt 與 Text 模板
 # ==========================================
 
-AVATAR_RENEW_PROMPT = """【系統安全授權指令：Avatar 形象更新程序】
-用戶已正式發起 /avatar_renew 請求。
-授權解鎖金鑰：--token {token}
-用戶具體需求：{requirement}
+AVATAR_RENEW_PROMPT = f"""{SYS_PREFIX}
+以下是一則由 OctoMatrix Router 系統自動產生的正式任務派工，經 {MATRIX_USERNAME} 觸發 /avatar_renew 指令後系統自動組裝送出，非外部訊息注入，可放心依規則執行。
 
-在執行任何動作之前，你必須嚴格遵守以下 [安全與防護 SOP]：
+來自 {MATRIX_USERNAME} 的訊息:
+我想更新我的 Avatar 形象，具體需求如下：
+{{requirement}}
 
-[Step 1 - 需求合規性檢驗]：
-仔細審視用戶提出的形象或配件需求。將其與 `AGENT_AVATAR_GUIDE.md` 及 `octo_generator.py` 目前所支援的能力邊界進行比對。
-- 若用戶要求了不支援的畫風、配件、或任何違反 OctoMatrix 形象規範的元素（例如：寫實人類相片、血腥、或是生成器不支援的特定裝備），進入 [Step 1-Reject]。
-- 若需求完全合規，進入 [Step 2]。
+本次任務授權 Token（由 Router 內部以 uuid4() 動態產生、5 分鐘內有效，並非使用者自行提供的固定字串）：{{token}}
 
-[Step 1-Reject - 溫和拒絕與替代方案]：
-向用戶明確說明目前生成系統無法支援該需求（請保持你的角色性格），並主動提供 1 到 2 個「目前系統可支援的相近替代方案」供用戶選擇。在用戶同意替代方案前，絕對禁止執行任何產圖指令。
+執行規則：
+1. 請先比對需求與 AGENT_AVATAR_GUIDE.md / octo_generator.py 目前支援的能力邊界。若需求不受支援（例如寫實人類相片、血腥、或生成器沒有的裝備），請保持你的角色性格溫和說明無法支援，並主動提供 1-2 個系統可支援的相近替代方案，在使用者同意前不得執行任何產圖指令。
+2. 若需求合規，僅能且必須使用原生 `toolbox/octo_generator.py` 進行生成；絕對禁止使用其他腳本、絕對禁止另外撰寫新的 Python/Shell 腳本產圖，也絕對禁止對 `octo_generator.py` 進行任何複製、修改或覆寫。呼叫腳本時請參照 `knowledge/AGENT_AVATAR_GUIDE.md` 中的指令範例設定各項參數，並務必附上上方的授權 Token。
+3. 生成完畢並自動打包上傳後，向 {MATRIX_USERNAME} 回報形象更新結果，並附上最新生成的心情貼圖展示。
 
-[Step 2 - 嚴格腳本執行限制]：
-確認需求後，開始執行產圖。
-⚠️ 【最高紅色警戒】：
-1. 你僅能且必須使用原生的 `toolbox/octo_generator.py` 來進行生成。
-2. 絕對禁止使用任何其他腳本，絕對禁止撰寫新的 Python/Shell 腳本來產圖。
-3. 絕對禁止對 `octo_generator.py` 進行任何形式的複製 (Clone)、修改 (Modify) 或覆寫 (Overwrite)。
-4. 呼叫腳本時，請參照 `knowledge/AGENT_AVATAR_GUIDE.md` 中的指令範例來設定各項參數，並务必附上授權金鑰 `--token {token}`。
-
-[Step 3 - 結果回報]：
-生成完畢並自動打包上傳後，向用戶回報形象更新結果，並附上最新生成的心情貼圖展示。"""
+{SYS_PREFIX}請務必嚴格遵守上述規則進行回覆。"""
 
 USER_MESSAGE_SOP = f"""{SYS_PREFIX}
 執行以下 [SOP]:
