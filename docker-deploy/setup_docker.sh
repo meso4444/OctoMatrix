@@ -345,7 +345,7 @@ for agent in config.get('agents', []):
             # Create container credentials persistence directory
             mkdir -p "$SCRIPT_DIR/container_home/$INSTANCE_NAME"
             chmod 750 "$SCRIPT_DIR/container_home/$INSTANCE_NAME"
-            chown $(whoami):$(whoami) "$SCRIPT_DIR/container_home/$INSTANCE_NAME"
+            chown "$(whoami)" "$SCRIPT_DIR/container_home/$INSTANCE_NAME"
             
             TMUX_SESSION=$(python3 -c "import yaml; print(yaml.safe_load(open('$SCRIPT_DIR/config.${INSTANCE_NAME}.yaml'))['tmux']['session_name'])" 2>/dev/null || echo "ai_${INSTANCE_NAME}")
             CURRENT_USER=$(whoami)
