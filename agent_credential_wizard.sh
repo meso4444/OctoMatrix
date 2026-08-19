@@ -222,18 +222,54 @@ run_container_auth() {
         ;;
       2)
         echo ""
-        echo "🚀 Starting Claude CLI authentication..."
-        echo "📂 Authentication path: $CONTAINER_HOME"
-        echo "💡 Tip: Authentication will be stored in $CONTAINER_HOME/.claude"
-        echo ""
-        if HOME="$CONTAINER_HOME" claude --permission-mode bypassPermissions; then
+        if [[ "$(uname)" == "Darwin" ]]; then
+          echo "🚀 Starting Claude CLI authentication (macOS-specific flow)..."
           echo ""
-          echo "✅ Claude authentication completed!"
-          echo "📦 Credentials stored at: $CONTAINER_HOME/.claude"
+          echo "💡 On macOS, Claude Code credentials are stored in the system Keychain,"
+          echo "   which is incompatible with the file-based authentication the container"
+          echo "   needs. So this uses claude setup-token instead, the official"
+          echo "   authentication method designed for container/CI environments that"
+          echo "   never touches the Keychain."
+          echo ""
+          echo "👉 In a separate terminal window, run:"
+          echo "     claude setup-token"
+          echo "   After completing browser authorization, copy the printed token and"
+          echo "   paste it back here:"
+          echo ""
+          read -rs -p "Paste the token and press Enter: " CLAUDE_OAUTH_TOKEN
+          echo ""
+          if [ -z "$CLAUDE_OAUTH_TOKEN" ]; then
+            echo "❌ No token entered, cancelling this authentication"
+          else
+            TOKEN_FILE="$DOCKER_DEPLOY_DIR/claude.token.$INSTANCE_NAME"
+            printf '%s' "$CLAUDE_OAUTH_TOKEN" > "$TOKEN_FILE"
+            chmod 600 "$TOKEN_FILE"
+            echo "📦 Token stored at: $TOKEN_FILE"
+            echo "🔄 Regenerating docker-compose configuration to apply the new auth environment variable..."
+            if python3 "$DOCKER_DEPLOY_DIR/generate_config.py" "compose" "$INSTANCE_NAME" "" "$DOCKER_DEPLOY_DIR" "11440" "4040" "$(whoami)" "12210"; then
+              echo ""
+              echo "✅ Claude authentication completed! CLAUDE_CODE_OAUTH_TOKEN has been written to docker-compose.$INSTANCE_NAME.yml"
+              echo "⚠️  If the container is already running, the environment variable only takes"
+              echo "   effect when the container is (re)created. Remember to run:"
+              echo "   docker-compose -f docker-compose.$INSTANCE_NAME.yml up -d to apply it."
+            else
+              echo "⚠️  Failed to regenerate the docker-compose configuration, please check the error above"
+            fi
+          fi
         else
+          echo "🚀 Starting Claude CLI authentication..."
+          echo "📂 Authentication path: $CONTAINER_HOME"
+          echo "💡 Tip: Authentication will be stored in $CONTAINER_HOME/.claude"
           echo ""
-          echo "⚠️  Error occurred during authentication, please check directory permissions"
-          echo "   Try running: sudo chmod 777 $CONTAINER_HOME"
+          if HOME="$CONTAINER_HOME" claude --permission-mode bypassPermissions; then
+            echo ""
+            echo "✅ Claude authentication completed!"
+            echo "📦 Credentials stored at: $CONTAINER_HOME/.claude"
+          else
+            echo ""
+            echo "⚠️  Error occurred during authentication, please check directory permissions"
+            echo "   Try running: sudo chmod 777 $CONTAINER_HOME"
+          fi
         fi
         ;;
       3)

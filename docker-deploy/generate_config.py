@@ -24,6 +24,24 @@ import os
 
 def generate_docker_compose(instance, user, script_dir, router_port=12210):
     """Generates a complete docker-compose file based on the template"""
+    environment = [
+        f"INSTANCE_NAME={instance}",
+        f"APP_USER={user}",
+        "ROUTER_HOST=0.0.0.0",
+        "TELEGRAM_GATEWAY_HOST=0.0.0.0",
+        f"ROUTER_PORT={router_port}",
+        "TZ=${TZ:-Asia/Taipei}"
+    ]
+    # On a macOS host, agent_credential_wizard.sh guides the user through `claude setup-token`
+    # and saves the resulting long-lived token to this file (macOS stores Claude Code
+    # credentials in Keychain, which is incompatible with the container's file-based auth).
+    # If the file exists, inject CLAUDE_CODE_OAUTH_TOKEN to bypass Keychain entirely.
+    claude_token_file = os.path.join(script_dir, f"claude.token.{instance}")
+    if os.path.isfile(claude_token_file):
+        with open(claude_token_file, "r", encoding="utf-8") as f:
+            claude_token = f.read().strip()
+        if claude_token:
+            environment.append(f"CLAUDE_CODE_OAUTH_TOKEN={claude_token}")
     return {
         "services": {
             "bot": {
@@ -37,14 +55,7 @@ def generate_docker_compose(instance, user, script_dir, router_port=12210):
                 },
                 "container_name": f"octo_{instance}-bot",
                 "restart": "unless-stopped",
-                "environment": [
-                    f"INSTANCE_NAME={instance}",
-                    f"APP_USER={user}",
-                    "ROUTER_HOST=0.0.0.0",
-                    "TELEGRAM_GATEWAY_HOST=0.0.0.0",
-                    f"ROUTER_PORT={router_port}",
-                    "TZ=${TZ:-Asia/Taipei}"
-                ],
+                "environment": environment,
                 "volumes": [
                     "../agent_home:/app/octomatrix/agent_home",
                     f"./container_home/{instance}:/home/{user}",
