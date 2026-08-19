@@ -24,6 +24,23 @@ import os
 
 def generate_docker_compose(instance, user, script_dir, router_port=12210):
     """根據模板生成完整的 docker-compose 檔案"""
+    environment = [
+        f"INSTANCE_NAME={instance}",
+        f"APP_USER={user}",
+        "ROUTER_HOST=0.0.0.0",
+        "TELEGRAM_GATEWAY_HOST=0.0.0.0",
+        f"ROUTER_PORT={router_port}",
+        "TZ=${TZ:-Asia/Taipei}"
+    ]
+    # macOS host 上 agent_credential_wizard.sh 會透過 claude setup-token 把長效 token
+    # 存成這個檔案（macOS的Claude Code憑證存在Keychain，跟容器需要的檔案式認證不相容），
+    # 若存在就注入 CLAUDE_CODE_OAUTH_TOKEN 環境變數繞開 Keychain 這條路。
+    claude_token_file = os.path.join(script_dir, f"claude.token.{instance}")
+    if os.path.isfile(claude_token_file):
+        with open(claude_token_file, "r", encoding="utf-8") as f:
+            claude_token = f.read().strip()
+        if claude_token:
+            environment.append(f"CLAUDE_CODE_OAUTH_TOKEN={claude_token}")
     return {
         "services": {
             "bot": {
@@ -37,14 +54,7 @@ def generate_docker_compose(instance, user, script_dir, router_port=12210):
                 },
                 "container_name": f"octo_{instance}-bot",
                 "restart": "unless-stopped",
-                "environment": [
-                    f"INSTANCE_NAME={instance}",
-                    f"APP_USER={user}",
-                    "ROUTER_HOST=0.0.0.0",
-                    "TELEGRAM_GATEWAY_HOST=0.0.0.0",
-                    f"ROUTER_PORT={router_port}",
-                    "TZ=${TZ:-Asia/Taipei}"
-                ],
+                "environment": environment,
                 "volumes": [
                     "../agent_home:/app/octomatrix/agent_home",
                     f"./container_home/{instance}:/home/{user}",

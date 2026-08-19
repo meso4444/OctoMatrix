@@ -220,18 +220,50 @@ run_container_auth() {
         ;;
       2)
         echo ""
-        echo "🚀 啟動 Claude CLI 認證..."
-        echo "📂 認證路徑: $CONTAINER_HOME"
-        echo "💡 提示: 認證將存放在 $CONTAINER_HOME/.claude"
-        echo ""
-        if HOME="$CONTAINER_HOME" claude --permission-mode bypassPermissions; then
+        if [[ "$(uname)" == "Darwin" ]]; then
+          echo "🚀 啟動 Claude CLI 認證 (macOS 專用流程)..."
           echo ""
-          echo "✅ Claude 認證完成！"
-          echo "📦 憑證已存放至: $CONTAINER_HOME/.claude"
+          echo "💡 macOS 上 Claude Code 的憑證是存放在系統 Keychain，跟容器需要的檔案式"
+          echo "   認證方式不相容，因此改走 claude setup-token 這個官方為容器/CI環境"
+          echo "   設計的認證方式，完全不會碰到 Keychain。"
+          echo ""
+          echo "👉 請另外開一個終端機視窗，執行："
+          echo "     claude setup-token"
+          echo "   完成瀏覽器授權後，把印出來的 token 複製起來，貼回這裡："
+          echo ""
+          read -rs -p "請貼上 token 後按 Enter: " CLAUDE_OAUTH_TOKEN
+          echo ""
+          if [ -z "$CLAUDE_OAUTH_TOKEN" ]; then
+            echo "❌ 未輸入 token，取消本次認證"
+          else
+            TOKEN_FILE="$DOCKER_DEPLOY_DIR/claude.token.$INSTANCE_NAME"
+            printf '%s' "$CLAUDE_OAUTH_TOKEN" > "$TOKEN_FILE"
+            chmod 600 "$TOKEN_FILE"
+            echo "📦 Token 已存放至: $TOKEN_FILE"
+            echo "🔄 正在重新產生 docker-compose 設定以套用新的認證環境變數..."
+            if python3 "$DOCKER_DEPLOY_DIR/generate_config.py" "compose" "$INSTANCE_NAME" "" "$DOCKER_DEPLOY_DIR" "11440" "4040" "$(whoami)" "12210"; then
+              echo ""
+              echo "✅ Claude 認證完成！CLAUDE_CODE_OAUTH_TOKEN 已寫入 docker-compose.$INSTANCE_NAME.yml"
+              echo "⚠️  若容器目前已經在執行中，環境變數只有在容器建立當下才會生效，"
+              echo "   請記得執行： docker-compose -f docker-compose.$INSTANCE_NAME.yml up -d 重新建立容器套用新設定。"
+            else
+              echo "⚠️  docker-compose 設定重新產生失敗，請檢查上方錯誤訊息"
+            fi
+          fi
         else
+          echo "🚀 啟動 Claude CLI 認證..."
+          echo "📂 認證路徑: $CONTAINER_HOME"
+          echo "💡 提示: 認證將存放在 $CONTAINER_HOME/.claude"
           echo ""
-          echo "⚠️  認證過程中出現錯誤，請檢查目錄權限"
-          echo "   嘗試執行: sudo chmod 777 $CONTAINER_HOME"
+          if HOME="$CONTAINER_HOME" claude --permission-mode bypassPermissions; then
+            echo ""
+            echo "✅ Claude 認證完成！"
+            echo "📦 憑證已存放至: $CONTAINER_HOME/.claude"
+          else
+            echo ""
+            echo "⚠️  認證過程中出現錯誤，請檢查目錄權限"
+            echo "   嘗試執行: sudo chmod 777 $CONTAINER_HOME"
+          fi
         fi
         ;;
       3)
