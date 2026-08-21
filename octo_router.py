@@ -427,7 +427,7 @@ class CommandHandler:
             import config
             is_direct_chat = msg.source in ['telegram', 'discord', 'slack']  # Awake 排程排除在 Harness Cooldown 範圍外
             if is_direct_chat and config.HARNESS_COOLDOWN_SEC > 0 and not check_cooldown(target_agent, 'harness_cooldown_user', config.HARNESS_COOLDOWN_SEC):
-                final_message = f"來自 {MATRIX_USERNAME} 的訊息:\n{content}"
+                final_message = f"\n來自 {MATRIX_USERNAME} 的訊息:\n{content}"
             else:
                 sop = f"""{config.USER_MESSAGE_SOP}
 
@@ -778,7 +778,7 @@ def inter_agent_message():
     # 封裝 AGENT_INTERCOM_SOP (將發送方與內容組合為完整 System Prompt)
     import config
     if config.HARNESS_COOLDOWN_SEC > 0 and not check_cooldown(target_agent, 'harness_cooldown_intercom', config.HARNESS_COOLDOWN_SEC):
-        formatted_message = f"來自 {source} 的訊息:\n{message}"
+        formatted_message = f"\n來自 {source} 的訊息:\n{message}"
     else:
         from config import get_agent_intercom_sop
         formatted_message = get_agent_intercom_sop(source, message)
