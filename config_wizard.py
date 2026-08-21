@@ -187,8 +187,9 @@ def manage_agents():
         print(" [D] 刪除 Agent")
         print(" [S] 設定預設活躍 Agent")
         print(" [O] 調整順序 (Reorder)")
+        print(f" [T] ⏱️ 設定 Harness 冷卻秒數 (目前: {CONFIG.get('harness_cooldown_sec', 30)} 秒)")
         print(" [R] 返回主選單")
-        
+
         choice = input("請選擇操作: ").strip().lower()
         if choice == 'a':
             name = input("Agent 名稱: ").strip()
@@ -271,6 +272,14 @@ def manage_agents():
                         print("✅ 已往下移！")
                     else:
                         print("❌ 無法移動 (已到頂或到底，或是無效輸入)。")
+        elif choice == 't':
+            current = CONFIG.get('harness_cooldown_sec', 30)
+            val = input(f"設定 Harness 冷卻秒數 (目前: {current} 秒，設為 0 可關閉): ").strip()
+            if val.isdigit():
+                CONFIG['harness_cooldown_sec'] = int(val)
+                print(f"✅ Harness 冷卻秒數已設定為 {val} 秒！")
+            elif val:
+                print("❌ 請輸入非負整數。")
         elif choice == 'r':
             break
 

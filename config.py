@@ -92,6 +92,13 @@ if _instance_config:
 MATRIX_USERNAME = os.environ.get("MATRIX_USERNAME", _config.get("matrix_username", "User"))
 
 # ==========================================
+# Harness Cooldown 設定
+# ==========================================
+# 用戶對 Agent、Agent 對 Agent 兩條直接通訊線各自獨立冷卻，秒數統一設定；
+# 預設 30 秒，設為 0 可關閉冷卻機制。
+HARNESS_COOLDOWN_SEC = int(_config.get("harness_cooldown_sec", 30))
+
+# ==========================================
 # Telegram 平臺配置
 # ==========================================
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
