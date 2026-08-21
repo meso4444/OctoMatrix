@@ -190,6 +190,7 @@ def manage_agents():
         print(" [D] Delete Agent")
         print(" [S] Set Default Active Agent")
         print(" [O] Reorder Agents")
+        print(f" [T] ⏱️ Set Harness Cooldown Seconds (current: {CONFIG.get('harness_cooldown_sec', 30)}s)")
         print(" [R] Return to Main Menu")
         
         choice = input("Select operation: ").strip().lower()
@@ -274,6 +275,14 @@ def manage_agents():
                         print("✅ Agent moved down!")
                     else:
                         print("❌ Cannot move (already at top/bottom, or invalid input).")
+        elif choice == 't':
+            current = CONFIG.get('harness_cooldown_sec', 30)
+            val = input(f"Set Harness Cooldown seconds (current: {current}s, set to 0 to disable): ").strip()
+            if val.isdigit():
+                CONFIG['harness_cooldown_sec'] = int(val)
+                print(f"✅ Harness Cooldown set to {val} seconds!")
+            elif val:
+                print("❌ Please enter a non-negative integer.")
         elif choice == 'r':
             break
 

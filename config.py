@@ -92,6 +92,14 @@ if _instance_config:
 MATRIX_USERNAME = os.environ.get("MATRIX_USERNAME", _config.get("matrix_username", "User"))
 
 # ==========================================
+# Harness Cooldown Settings
+# ==========================================
+# User-to-Agent and Agent-to-Agent direct communication each cool down
+# independently, sharing one configured threshold. Default 30 seconds;
+# set to 0 to disable the cooldown.
+HARNESS_COOLDOWN_SEC = int(_config.get("harness_cooldown_sec", 30))
+
+# ==========================================
 # Telegram Platform Configuration
 # ==========================================
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")

@@ -425,14 +425,19 @@ Here is the current status of {target}, please analyze...
         # 🛡️ Inject standard SOP (Matrix message processing flow)
         # ==========================================
         if msg.source in ['telegram', 'discord', 'slack', 'awake'] and 'Execute the following [SOP]:' not in content:
+            import config
             from config import USER_MESSAGE_SOP
-            sop = f"""{USER_MESSAGE_SOP}
+            is_direct_chat = msg.source in ['telegram', 'discord', 'slack']  # Awake schedules are excluded from Harness Cooldown
+            if is_direct_chat and config.HARNESS_COOLDOWN_SEC > 0 and not check_cooldown(target_agent, 'harness_cooldown_user', config.HARNESS_COOLDOWN_SEC):
+                final_message = f"Message from {MATRIX_USERNAME}:\n{content}"
+            else:
+                sop = f"""{USER_MESSAGE_SOP}
 
 Message from {MATRIX_USERNAME}:
 {content}
 
 {SYS_PREFIX} Please strictly follow the [SOP] above to reply."""
-            final_message = sop
+                final_message = sop
         else:
             final_message = content
 
@@ -776,8 +781,12 @@ def inter_agent_message():
     pending_agent_file = os.path.join(agent_dir, 'octo_cyberbrain', 'pending_agent.txt')
 
     # Encapsulate AGENT_INTERCOM_SOP (combine sender and content into full System Prompt)
-    from config import get_agent_intercom_sop
-    formatted_message = get_agent_intercom_sop(source, message)
+    import config
+    if config.HARNESS_COOLDOWN_SEC > 0 and not check_cooldown(target_agent, 'harness_cooldown_intercom', config.HARNESS_COOLDOWN_SEC):
+        formatted_message = f"Message from {source}:\n{message}"
+    else:
+        from config import get_agent_intercom_sop
+        formatted_message = get_agent_intercom_sop(source, message)
 
     if os.path.exists(flag_file):
         try:
