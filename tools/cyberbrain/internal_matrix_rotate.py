@@ -472,9 +472,6 @@ Message from {MATRIX_USERNAME}:
         # ==========================================
         # Step 4: Neural Reset & Task Integration
         # ==========================================
-        task_memo_prompt = ""
-        combined_memo = ""
-
         def build_sop_block(msg_type, content):
             return f"""{SYS_PREFIX}\nExecute the following [SOP]:\n[Step 0 - Identify]: Determine if the Task Resumption Message is a real task. If yes, proceed to Step1; if it's merely a hint without a task, skip subsequent steps.
 [Step 1 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.webm` to send a sticker matching your current mood.
@@ -486,44 +483,60 @@ Message from {MATRIX_USERNAME}:
 [Step 7 - Absorb]: Execute `python3 octo_cyberbrain/octo_ghost_reader.py --level current` to absorb your GHOST and memory.
 [Step 8 - Imprint]: Execute `python3 octo_cyberbrain/octo_ghost_updater.py --outline "semantic outline" --keywords "keyword1,keyword2" --paths "/path1,/path2"` to imprint the current task status into GHOST.\n\n{msg_type}\n{content}\n\n{SYS_PREFIX}Please strictly follow the [SOP] above when replying."""
 
-        # 1. Agent's own task memo (Top)
-        if os.path.exists(TASK_MEMO):
-            try:
-                with open(TASK_MEMO, 'r', encoding='utf-8') as f:
-                    memo_content = f.read().strip()
-                if memo_content:
-                    combined_memo += build_sop_block("Task Resumption Message:", memo_content) + "\n\n"
-            except Exception as e:
-                print(f"Error processing task_memo.txt: {e}")
+        def merge_pending_into_task_memo():
+            # Merge task_memo.txt (read then overwrite, never deleted) with pending_user.txt / pending_agent.txt
+            # (read then immediately deleted) back into task_memo.txt.
+            # Returns whether any new pending content was merged this time, so the caller can decide
+            # whether a soft reminder needs to be sent once the buffer window is lifted.
+            local_combined = ""
+            had_new_pending = False
 
-        # 2. pending_user (Middle)
-        if os.path.exists(PENDING_USER_FILE):
-            try:
-                with open(PENDING_USER_FILE, 'r', encoding='utf-8') as f:
-                    pending_content = f.read().strip()
-                if pending_content:
-                    combined_memo += build_sop_block("Message from {MATRIX_USERNAME}:", pending_content) + "\n\n"
-                os.remove(PENDING_USER_FILE)
-            except Exception as e:
-                print(f"Error processing pending_user: {e}")
+            # 1. Agent's own task memo (Top)
+            if os.path.exists(TASK_MEMO):
+                try:
+                    with open(TASK_MEMO, 'r', encoding='utf-8') as f:
+                        memo_content = f.read().strip()
+                    if memo_content:
+                        local_combined += build_sop_block("Task Resumption Message:", memo_content) + "\n\n"
+                except Exception as e:
+                    print(f"Error processing task_memo.txt: {e}")
 
-        # 3. pending_agent (Bottom)
-        if os.path.exists(PENDING_AGENT_FILE):
-            try:
-                with open(PENDING_AGENT_FILE, 'r', encoding='utf-8') as f:
-                    pending_content = f.read().strip()
-                if pending_content:
-                    agent_prompt = f"Interaction message from another Agent:\n{pending_content}"
-                    combined_memo += agent_prompt + "\n\n"
-                os.remove(PENDING_AGENT_FILE)
-            except Exception as e:
-                print(f"Error processing pending_agent: {e}")
+            # 2. pending_user (Middle)
+            if os.path.exists(PENDING_USER_FILE):
+                try:
+                    with open(PENDING_USER_FILE, 'r', encoding='utf-8') as f:
+                        pending_content = f.read().strip()
+                    if pending_content:
+                        local_combined += build_sop_block("Message from {MATRIX_USERNAME}:", pending_content) + "\n\n"
+                        had_new_pending = True
+                    os.remove(PENDING_USER_FILE)
+                except Exception as e:
+                    print(f"Error processing pending_user: {e}")
 
-        # Write unified task_memo
-        if combined_memo.strip():
-            with open(TASK_MEMO, 'w', encoding='utf-8') as f:
-                f.write(combined_memo.strip())
-        
+            # 3. pending_agent (Bottom)
+            if os.path.exists(PENDING_AGENT_FILE):
+                try:
+                    with open(PENDING_AGENT_FILE, 'r', encoding='utf-8') as f:
+                        pending_content = f.read().strip()
+                    if pending_content:
+                        agent_prompt = f"Interaction message from another Agent:\n{pending_content}"
+                        local_combined += agent_prompt + "\n\n"
+                        had_new_pending = True
+                    os.remove(PENDING_AGENT_FILE)
+                except Exception as e:
+                    print(f"Error processing pending_agent: {e}")
+
+            # Write unified task_memo (overwrite only, never deleted here; actual clearing is left to the
+            # Agent itself, which runs `true > task_memo.txt` after reading it)
+            if local_combined.strip():
+                with open(TASK_MEMO, 'w', encoding='utf-8') as f:
+                    f.write(local_combined.strip())
+
+            return had_new_pending
+
+        # Before sleep: merge backlog that already existed before this rotation started (original behavior)
+        merge_pending_into_task_memo()
+
         task_memo_prompt = "Next, verify if octo_cyberbrain/task_memo.txt exists; if so, read it to resume the task and then execute 'true > octo_cyberbrain/task_memo.txt' to clear its content."
         prompt = f"{SYS_PREFIX}Please execute python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot to get keywords, then bring all retrieved keywords into a single execution of 'python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"Keyword1\" \"Keyword2\"' for Shell GHOST deep dive. Once complete, re-establish compliance with {ENGINE_DOC_NAME}. and execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.webm` to send a sticker matching your current mood, then execute `python3 toolbox/matrix_notifier.py '{{Let {MATRIX_USERNAME} know you have awakened from the sea energy}}'` {task_memo_prompt}"
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
@@ -537,8 +550,50 @@ Message from {MATRIX_USERNAME}:
         time.sleep(0.5)
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
 
-        # Early unlock
+        # Buffer window: any new message arriving within these 30 seconds is softly queued by octo_router.py's
+        # existing pending mechanism into pending_user.txt / pending_agent.txt, with no interruption at all.
         time.sleep(30.0)
+
+        # Buffer lifted: first merge whatever backlog accumulated during the buffer window
+        # (reads then immediately deletes pending_user.txt / pending_agent.txt)
+        had_new_pending = merge_pending_into_task_memo()
+
+        # If the buffer window did produce new content, softly flush it while FLAG_FILE is still in place.
+        # source='system_flush' is already excluded from both the pending-file diversion check and the
+        # interrupt_first check inside octo_router.py's handle(), so this reminder will be delivered normally
+        # (with Enter, without C-c) even while FLAG_FILE still exists, instead of being queued into the file again.
+        # The order matters: delivery must be confirmed BEFORE FLAG_FILE is removed, otherwise a new user
+        # message could slip in through the gap and cut ahead of this reminder.
+        if had_new_pending:
+            try:
+                octo_root = os.path.dirname(os.path.dirname(AGENT_HOME))
+                port_file = os.path.join(octo_root, ".router_port")
+                port = 12210
+                if os.path.exists(port_file):
+                    try:
+                        with open(port_file, 'r') as f:
+                            port = int(f.read().strip())
+                    except: pass
+
+                flush_content = build_sop_block(
+                    "System notice:",
+                    "New messages or instructions accumulated during the buffer window and have been merged into octo_cyberbrain/task_memo.txt. Please re-check whether this file exists; if so, read it to resume the task, then execute 'true > octo_cyberbrain/task_memo.txt' to clear its content once done."
+                )
+                requests.post(
+                    f"http://127.0.0.1:{port}/inject",
+                    json={
+                        "source": "system_flush",
+                        "user_id": "system",
+                        "content": flush_content,
+                        "metadata": {"target_agent": AGENT_NAME}
+                    },
+                    timeout=10
+                )
+                print(f"📩 Soft-flushed the buffer window reminder (Port: {port}), without C-c.")
+            except Exception as e:
+                print(f"⚠️ Failed to soft-flush the buffer window reminder: {e}")
+
+        # Only unlock the buffer restriction after the reminder was sent (or wasn't needed this round)
         if os.path.exists(FLAG_FILE):
             try:
                 os.remove(FLAG_FILE)
