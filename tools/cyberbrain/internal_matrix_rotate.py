@@ -468,9 +468,6 @@ def main():
         # ==========================================
         # Step 4: 靈魂重塑與任務整合注入 (Neural Reset & Task Integration)
         # ==========================================
-        task_memo_prompt = ""
-        combined_memo = ""
-
         def build_sop_block(msg_type, content):
             return f"""{SYS_PREFIX}\n執行以下 [SOP]:\n[Step 0 - 辨識]：辨識 任務接續訊息 是否為真實任務，若為真實任務則進入Step1; 若內容僅為提示無任務則不執行後續Step。
 [Step 1 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.webm 發符合當下心情的貼圖。
@@ -482,44 +479,57 @@ def main():
 [Step 7 - 收攝]：執行 python3 octo_cyberbrain/octo_ghost_reader.py --level current 收攝你的 GHOST 與記憶。
 [Step 8 - 刻印]：執行 python3 octo_cyberbrain/octo_ghost_updater.py --outline "語義大綱" --keywords "關鍵字1,關鍵字2" --paths "/檔案路徑1,/檔案路徑2" 將本次任務狀態刻印到GHOST。\n\n{msg_type}\n{content}\n\n{SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
 
-        # 1. Agent 自己的 task memo (Top)
-        if os.path.exists(TASK_MEMO):
-            try:
-                with open(TASK_MEMO, 'r', encoding='utf-8') as f:
-                    memo_content = f.read().strip()
-                if memo_content:
-                    combined_memo += build_sop_block("任務接續訊息:", memo_content) + "\n\n"
-            except Exception as e:
-                print(f"處理 task_memo.txt 時發生錯誤: {e}")
+        def merge_pending_into_task_memo():
+            # 把 task_memo.txt（讀取後覆寫，不刪除）與 pending_user.txt / pending_agent.txt（讀取後立刻刪除）併回 task_memo.txt。
+            # 回傳這次是否有新的 pending 內容被併入，供呼叫端判斷緩衝解除當下是否需要送出軟性提醒。
+            local_combined = ""
+            had_new_pending = False
 
-        # 2. pending_user (Middle)
-        if os.path.exists(PENDING_USER_FILE):
-            try:
-                with open(PENDING_USER_FILE, 'r', encoding='utf-8') as f:
-                    pending_content = f.read().strip()
-                if pending_content:
-                    combined_memo += build_sop_block("來自 {MATRIX_USERNAME} 的訊息:", pending_content) + "\n\n"
-                os.remove(PENDING_USER_FILE)
-            except Exception as e:
-                print(f"處理 pending_user 時發生錯誤: {e}")
+            # 1. Agent 自己的 task memo (Top)
+            if os.path.exists(TASK_MEMO):
+                try:
+                    with open(TASK_MEMO, 'r', encoding='utf-8') as f:
+                        memo_content = f.read().strip()
+                    if memo_content:
+                        local_combined += build_sop_block("任務接續訊息:", memo_content) + "\n\n"
+                except Exception as e:
+                    print(f"處理 task_memo.txt 時發生錯誤: {e}")
 
-        # 3. pending_agent (Bottom)
-        if os.path.exists(PENDING_AGENT_FILE):
-            try:
-                with open(PENDING_AGENT_FILE, 'r', encoding='utf-8') as f:
-                    pending_content = f.read().strip()
-                if pending_content:
-                    agent_prompt = f"來自其他 Agent 的交互訊息:\n{pending_content}"
-                    combined_memo += agent_prompt + "\n\n"
-                os.remove(PENDING_AGENT_FILE)
-            except Exception as e:
-                print(f"處理 pending_agent 時發生錯誤: {e}")
+            # 2. pending_user (Middle)
+            if os.path.exists(PENDING_USER_FILE):
+                try:
+                    with open(PENDING_USER_FILE, 'r', encoding='utf-8') as f:
+                        pending_content = f.read().strip()
+                    if pending_content:
+                        local_combined += build_sop_block("來自 {MATRIX_USERNAME} 的訊息:", pending_content) + "\n\n"
+                        had_new_pending = True
+                    os.remove(PENDING_USER_FILE)
+                except Exception as e:
+                    print(f"處理 pending_user 時發生錯誤: {e}")
 
-        # 寫入統一的 task_memo
-        if combined_memo.strip():
-            with open(TASK_MEMO, 'w', encoding='utf-8') as f:
-                f.write(combined_memo.strip())
-        
+            # 3. pending_agent (Bottom)
+            if os.path.exists(PENDING_AGENT_FILE):
+                try:
+                    with open(PENDING_AGENT_FILE, 'r', encoding='utf-8') as f:
+                        pending_content = f.read().strip()
+                    if pending_content:
+                        agent_prompt = f"來自其他 Agent 的交互訊息:\n{pending_content}"
+                        local_combined += agent_prompt + "\n\n"
+                        had_new_pending = True
+                    os.remove(PENDING_AGENT_FILE)
+                except Exception as e:
+                    print(f"處理 pending_agent 時發生錯誤: {e}")
+
+            # 寫入統一的 task_memo（只覆寫，不刪除；真正清空交由 Agent 讀完後自行執行 true > task_memo.txt）
+            if local_combined.strip():
+                with open(TASK_MEMO, 'w', encoding='utf-8') as f:
+                    f.write(local_combined.strip())
+
+            return had_new_pending
+
+        # Sleep 前：整併本輪重置開始前就已存在的積壓內容（原有行為）
+        merge_pending_into_task_memo()
+
         task_memo_prompt = "接著確認是否octo_cyberbrain/task_memo.txt存在，若存在則讀取後接續執行任務，task_memo.txt讀取完畢後執行 true > octo_cyberbrain/task_memo.txt 以清空內容。"
         prompt = f"{SYS_PREFIX}請執行 python3 octo_cyberbrain/octo_ghost_reader.py --level snapshot 取得關鍵字，然後一次性將所有撈到的關鍵字全部帶入執行 `python3 octo_cyberbrain/dive_into_the_shell.py --level snapshot -C {CONTEXT_SIZE} --keyword \"關鍵字1\" \"關鍵字2\"` 進行Shell GHOST深潛，完成後重新提升{ENGINE_DOC_NAME}的遵守，並執行 `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.webm` 發符合當下心情的貼圖及執行 `python3 toolbox/matrix_notifier.py '{{讓 {MATRIX_USERNAME} 知道你從大海能量中清醒過來了}}'` {task_memo_prompt}"
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
@@ -533,8 +543,46 @@ def main():
         time.sleep(0.5)
         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"])
 
-        # 提早解除 Flag
+        # 緩衝期：30 秒內任何新訊息都會被 octo_router.py 既有的軟性排隊機制暫存進 pending_user.txt / pending_agent.txt，不做任何打斷
         time.sleep(30.0)
+
+        # 緩衝解除：先整併緩衝期間新產生的積壓內容（讀完即清除 pending_user.txt / pending_agent.txt）
+        had_new_pending = merge_pending_into_task_memo()
+
+        # 若緩衝期間確實有新內容，趁 FLAG_FILE 還在時先軟性送出提醒。
+        # source='system_flush' 在 octo_router.py 的 handle() 裡本來就排除在 pending 檔案暫存判斷與 interrupt_first 判斷之外，
+        # 所以即使 FLAG_FILE 還在，這次提醒也會正常送達（帶 Enter，不夾帶 C-c），不會被繞回檔案排隊。
+        # 順序不可顛倒：必須先確認送達，才移除 FLAG_FILE，避免中間出現讓使用者新訊息插隊搶先的空檔。
+        if had_new_pending:
+            try:
+                octo_root = os.path.dirname(os.path.dirname(AGENT_HOME))
+                port_file = os.path.join(octo_root, ".router_port")
+                port = 12210
+                if os.path.exists(port_file):
+                    try:
+                        with open(port_file, 'r') as f:
+                            port = int(f.read().strip())
+                    except: pass
+
+                flush_content = build_sop_block(
+                    "系統提示:",
+                    "緩衝期間累積了新的訊息或指令，已併入 octo_cyberbrain/task_memo.txt，請重新確認該檔案是否存在，若存在則讀取後接續執行任務，task_memo.txt讀取完畢後執行 true > octo_cyberbrain/task_memo.txt 以清空內容。"
+                )
+                requests.post(
+                    f"http://127.0.0.1:{port}/inject",
+                    json={
+                        "source": "system_flush",
+                        "user_id": "system",
+                        "content": flush_content,
+                        "metadata": {"target_agent": AGENT_NAME}
+                    },
+                    timeout=10
+                )
+                print(f"📩 已軟性送出緩衝期間累積的提醒 (Port: {port})，不夾帶 C-c。")
+            except Exception as e:
+                print(f"⚠️ 軟性送出緩衝期間提醒失敗: {e}")
+
+        # 確認提醒已送出（或本輪無需送出）後，才解除緩衝限制
         if os.path.exists(FLAG_FILE):
             try:
                 os.remove(FLAG_FILE)
