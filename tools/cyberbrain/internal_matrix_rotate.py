@@ -576,7 +576,7 @@ Message from {MATRIX_USERNAME}:
                     except: pass
 
                 flush_content = build_sop_block(
-                    SYS_PREFIX,
+                    f"{SYS_PREFIX} Automated system reminder:",
                     "New messages or instructions accumulated during the buffer window and have been merged into octo_cyberbrain/task_memo.txt. Please re-check whether this file exists; if so, read it to resume the task, then execute 'true > octo_cyberbrain/task_memo.txt' to clear its content once done."
                 )
                 requests.post(
