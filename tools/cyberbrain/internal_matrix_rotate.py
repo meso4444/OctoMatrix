@@ -565,7 +565,7 @@ def main():
                     except: pass
 
                 flush_content = build_sop_block(
-                    SYS_PREFIX,
+                    f"{SYS_PREFIX}系統自動提醒:",
                     "緩衝期間累積了新的訊息或指令，已併入 octo_cyberbrain/task_memo.txt，請重新確認該檔案是否存在，若存在則讀取後接續執行任務，task_memo.txt讀取完畢後執行 true > octo_cyberbrain/task_memo.txt 以清空內容。"
                 )
                 requests.post(
