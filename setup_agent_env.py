@@ -504,9 +504,6 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
                                 .replace('{collaboration_context}', collab_context)
                                 .replace('{home_path}', home_path))
 
-        avatar_instruction = "\n\n=== 視覺形象建構任務 ===\n完成客製化的自我認知撰寫後，請依照 ./knowledge/AGENT_AVATAR_GUIDE.md 的指引生成你的 avatar。提示：Avatar 初次建立不需要 token 即可建立。"
-        prompt += avatar_instruction
-
         prompt_file = os.path.join(script_dir, f".prompt_temp_{name}")
         with open(prompt_file, 'w') as f: f.write(prompt)
         with open(prompt_file, 'r') as pf: prompt_content = pf.read()
