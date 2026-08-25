@@ -41,7 +41,13 @@ def generate_docker_compose(instance, user, script_dir, router_port=12210):
         with open(claude_token_file, "r", encoding="utf-8") as f:
             claude_token = f.read().strip()
         if claude_token:
-            environment.append(f"CLAUDE_CODE_OAUTH_TOKEN={claude_token}")
+            # docker-compose interpolates ${VAR} references in every string value in
+            # the compose file (the TZ=${TZ:-Asia/Taipei} line above deliberately relies
+            # on this). If the token happens to contain a literal $ character, it would
+            # get silently misinterpreted as a variable reference and stripped/mangled,
+            # corrupting the token written into the container. Escape as $$ so
+            # docker-compose treats it as a literal dollar sign.
+            environment.append(f"CLAUDE_CODE_OAUTH_TOKEN={claude_token.replace('$', '$$')}")
     return {
         "services": {
             "bot": {

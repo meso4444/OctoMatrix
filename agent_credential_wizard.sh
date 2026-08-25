@@ -238,9 +238,25 @@ run_container_auth() {
           echo ""
           read -rs -p "Paste the token and press Enter: " CLAUDE_OAUTH_TOKEN
           echo ""
+          # -s never echoes the input (so the token doesn't linger in terminal
+          # scrollback), but that also means there is zero visual feedback about
+          # whether Command+V actually pasted anything. Strip whitespace, then print
+          # a redacted length/prefix/suffix so the user gets one chance to eyeball
+          # that the paste looks right before it gets written to disk and the
+          # docker-compose config gets regenerated -- instead of blindly hitting
+          # Enter on a screen that shows nothing either way.
+          CLAUDE_OAUTH_TOKEN="$(printf '%s' "$CLAUDE_OAUTH_TOKEN" | tr -d '[:space:]')"
           if [ -z "$CLAUDE_OAUTH_TOKEN" ]; then
-            echo "❌ No token entered, cancelling this authentication"
+            echo "❌ No paste detected, cancelling this authentication"
+          elif [ "${#CLAUDE_OAUTH_TOKEN}" -lt 20 ]; then
+            echo "❌ Only ${#CLAUDE_OAUTH_TOKEN} character(s) were pasted, too short to be a real token"
+            echo "   (common cause: the Command+V paste failed, or only part of it landed), cancelling this authentication"
           else
+            echo "📋 Received: ${CLAUDE_OAUTH_TOKEN:0:10}...${CLAUDE_OAUTH_TOKEN: -4} (${#CLAUDE_OAUTH_TOKEN} characters total)"
+            if [[ "$CLAUDE_OAUTH_TOKEN" != sk-ant-* ]]; then
+              echo "⚠️  This doesn't start with sk-ant-, which is not what claude setup-token"
+              echo "   normally prints. If the snippet above doesn't look right, press Ctrl+C and paste again."
+            fi
             TOKEN_FILE="$DOCKER_DEPLOY_DIR/claude.token.$INSTANCE_NAME"
             printf '%s' "$CLAUDE_OAUTH_TOKEN" > "$TOKEN_FILE"
             chmod 600 "$TOKEN_FILE"
