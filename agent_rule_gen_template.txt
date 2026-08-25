@@ -19,3 +19,5 @@ Special attention:
 1. The core system operating protocol should be **completely copied** except for the document title section, no omissions allowed.
 2. Based on "Team Collaboration Context," add a "Collaboration Partners" section to your work handbook, clearly listing who you know to find for what tasks.
 
+=== Visual Identity Construction Task ===
+After completing the customized self-awareness writing, follow the guidance in ./knowledge/AGENT_AVATAR_GUIDE.md to generate your avatar. Note: creating your avatar for the first time does not require a token.

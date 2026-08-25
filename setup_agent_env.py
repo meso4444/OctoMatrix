@@ -506,9 +506,6 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
                                 .replace('{collaboration_context}', collab_context)
                                 .replace('{home_path}', home_path))
 
-        avatar_instruction = "\n\n=== Visual Identity Construction Task ===\nAfter completing the customized self-awareness writing, follow the guidance in ./knowledge/AGENT_AVATAR_GUIDE.md to generate your avatar. Note: creating your avatar for the first time does not require a token."
-        prompt += avatar_instruction
-
         prompt_file = os.path.join(script_dir, f".prompt_temp_{name}")
         with open(prompt_file, 'w') as f: f.write(prompt)
         with open(prompt_file, 'r') as pf: prompt_content = pf.read()
