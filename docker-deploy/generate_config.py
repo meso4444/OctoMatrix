@@ -40,7 +40,11 @@ def generate_docker_compose(instance, user, script_dir, router_port=12210):
         with open(claude_token_file, "r", encoding="utf-8") as f:
             claude_token = f.read().strip()
         if claude_token:
-            environment.append(f"CLAUDE_CODE_OAUTH_TOKEN={claude_token}")
+            # docker-compose 會對 compose 檔案裡的每個字串值做 ${VAR} 插值（本檔
+            # 上面的 TZ=${TZ:-Asia/Taipei} 就是刻意利用這個機制），若 token 裡剛好
+            # 帶有字面的 $ 字元，會被誤判成變數參照而被靜默替換掉，導致寫入容器的
+            # token 被截斷/損毀。用 $$ 跳脫成字面 $，docker-compose 才不會誤解析。
+            environment.append(f"CLAUDE_CODE_OAUTH_TOKEN={claude_token.replace('$', '$$')}")
     return {
         "services": {
             "bot": {

@@ -233,9 +233,23 @@ run_container_auth() {
           echo ""
           read -rs -p "請貼上 token 後按 Enter: " CLAUDE_OAUTH_TOKEN
           echo ""
+          # -s 完全不回顯輸入內容（避免 token 留在終端機捲動紀錄裡），但這代表
+          # 使用者從畫面上完全無法判斷 Command+V 到底有沒有真的貼進去。這裡去除
+          # 空白字元後印出遮蔽過的長度/頭尾片段，讓使用者在寫入檔案跟重建
+          # docker-compose 之前，至少有一次機會肉眼確認貼上結果看起來合理，
+          # 不要在畫面完全沒反應的情況下就盲目按 Enter 送出。
+          CLAUDE_OAUTH_TOKEN="$(printf '%s' "$CLAUDE_OAUTH_TOKEN" | tr -d '[:space:]')"
           if [ -z "$CLAUDE_OAUTH_TOKEN" ]; then
-            echo "❌ 未輸入 token，取消本次認證"
+            echo "❌ 未偵測到任何貼上內容，取消本次認證"
+          elif [ "${#CLAUDE_OAUTH_TOKEN}" -lt 20 ]; then
+            echo "❌ 貼上內容只有 ${#CLAUDE_OAUTH_TOKEN} 字元，太短不像是完整的 token"
+            echo "   （常見原因：Command+V 貼上失敗、或只貼到部分內容），取消本次認證"
           else
+            echo "📋 已接收到貼上內容：${CLAUDE_OAUTH_TOKEN:0:10}...${CLAUDE_OAUTH_TOKEN: -4}（共 ${#CLAUDE_OAUTH_TOKEN} 字元）"
+            if [[ "$CLAUDE_OAUTH_TOKEN" != sk-ant-* ]]; then
+              echo "⚠️  這段內容不是以 sk-ant- 開頭，跟 claude setup-token 平常印出的格式不太一樣。"
+              echo "   若上面顯示的片段看起來不眼熟，建議按 Ctrl+C 中止、重新貼一次再試。"
+            fi
             TOKEN_FILE="$DOCKER_DEPLOY_DIR/claude.token.$INSTANCE_NAME"
             printf '%s' "$CLAUDE_OAUTH_TOKEN" > "$TOKEN_FILE"
             chmod 600 "$TOKEN_FILE"
