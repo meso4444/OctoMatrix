@@ -115,7 +115,7 @@ def generate_config(instance, data, telegram_gateway_port=11440, ngrok_api_port=
             "ghost_check_interval_sec": 60,
             "ghost_compression_threshold_kb": 70,
             "ghost_long_term_compression_limit": 12,
-            "ghost_awake_context_depth": 50
+            "ghost_awake_context_depth": 20
         },
         "telegram": {
             "api_base_url": "https://api.telegram.org/bot",

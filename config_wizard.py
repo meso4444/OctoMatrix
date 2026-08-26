@@ -413,7 +413,7 @@ def manage_cyberbrain():
             "ghost_check_interval_sec": 60,
             "ghost_compression_threshold_kb": 150,
             "ghost_long_term_compression_limit": 12,
-            "ghost_awake_context_depth": 50,
+            "ghost_awake_context_depth": 20,
             "inactivity_check_hours": 12,
             "dnd_range": "2200-0700"
         }
@@ -423,7 +423,7 @@ def manage_cyberbrain():
         print(f" [1] GHOST 容量檢測頻率: {CONFIG.get('octo_cyberbrain', {}).get('ghost_check_interval_sec', 60)} 秒")
         print(f" [2] 淺層 GHOST 壓縮閾值: {CONFIG.get('octo_cyberbrain', {}).get('ghost_compression_threshold_kb', 150)} KB")
         print(f" [3] 長期 GHOST 壓縮閥值: {CONFIG.get('octo_cyberbrain', {}).get('ghost_long_term_compression_limit', 12)} 個淺層壓縮GHOST")
-        print(f" [4] GHOST 喚醒上下文深度: {CONFIG.get('octo_cyberbrain', {}).get('ghost_awake_context_depth', 50)} 行")
+        print(f" [4] GHOST 喚醒上下文深度: {CONFIG.get('octo_cyberbrain', {}).get('ghost_awake_context_depth', 20)} 行")
         print(f" [5] 空閒無互動問候超時: {CONFIG.get('octo_cyberbrain', {}).get('inactivity_check_hours', 12)} 小時")
         print(f" [6] 免打擾區間 (DND): {CONFIG.get('octo_cyberbrain', {}).get('dnd_range', '2200-0700')}")
         print(" [R] 返回主選單")
@@ -702,7 +702,7 @@ def main():
                         "ghost_check_interval_sec": 60,
                         "ghost_compression_threshold_kb": 70,
                         "ghost_long_term_compression_limit": 12,
-                        "ghost_awake_context_depth": 50,
+                        "ghost_awake_context_depth": 20,
                         "inactivity_check_hours": 12,
                         "dnd_range": "2200-0700"
                     }
