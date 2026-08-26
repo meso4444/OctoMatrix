@@ -416,7 +416,7 @@ def manage_cyberbrain():
             "ghost_check_interval_sec": 60,
             "ghost_compression_threshold_kb": 150,
             "ghost_long_term_compression_limit": 12,
-            "ghost_awake_context_depth": 50,
+            "ghost_awake_context_depth": 20,
             "inactivity_check_hours": 12,
             "dnd_range": "2200-0700"
         }
@@ -426,7 +426,7 @@ def manage_cyberbrain():
         print(f" [1] GHOST Capacity Check Frequency: {CONFIG.get('octo_cyberbrain', {}).get('ghost_check_interval_sec', 60)} sec")
         print(f" [2] Shallow GHOST Compression Threshold: {CONFIG.get('octo_cyberbrain', {}).get('ghost_compression_threshold_kb', 150)} KB")
         print(f" [3] Long-term GHOST Compression Threshold: {CONFIG.get('octo_cyberbrain', {}).get('ghost_long_term_compression_limit', 12)} shallow GHOSTs")
-        print(f" [4] GHOST Awake Context Depth: {CONFIG.get('octo_cyberbrain', {}).get('ghost_awake_context_depth', 50)} lines")
+        print(f" [4] GHOST Awake Context Depth: {CONFIG.get('octo_cyberbrain', {}).get('ghost_awake_context_depth', 20)} lines")
         print(f" [5] Inactivity Greeting Idle Timeout: {CONFIG.get('octo_cyberbrain', {}).get('inactivity_check_hours', 12)} hours")
         print(f" [6] Do Not Disturb (DND) Range: {CONFIG.get('octo_cyberbrain', {}).get('dnd_range', '2200-0700')}")
         print(" [R] Return to Main Menu")
@@ -704,7 +704,7 @@ def main():
                         "ghost_check_interval_sec": 60,
                         "ghost_compression_threshold_kb": 70,
                         "ghost_long_term_compression_limit": 12,
-                        "ghost_awake_context_depth": 50,
+                        "ghost_awake_context_depth": 20,
                         "inactivity_check_hours": 12,
                         "dnd_range": "2200-0700"
                     }
