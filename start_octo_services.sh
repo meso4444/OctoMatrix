@@ -208,6 +208,8 @@ try:
             time.sleep(0.5)
             subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:{name}', 'Enter'], check=True)
             print(f"   ✓ Test message sent to: {name}")
+
+        time.sleep(5)  # Stagger 5 seconds before injecting into the next agent window to avoid a simultaneous burst
 except Exception as e:
     print(f"   ⚠️ Failed to send test message: {e}")
 EOF
