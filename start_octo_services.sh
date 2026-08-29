@@ -208,6 +208,8 @@ try:
             time.sleep(0.5)
             subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:{name}', 'Enter'], check=True)
             print(f"   ✓ 已發送測試訊息給: {name}")
+
+        time.sleep(5)  # 每個 agent window 間隔 5 秒才注入下一個，避免同時湧入
 except Exception as e:
     print(f"   ⚠️ 發送測試訊息失敗: {e}")
 EOF
