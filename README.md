@@ -94,11 +94,6 @@ OctoMatrix 不僅賦予 Agent 執行任務的能力，更強調其「自我認�
     2. 發送 `/start` 到 Telegram 中的機器人聊天室。
     3. **設定精靈會自動偵測**並抓取聊天室 ID。
 
-*   **C. ngrok Authtoken**
-    1. 註冊並登入 [ngrok](https://dashboard.ngrok.com/get-started/your-authtoken)。
-    2. 在頁面左欄找到 **Your Authtoken**。
-    3. 複製該 Token，稍後在設定精靈中填入。
-
 ### 2. 獲取 Discord 憑證
 
 *   **A. 建立專屬伺服器 (前置作業)**
@@ -204,7 +199,7 @@ cd OctoMatrix
 **精靈主選單功能：**
 *   **[1] 👤 設定使用者暱稱 (Username)**：設定您的稱呼，Agent 會以此名稱來稱呼您。
 *   **[2]-[4] 通訊通道設定**：引導綁定 Telegram、Discord 或 Slack 的 Token，並可隨時開關特定通道。
-*   **[5] 🌍 設定網路與連接埠 (Ports)**：自訂 Router、Gateway 與 ngrok 隧道的本地 Port口，避免與主機其他服務衝突。
+*   **[5] 🌍 設定網路與連接埠 (Ports)**：自訂 Router 與 Gateway 的本地 Port口，避免與主機其他服務衝突。
 *   **[6] 🤖 設定 AI Agent 軍團與進階參數**：
     *   **配置 Agent**：為 AI 命名，指定它的 **職責 (usecase)**（用於 AI 認知）與 **描述 (description)**（用於選單展示給使用者），並自由搭配 AI 引擎（Gemini、Claude、Codex 或 agy (Antigravity)）與模型。
         > **注意：** 建議改用 agy (Antigravity) 引擎較為穩定，且 gemini CLI 已不再支援 Pro 訂閱用戶。
@@ -296,7 +291,7 @@ OctoMatrix 具備先進的 Agent 橫向通訊機制，允許 AI 團隊成員之�
 
 OctoMatrix 針對三大通訊平臺，皆採用無需破壞主機防火牆的連線架構，確保系統的隱私與運行安全：
 
-*   **Telegram (Webhook 隧道)**：透過動態配置的 `ngrok` 建立安全的 HTTPS 逆向隧道。主機不需對外開放任何 Port，Webhook 網址亦為每次啟動動態產生，大幅降低被探測攻擊的風險。
+*   **Telegram (Long Polling)**：採用主動向 Telegram 伺服器長輪詢拉取訊息的機制。主機不需對外開放任何 Port，也無需建立任何對外隧道，從架構上杜絕被探測攻擊的風險。
 *   **Discord (WebSocket 直連)**：採用基於 WebSocket 的即時雙向通訊協議。主機純粹作為 Client 往外連線，穿透內網限制。
 *   **Slack (Socket Mode)**：採用企業級的 Socket Mode 連線。不依賴公開的 Request URL，所有事件與指令皆透過安全隧道進行雙向傳輸。
 *   **權限隔離防護網 (Privilege Isolation & Sandboxing)**：無論訊息來自哪個通道，Agent 皆於專屬的 Linux 使用者帳戶與獨立的 `agent_home` 目錄下運行。這種設計讓 Agent 嚴格受限於該使用者所具有的最小權限 (Least Privilege)；只有在 `agent_home` 中的檔案與目錄才具有較完整的操作權，而系統賦予的系統腳本與核心文件皆已拔除其寫入權限，從系統底層精準防止任何越權竄改的風險。

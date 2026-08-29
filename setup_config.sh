@@ -46,12 +46,10 @@ fi
 
 # 嘗試從 config.yaml 讀取當前 Port 與通道偏好
 CUR_TELEGRAM_GATEWAY_PORT=11440
-CUR_NGROK_PORT=4040
 CUR_ROUTER_PORT=12210
 
 if [ -f "$CONFIG_YAML" ]; then
     CUR_TELEGRAM_GATEWAY_PORT=$(python3 -c "import yaml; print(yaml.safe_load(open('$CONFIG_YAML'))['server'].get('telegram_gateway_port', 11440))" 2>/dev/null || echo 11440)
-    CUR_NGROK_PORT=$(python3 -c "import yaml; print(yaml.safe_load(open('$CONFIG_YAML'))['server']['ngrok_api_port'])" 2>/dev/null || echo 4040)
     CUR_ROUTER_PORT=$(python3 -c "import yaml; print(yaml.safe_load(open('$CONFIG_YAML'))['router']['port'])" 2>/dev/null || echo 12210)
 fi
 
@@ -60,7 +58,6 @@ ORIG_MATRIX_USERNAME="${MATRIX_USERNAME:-User}"
 ORIG_TELEGRAM_ENABLED="${TELEGRAM_ENABLED:-true}"
 ORIG_TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-}"
 ORIG_TELEGRAM_CHAT_ID="${TELEGRAM_CHAT_ID:-}"
-ORIG_NGROK_AUTHTOKEN="${NGROK_AUTHTOKEN:-}"
 
 ORIG_DISCORD_ENABLED="${DISCORD_ENABLED:-false}"
 ORIG_DISCORD_TOKEN="${DISCORD_TOKEN:-}"
@@ -74,7 +71,6 @@ ORIG_SLACK_WORKSPACE_ID="${SLACK_WORKSPACE_ID:-}"
 ORIG_SLACK_CHANNEL_ID="${SLACK_CHANNEL_ID:-}"
 
 ORIG_TELEGRAM_GATEWAY_PORT="$CUR_TELEGRAM_GATEWAY_PORT"
-ORIG_NGROK_API_PORT="$CUR_NGROK_PORT"
 ORIG_ROUTER_PORT="$CUR_ROUTER_PORT"
 
 # 當前工作變數
@@ -82,7 +78,6 @@ MATRIX_USERNAME="$ORIG_MATRIX_USERNAME"
 TELEGRAM_ENABLED="$ORIG_TELEGRAM_ENABLED"
 TELEGRAM_BOT_TOKEN="$ORIG_TELEGRAM_BOT_TOKEN"
 TELEGRAM_CHAT_ID="$ORIG_TELEGRAM_CHAT_ID"
-NGROK_AUTHTOKEN="$ORIG_NGROK_AUTHTOKEN"
 
 DISCORD_ENABLED="$ORIG_DISCORD_ENABLED"
 DISCORD_TOKEN="$ORIG_DISCORD_TOKEN"
@@ -96,7 +91,6 @@ SLACK_WORKSPACE_ID="$ORIG_SLACK_WORKSPACE_ID"
 SLACK_CHANNEL_ID="$ORIG_SLACK_CHANNEL_ID"
 
 TELEGRAM_GATEWAY_PORT="$ORIG_TELEGRAM_GATEWAY_PORT"
-NGROK_API_PORT="$ORIG_NGROK_API_PORT"
 ROUTER_PORT="$ORIG_ROUTER_PORT"
 
 # --- 自動獲取 Chat ID 函數 ---
@@ -152,11 +146,6 @@ SLACK_WORKSPACE_ID=$SLACK_WORKSPACE_ID
 SLACK_CHANNEL_ID=$SLACK_CHANNEL_ID
 
 # =========================================
-# ngrok 配置
-# =========================================
-NGROK_AUTHTOKEN=$NGROK_AUTHTOKEN
-
-# =========================================
 # MC Router 配置
 # =========================================
 ROUTER_HOST=127.0.0.1
@@ -166,7 +155,7 @@ EOF
 
 # --- 更新 config.yaml 函數 ---
 update_config_yaml() {
-    export TELEGRAM_GATEWAY_PORT NGROK_API_PORT ROUTER_PORT
+    export TELEGRAM_GATEWAY_PORT ROUTER_PORT
     export TELEGRAM_ENABLED DISCORD_ENABLED SLACK_ENABLED
     python3 << 'PYTHON_EOF'
 import os
@@ -182,7 +171,6 @@ except FileNotFoundError:
 # 1. Server 區塊
 if 'server' not in config: config['server'] = {}
 config['server']['telegram_gateway_port'] = int(os.environ['TELEGRAM_GATEWAY_PORT'])
-config['server']['ngrok_api_port'] = int(os.environ['NGROK_API_PORT'])
 
 # 2. Router 區塊
 if 'router' not in config: config['router'] = {}
@@ -258,10 +246,6 @@ while true; do
                 fi
                 read -p "  2. Chat ID [目前/自動: ${DETECTED_CHAT_ID:-$TELEGRAM_CHAT_ID}]: " INPUT_CHAT_ID
                 TELEGRAM_CHAT_ID="${INPUT_CHAT_ID:-${DETECTED_CHAT_ID:-$TELEGRAM_CHAT_ID}}"
-
-                echo "  🌐 ngrok 配置 (Telegram Webhook 必要項目)"
-                read -p "  3. ngrok Authtoken [目前: ${NGROK_AUTHTOKEN:-未設定}]: " INPUT_NGROK
-                NGROK_AUTHTOKEN="${INPUT_NGROK:-$NGROK_AUTHTOKEN}"
             else
                 TELEGRAM_ENABLED="false"
             fi
@@ -305,9 +289,7 @@ while true; do
             echo "🌍 網路與連接埠設定"
             read -p "  1. Telegram Gateway Port [目前: $TELEGRAM_GATEWAY_PORT]: " INPUT_TG_PORT
             TELEGRAM_GATEWAY_PORT="${INPUT_TG_PORT:-$TELEGRAM_GATEWAY_PORT}"
-            read -p "  2. Ngrok API Port [目前: $NGROK_API_PORT]: " INPUT_NGROK_PORT
-            NGROK_API_PORT="${INPUT_NGROK_PORT:-$NGROK_API_PORT}"
-            read -p "  3. Octo Router Port [目前: $ROUTER_PORT]: " INPUT_ROUTER_PORT
+            read -p "  2. Octo Router Port [目前: $ROUTER_PORT]: " INPUT_ROUTER_PORT
             ROUTER_PORT="${INPUT_ROUTER_PORT:-$ROUTER_PORT}"
             ;;
         6)
@@ -475,10 +457,10 @@ for agent in config.get('agents', []):
                         fi
                         # 重置變數
                         MATRIX_USERNAME="User"
-                        TELEGRAM_ENABLED="false"; TELEGRAM_BOT_TOKEN=""; TELEGRAM_CHAT_ID=""; NGROK_AUTHTOKEN=""
+                        TELEGRAM_ENABLED="false"; TELEGRAM_BOT_TOKEN=""; TELEGRAM_CHAT_ID=""
                         DISCORD_ENABLED="false"; DISCORD_TOKEN=""; DISCORD_SERVER_ID=""; DISCORD_CHANNEL_ID=""
                         SLACK_ENABLED="false"; SLACK_APP_TOKEN=""; SLACK_BOT_TOKEN=""; SLACK_WORKSPACE_ID=""; SLACK_CHANNEL_ID=""
-                        TELEGRAM_GATEWAY_PORT=11440; NGROK_API_PORT=4040; ROUTER_PORT=12210
+                        TELEGRAM_GATEWAY_PORT=11440; ROUTER_PORT=12210
                         write_env_file
                         echo "✅ 所有通訊憑證 (.env) 已清除。"
                     fi

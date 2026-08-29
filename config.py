@@ -130,9 +130,6 @@ ROUTER_INJECT_ENDPOINT = f"http://{_api_host}:{ROUTER_PORT}/inject"
 ROUTER_HEALTH_ENDPOINT = f"http://{_api_host}:{ROUTER_PORT}/health"
 ROUTER_STATUS_ENDPOINT = f"http://{_api_host}:{ROUTER_PORT}/status"
 
-# ngrok 配置
-NGROK_AUTHTOKEN = os.environ.get("NGROK_AUTHTOKEN", "")
-
 _registry_str = os.environ.get("BOT_REGISTRY", "{}")
 try:
     BOT_REGISTRY = json.loads(_registry_str)
@@ -141,7 +138,6 @@ except Exception:
 
 # 【Port 配置統一化】Port 從 config.yaml 讀取，環境變量保留作緊急覆蓋用
 TELEGRAM_GATEWAY_PORT = int(os.environ.get("TELEGRAM_GATEWAY_PORT", _config.get("server", {}).get("telegram_gateway_port", 11440)))
-NGROK_API_PORT = int(os.environ.get("NGROK_API_PORT", _config.get("server", {}).get("ngrok_api_port", 4040)))
 
 AGENTS = _config.get("agents", [])
 DEFAULT_ACTIVE_AGENT = _config.get("default_active_agent", "")

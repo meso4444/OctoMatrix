@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# 安裝 Telegram → AI 遠端控制系統 (ngrok 版) 所需的依賴
+# 安裝 Telegram → AI 遠端控制系統 (long polling 版) 所需的依賴
 # 自動偵測環境 (WSL/Linux/macOS) 並應用適當的安裝方法
 
 set -e
@@ -118,43 +118,6 @@ install_basic_tools() {
         else
             echo "⚠️  無法自動安裝基礎工具，請手動確認已安裝: curl, wget, git, jq, tmux, zstd, ffmpeg"
         fi
-    fi
-}
-
-# ===== ngrok 安裝 =====
-install_ngrok() {
-    echo ""
-    if command -v ngrok &> /dev/null; then
-        echo "✅ ngrok 已安裝: $(ngrok --version)"
-        return
-    fi
-
-    echo "📦 正在安裝 ngrok..."
-
-    if [[ "$ENVIRONMENT" == "macOS" ]]; then
-        # macOS: 使用 brew
-        brew install ngrok
-    elif [[ "$ENVIRONMENT" == "WSL2" || "$ENVIRONMENT" == "Linux" ]]; then
-        # Linux/WSL: 優先使用 apt-get，否則直接下載
-        if command -v apt-get &> /dev/null; then
-            echo "   (使用 apt 安裝)"
-            curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
-            echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
-            sudo apt-get update
-            sudo apt-get install -y ngrok
-        else
-            echo "   (使用直接下載方式)"
-            wget -q https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz
-            sudo tar xvzf ngrok-v3-stable-linux-amd64.tgz -C /usr/local/bin
-            rm ngrok-v3-stable-linux-amd64.tgz
-        fi
-    fi
-
-    if command -v ngrok &> /dev/null; then
-        echo "✅ ngrok 安裝成功"
-    else
-        echo "❌ ngrok 安裝失敗，請參考官網手動安裝: https://ngrok.com/download"
-        exit 1
     fi
 }
 
@@ -369,7 +332,6 @@ print_summary() {
     echo "   • tmux:    $(tmux -V 2>/dev/null || echo '未安裝')"
     echo "   • jq:      $(jq --version 2>/dev/null || echo '未安裝')"
     echo "   • zstd:    $(zstd --version 2>/dev/null | head -n 1 || echo '未安裝')"
-    echo "   • ngrok:   $(ngrok --version 2>/dev/null || echo '未安裝')"
     echo "   • Python:  $(python3 --version 2>/dev/null || echo '未安裝')"
     echo "   • Node.js: $(node --version 2>/dev/null || echo '未安裝')"
     echo ""
@@ -400,7 +362,6 @@ fi
 # 執行安裝步驟
 install_homebrew_if_needed
 install_basic_tools
-install_ngrok
 install_python3_if_needed
 install_python_packages
 install_nodejs

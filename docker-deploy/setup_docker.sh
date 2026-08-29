@@ -79,7 +79,6 @@ ORIG_TZ="${TZ:-Asia/Taipei}"
 ORIG_TELEGRAM_ENABLED="${TELEGRAM_ENABLED:-false}"
 ORIG_TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-}"
 ORIG_TELEGRAM_CHAT_ID="${TELEGRAM_CHAT_ID:-}"
-ORIG_NGROK_AUTHTOKEN="${NGROK_AUTHTOKEN:-}"
 ORIG_DISCORD_ENABLED="${DISCORD_ENABLED:-false}"
 ORIG_DISCORD_TOKEN="${DISCORD_TOKEN:-}"
 ORIG_DISCORD_SERVER_ID="${DISCORD_SERVER_ID:-}"
@@ -96,7 +95,6 @@ TZ="$ORIG_TZ"
 TELEGRAM_ENABLED="$ORIG_TELEGRAM_ENABLED"
 TELEGRAM_BOT_TOKEN="$ORIG_TELEGRAM_BOT_TOKEN"
 TELEGRAM_CHAT_ID="$ORIG_TELEGRAM_CHAT_ID"
-NGROK_AUTHTOKEN="$ORIG_NGROK_AUTHTOKEN"
 DISCORD_ENABLED="$ORIG_DISCORD_ENABLED"
 DISCORD_TOKEN="$ORIG_DISCORD_TOKEN"
 DISCORD_SERVER_ID="$ORIG_DISCORD_SERVER_ID"
@@ -158,11 +156,6 @@ SLACK_APP_TOKEN=$SLACK_APP_TOKEN
 SLACK_BOT_TOKEN=$SLACK_BOT_TOKEN
 SLACK_WORKSPACE_ID=$SLACK_WORKSPACE_ID
 SLACK_CHANNEL_ID=$SLACK_CHANNEL_ID
-
-# =========================================
-# ngrok 配置
-# =========================================
-NGROK_AUTHTOKEN=$NGROK_AUTHTOKEN
 ENVEOF
 }
 
@@ -188,7 +181,7 @@ while true; do
     echo "  🌍 時區 (TZ): $TZ"
     echo "----------------------------------------"
     echo " [U] 👤 設定使用者名稱 (當前: $MATRIX_USERNAME)"
-    echo " [1] 📱 設定 Telegram 與 Ngrok 隧道"
+    echo " [1] 📱 設定 Telegram"
     echo " [2] 💻 設定 Discord"
     echo " [3] ⚡ 設定 Slack"
     echo " [4] 🌍 設定時區 (TZ)"
@@ -228,10 +221,6 @@ while true; do
                 fi
                 read -p "  2. Chat ID [目前/自動: ${DETECTED_CHAT_ID:-$TELEGRAM_CHAT_ID}]: " INPUT_CHAT_ID
                 TELEGRAM_CHAT_ID="${INPUT_CHAT_ID:-${DETECTED_CHAT_ID:-$TELEGRAM_CHAT_ID}}"
-                
-                echo "  🌐 ngrok 配置 (Telegram Webhook 必要項目)"
-                read -p "  3. ngrok Authtoken [目前: ${NGROK_AUTHTOKEN:-未設定}]: " INPUT_NGROK
-                NGROK_AUTHTOKEN="${INPUT_NGROK:-$NGROK_AUTHTOKEN}"
             else
                 TELEGRAM_ENABLED="false"
             fi
@@ -282,7 +271,7 @@ while true; do
             write_env_file
             if [ ! -f "$SCRIPT_DIR/config.${INSTANCE_NAME}.yaml" ]; then
                 echo "⚙️  正在產生基礎設定檔..."
-                python3 "$CONFIG_GENERATOR" "config" "$INSTANCE_NAME" "" "$SCRIPT_DIR" "11440" "4040" "$(whoami)" "12210"
+                python3 "$CONFIG_GENERATOR" "config" "$INSTANCE_NAME" "" "$SCRIPT_DIR" "11440" "$(whoami)" "12210"
             fi
             python3 "$SCRIPT_DIR/../config_wizard.py" "$SCRIPT_DIR/config.${INSTANCE_NAME}.yaml"
             ;;
@@ -329,11 +318,11 @@ for agent in config.get('agents', []):
             echo ""
             if [ ! -f "$SCRIPT_DIR/config.${INSTANCE_NAME}.yaml" ]; then
                 echo "⚙️  正在調用生成器物理落地基礎配置..."
-                python3 "$CONFIG_GENERATOR" "config" "$INSTANCE_NAME" "" "$SCRIPT_DIR" "11440" "4040" "$(whoami)" "12210"
+                python3 "$CONFIG_GENERATOR" "config" "$INSTANCE_NAME" "" "$SCRIPT_DIR" "11440" "$(whoami)" "12210"
                 echo "🤖 啟動設定精靈配置 Agent 與進階參數..."
                 python3 "$SCRIPT_DIR/../config_wizard.py" "$SCRIPT_DIR/config.${INSTANCE_NAME}.yaml"
             fi
-            python3 "$CONFIG_GENERATOR" "compose" "$INSTANCE_NAME" "" "$SCRIPT_DIR" "11440" "4040" "$(whoami)" "12210"
+            python3 "$CONFIG_GENERATOR" "compose" "$INSTANCE_NAME" "" "$SCRIPT_DIR" "11440" "$(whoami)" "12210"
 
             if [ ! -f "$SCRIPT_DIR/awake.${INSTANCE_NAME}.yaml" ]; then
                 echo "awake:" > "$SCRIPT_DIR/awake.${INSTANCE_NAME}.yaml"
@@ -400,7 +389,7 @@ for agent in config.get('agents', []):
                         fi
                         # 重置變數
                         TZ="Asia/Taipei"
-                        TELEGRAM_ENABLED="false"; TELEGRAM_BOT_TOKEN=""; TELEGRAM_CHAT_ID=""; NGROK_AUTHTOKEN=""
+                        TELEGRAM_ENABLED="false"; TELEGRAM_BOT_TOKEN=""; TELEGRAM_CHAT_ID=""
                         DISCORD_ENABLED="false"; DISCORD_TOKEN=""; DISCORD_SERVER_ID=""; DISCORD_CHANNEL_ID=""
                         SLACK_ENABLED="false"; SLACK_APP_TOKEN=""; SLACK_BOT_TOKEN=""; SLACK_WORKSPACE_ID=""; SLACK_CHANNEL_ID=""
                         write_env_file

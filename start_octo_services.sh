@@ -85,11 +85,6 @@ TMUX_SESSION_NAME=$(python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from
 echo "🚀 啟動 OctoMatrix"
 echo "==========================================="
 
-# 生成動態 Webhook Secret
-SECRET_FILE="$SCRIPT_DIR/webhook_secret.token"
-openssl rand -hex 32 > "$SECRET_FILE"
-export WEBHOOK_SECRET_TOKEN=$(cat "$SECRET_FILE")
-
 # 終止現有 session
 if tmux has-session -t "$TMUX_SESSION_NAME" 2>/dev/null; then
     echo "🔄 終止現有 session…"
@@ -181,20 +176,6 @@ tmux send-keys -t "$TMUX_SESSION_NAME:reaper" "$PYTHON_CMD $SCRIPT_DIR/octo_reap
 sleep 1
 tmux send-keys -t "$TMUX_SESSION_NAME:reaper" Enter
 
-if python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import PLATFORMS_ENABLED; print(PLATFORMS_ENABLED.get('telegram', True))" | grep -q "True"; then
-    # Window: ngrok Tunnel
-    echo "☁️  建立安全連線隧道 (ngrok)…"
-    tmux new-window -t "$TMUX_SESSION_NAME" -n "ngrok" -c "$SCRIPT_DIR"
-    tmux send-keys -t "$TMUX_SESSION_NAME:ngrok" "$SCRIPT_DIR/start_ngrok.sh"
-    sleep 1
-    tmux send-keys -t "$TMUX_SESSION_NAME:ngrok" Enter
-
-    echo "⏳ 正在同步網路位址與 Webhook…"
-    sleep 5
-else
-    echo "⚪️ Telegram 已禁用，跳過 Ngrok 啟動"
-fi
-
 # 回到第一個 Agent window
 tmux select-window -t "$TMUX_SESSION_NAME:0"
 
@@ -252,9 +233,6 @@ EOF
 echo "   已啟動中樞服務:"
 echo "      🔀 MC Router (消息標準化 + 原子注入)"
 echo "      🧠 Octo Reaper (電子腦 GHOST 收割者)"
-if python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import PLATFORMS_ENABLED; print(PLATFORMS_ENABLED.get('telegram', True))" | grep -q "True"; then
-    echo "      ☁️  ngrok (Webhook 安全隧道)"
-fi
 echo ""
 echo "   所有 tmux 視窗:"
 tmux list-windows -t "$TMUX_SESSION_NAME" -F "      • Window #{window_index}: #{window_name}"

@@ -5,10 +5,10 @@
 **/.env*
 **/.flask_port*
 **/.last_source*
-**/.ngrok.pid*
 **/.router_port*
 **/.runtime_state*
 **/.last_update*
+**/.telegram_offset*
 **/*.log*
 **/*.token*
 **/*.secret*
@@ -29,7 +29,6 @@
 # 【設定與憑證】 最高等級防外流
 /config.yaml*
 /awake.yaml*
-/webhook_secret.token*
 
 # 【技能包】 僅留存於本地共用空間
 /skills/*.tar.gz
