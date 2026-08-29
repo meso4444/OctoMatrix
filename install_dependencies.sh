@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Install dependencies required for Telegram → AI Remote Control System (ngrok version)
+# Install dependencies required for Telegram → AI Remote Control System (long polling version)
 # Automatically detect environment (WSL/Linux/macOS) and apply appropriate installation method
 
 set -e
@@ -118,43 +118,6 @@ install_basic_tools() {
         else
             echo "⚠️  Unable to automatically install basic tools, please manually verify installed: curl, wget, git, jq, tmux, zstd, ffmpeg"
         fi
-    fi
-}
-
-# ===== ngrok installation =====
-install_ngrok() {
-    echo ""
-    if command -v ngrok &> /dev/null; then
-        echo "✅ ngrok already installed: $(ngrok --version)"
-        return
-    fi
-
-    echo "📦 Installing ngrok..."
-
-    if [[ "$ENVIRONMENT" == "macOS" ]]; then
-        # macOS: Use brew
-        brew install ngrok
-    elif [[ "$ENVIRONMENT" == "WSL2" || "$ENVIRONMENT" == "Linux" ]]; then
-        # Linux/WSL: Prefer apt-get, otherwise download directly
-        if command -v apt-get &> /dev/null; then
-            echo "   (Using apt installation)"
-            curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
-            echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
-            sudo apt-get update
-            sudo apt-get install -y ngrok
-        else
-            echo "   (Using direct download)"
-            wget -q https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz
-            sudo tar xvzf ngrok-v3-stable-linux-amd64.tgz -C /usr/local/bin
-            rm ngrok-v3-stable-linux-amd64.tgz
-        fi
-    fi
-
-    if command -v ngrok &> /dev/null; then
-        echo "✅ ngrok installed successfully"
-    else
-        echo "❌ ngrok installation failed, please manually install from: https://ngrok.com/download"
-        exit 1
     fi
 }
 
@@ -369,7 +332,6 @@ print_summary() {
     echo "   • tmux:    $(tmux -V 2>/dev/null || echo 'Not installed')"
     echo "   • jq:      $(jq --version 2>/dev/null || echo 'Not installed')"
     echo "   • zstd:    $(zstd --version 2>/dev/null | head -n 1 || echo 'Not installed')"
-    echo "   • ngrok:   $(ngrok --version 2>/dev/null || echo 'Not installed')"
     echo "   • Python:  $(python3 --version 2>/dev/null || echo 'Not installed')"
     echo "   • Node.js: $(node --version 2>/dev/null || echo 'Not installed')"
     echo ""
@@ -400,7 +362,6 @@ fi
 # Execute installation steps
 install_homebrew_if_needed
 install_basic_tools
-install_ngrok
 install_python3_if_needed
 install_python_packages
 install_nodejs

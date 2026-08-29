@@ -85,11 +85,6 @@ TMUX_SESSION_NAME=$(python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from
 echo "🚀 Starting OctoMatrix"
 echo "==========================================="
 
-# Generate dynamic Webhook Secret
-SECRET_FILE="$SCRIPT_DIR/webhook_secret.token"
-openssl rand -hex 32 > "$SECRET_FILE"
-export WEBHOOK_SECRET_TOKEN=$(cat "$SECRET_FILE")
-
 # Kill existing session
 if tmux has-session -t "$TMUX_SESSION_NAME" 2>/dev/null; then
     echo "🔄 Killing existing session…"
@@ -181,20 +176,6 @@ tmux send-keys -t "$TMUX_SESSION_NAME:reaper" "$PYTHON_CMD $SCRIPT_DIR/octo_reap
 sleep 1
 tmux send-keys -t "$TMUX_SESSION_NAME:reaper" Enter
 
-if python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import PLATFORMS_ENABLED; print(PLATFORMS_ENABLED.get('telegram', True))" | grep -q "True"; then
-    # Window: ngrok Tunnel
-    echo "☁️  Establishing secure connection tunnel (ngrok)…"
-    tmux new-window -t "$TMUX_SESSION_NAME" -n "ngrok" -c "$SCRIPT_DIR"
-    tmux send-keys -t "$TMUX_SESSION_NAME:ngrok" "$SCRIPT_DIR/start_ngrok.sh"
-    sleep 1
-    tmux send-keys -t "$TMUX_SESSION_NAME:ngrok" Enter
-
-    echo "⏳ Synchronizing network address and Webhook…"
-    sleep 5
-else
-    echo "⚪️ Telegram disabled, skipping Ngrok startup"
-fi
-
 # Back to first Agent window
 tmux select-window -t "$TMUX_SESSION_NAME:0"
 
@@ -252,9 +233,6 @@ EOF
 echo "   Hub services started:"
 echo "      🔀 MC Router (message normalization + atomic injection)"
 echo "      🧠 Octo Reaper (Cyberbrain GHOST reaper)"
-if python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import PLATFORMS_ENABLED; print(PLATFORMS_ENABLED.get('telegram', True))" | grep -q "True"; then
-    echo "      ☁️  ngrok (Webhook secure tunnel)"
-fi
 echo ""
 echo "   All tmux windows:"
 tmux list-windows -t "$TMUX_SESSION_NAME" -F "      • Window #{window_index}: #{window_name}"

@@ -19,13 +19,6 @@ RUN set -eux; \
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs
 
-# Install Ngrok
-RUN curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | \
-    tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && \
-    echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | \
-    tee /etc/apt/sources.list.d/ngrok.list && \
-    apt-get update && apt-get install -y ngrok
-
 # Install AI Agent CLIs
 RUN npm install -g @google/gemini-cli @anthropic-ai/claude-code @openai/codex && \
     echo "✅ AI CLI tools installed successfully" && \
@@ -64,7 +57,6 @@ COPY setup_agent_env.py /app/octomatrix/
 COPY start_octo_services.sh /app/octomatrix/
 COPY status_octo_services.sh /app/octomatrix/
 COPY stop_octo_services.sh /app/octomatrix/
-COPY start_ngrok.sh /app/octomatrix/
 
 # 6. Copy templates and rules
 COPY message_templates.yaml /app/octomatrix/
@@ -108,7 +100,6 @@ RUN chown -R $BUILD_USER:$BUILD_USER /app && \
     chmod +x /app/octomatrix/docker-deploy/scripts/entrypoint.sh && \
     chmod +x /app/octomatrix/start_octo_services.sh && \
     chmod +x /app/octomatrix/status_octo_services.sh && \
-    chmod +x /app/octomatrix/stop_octo_services.sh && \
-    chmod +x /app/octomatrix/start_ngrok.sh
+    chmod +x /app/octomatrix/stop_octo_services.sh
 
 CMD ["/app/octomatrix/docker-deploy/scripts/entrypoint.sh"]

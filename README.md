@@ -94,11 +94,6 @@ Through deep system prompts and contextual settings, each Agent is imbued with a
     2. Send `/start` to the bot's chat in Telegram.
     3. **The configuration wizard will automatically detect** and retrieve the chat ID.
 
-*   **C. ngrok Authtoken**
-    1. Register and log in to [ngrok](https://dashboard.ngrok.com/get-started/your-authtoken).
-    2. Find **Your Authtoken** in the left column of the page.
-    3. Copy the Token and enter it in the configuration wizard later.
-
 ### 2. Obtaining Discord Credentials
 
 *   **A. Create a Dedicated Server (Prerequisite)**
@@ -204,7 +199,7 @@ After dependencies are installed, start the interactive configuration wizard. Yo
 **Wizard Main Menu Features:**
 *   **[1] 👤 Set Username (Username)**: Set your preferred name, which the Agents will use to address you.
 *   **[2]-[4] Communication Channel Setup**: Guide for binding Telegram, Discord, or Slack tokens, and you can toggle specific channels anytime.
-*   **[5] 🌍 Network & Ports Setup (Ports)**: Customize local port numbers for Router, Gateway, and ngrok tunnel to avoid conflicts with other services on your host.
+*   **[5] 🌍 Network & Ports Setup (Ports)**: Customize local port numbers for Router and Gateway to avoid conflicts with other services on your host.
 *   **[6] 🤖 Configure AI Agent Squadron & Advanced Parameters**:
     *   **Configure Agent**: Name the AI, specify its **usecase** (for AI awareness) and **description** (for menu display to users), and freely combine AI engines (Gemini, Claude, Codex, or agy (Antigravity)) with models.
         > **Note:** It is recommended to switch to the agy (Antigravity) engine for better stability, as the gemini CLI no longer supports Pro subscription users.
@@ -296,7 +291,7 @@ OctoMatrix features an advanced lateral communication mechanism that allows AI t
 
 OctoMatrix uses connection architectures that don't require breaking the host's firewall for all three major communication platforms, ensuring system privacy and operational security:
 
-*   **Telegram (Webhook Tunnel)**: Creates a secure HTTPS reverse tunnel through dynamically configured `ngrok`. The host doesn't need to open any ports, and the Webhook URL is dynamically generated with each startup, significantly reducing the risk of probe attacks.
+*   **Telegram (Long Polling)**: Actively long-polls the Telegram server for messages. The host doesn't need to open any ports, and no outbound tunnel is ever established, ruling out probe-attack exposure by design.
 *   **Discord (WebSocket Direct Connection)**: Uses a real-time bidirectional communication protocol based on WebSocket. The host acts purely as a Client connecting outbound, penetrating intranet restrictions.
 *   **Slack (Socket Mode)**: Uses enterprise-grade Socket Mode connections. Doesn't rely on public Request URLs; all events and commands are transmitted bidirectionally through secure tunnels.
 *   **Privilege Isolation & Sandboxing**: Regardless of which channel the message comes from, Agents run under dedicated Linux user accounts and independent `agent_home` directories. This design strictly restricts the Agent to the least privilege of that user; it only has full operational rights within its `agent_home` directory, while write permissions for the system-provided scripts and core documents have been completely stripped, precisely preventing any risk of unauthorized modifications from the system's lowest level.

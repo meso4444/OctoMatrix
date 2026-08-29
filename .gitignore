@@ -5,10 +5,10 @@
 **/.env*
 **/.flask_port*
 **/.last_source*
-**/.ngrok.pid*
 **/.router_port*
 **/.runtime_state*
 **/.last_update*
+**/.telegram_offset*
 **/*.log*
 **/*.token*
 **/*.secret*
@@ -29,7 +29,6 @@
 # [Configs and Credentials] Maximum leakage prevention
 /config.yaml*
 /awake.yaml*
-/webhook_secret.token*
 
 # [Skill Packages] Local shared space only
 /skills/*.tar.gz

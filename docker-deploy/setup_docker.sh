@@ -80,7 +80,6 @@ ORIG_TZ="${TZ:-Asia/Taipei}"
 ORIG_TELEGRAM_ENABLED="${TELEGRAM_ENABLED:-false}"
 ORIG_TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-}"
 ORIG_TELEGRAM_CHAT_ID="${TELEGRAM_CHAT_ID:-}"
-ORIG_NGROK_AUTHTOKEN="${NGROK_AUTHTOKEN:-}"
 ORIG_DISCORD_ENABLED="${DISCORD_ENABLED:-false}"
 ORIG_DISCORD_TOKEN="${DISCORD_TOKEN:-}"
 ORIG_DISCORD_SERVER_ID="${DISCORD_SERVER_ID:-}"
@@ -97,7 +96,6 @@ TZ="$ORIG_TZ"
 TELEGRAM_ENABLED="$ORIG_TELEGRAM_ENABLED"
 TELEGRAM_BOT_TOKEN="$ORIG_TELEGRAM_BOT_TOKEN"
 TELEGRAM_CHAT_ID="$ORIG_TELEGRAM_CHAT_ID"
-NGROK_AUTHTOKEN="$ORIG_NGROK_AUTHTOKEN"
 DISCORD_ENABLED="$ORIG_DISCORD_ENABLED"
 DISCORD_TOKEN="$ORIG_DISCORD_TOKEN"
 DISCORD_SERVER_ID="$ORIG_DISCORD_SERVER_ID"
@@ -159,11 +157,6 @@ SLACK_APP_TOKEN=$SLACK_APP_TOKEN
 SLACK_BOT_TOKEN=$SLACK_BOT_TOKEN
 SLACK_WORKSPACE_ID=$SLACK_WORKSPACE_ID
 SLACK_CHANNEL_ID=$SLACK_CHANNEL_ID
-
-# =========================================
-# ngrok Configuration
-# =========================================
-NGROK_AUTHTOKEN=$NGROK_AUTHTOKEN
 ENVEOF
 }
 
@@ -189,7 +182,7 @@ while true; do
     echo "  🌍 Timezone (TZ): $TZ"
     echo "----------------------------------------"
     echo " [U] 👤 Configure Username (Current: $MATRIX_USERNAME)"
-    echo " [1] 📱 Configure Telegram & Ngrok Tunnel"
+    echo " [1] 📱 Configure Telegram"
     echo " [2] 💻 Configure Discord"
     echo " [3] ⚡ Configure Slack"
     echo " [4] 🌍 Configure Timezone (TZ)"
@@ -229,10 +222,6 @@ while true; do
                 fi
                 read -p "  2. Chat ID [Current/Auto: ${DETECTED_CHAT_ID:-$TELEGRAM_CHAT_ID}]: " INPUT_CHAT_ID
                 TELEGRAM_CHAT_ID="${INPUT_CHAT_ID:-${DETECTED_CHAT_ID:-$TELEGRAM_CHAT_ID}}"
-                
-                echo "  🌐 ngrok Configuration (Required for Telegram Webhook)"
-                read -p "  3. ngrok Authtoken [Current: ${NGROK_AUTHTOKEN:-Not Set}]: " INPUT_NGROK
-                NGROK_AUTHTOKEN="${INPUT_NGROK:-$NGROK_AUTHTOKEN}"
             else
                 TELEGRAM_ENABLED="false"
             fi
@@ -283,7 +272,7 @@ while true; do
             write_env_file
             if [ ! -f "$SCRIPT_DIR/config.${INSTANCE_NAME}.yaml" ]; then
                 echo "⚙️  Generating base configuration file..."
-                python3 "$CONFIG_GENERATOR" "config" "$INSTANCE_NAME" "" "$SCRIPT_DIR" "11440" "4040" "$(whoami)" "12210"
+                python3 "$CONFIG_GENERATOR" "config" "$INSTANCE_NAME" "" "$SCRIPT_DIR" "11440" "$(whoami)" "12210"
             fi
             python3 "$SCRIPT_DIR/../config_wizard.py" "$SCRIPT_DIR/config.${INSTANCE_NAME}.yaml"
             ;;
@@ -331,11 +320,11 @@ for agent in config.get('agents', []):
             echo ""
             if [ ! -f "$SCRIPT_DIR/config.${INSTANCE_NAME}.yaml" ]; then
                 echo "⚙️  Invoking generator for base configuration..."
-                python3 "$CONFIG_GENERATOR" "config" "$INSTANCE_NAME" "" "$SCRIPT_DIR" "11440" "4040" "$(whoami)" "12210"
+                python3 "$CONFIG_GENERATOR" "config" "$INSTANCE_NAME" "" "$SCRIPT_DIR" "11440" "$(whoami)" "12210"
                 echo "🤖 Launching Wizard to configure Agents and advanced parameters..."
                 python3 "$SCRIPT_DIR/../config_wizard.py" "$SCRIPT_DIR/config.${INSTANCE_NAME}.yaml"
             fi
-            python3 "$CONFIG_GENERATOR" "compose" "$INSTANCE_NAME" "" "$SCRIPT_DIR" "11440" "4040" "$(whoami)" "12210"
+            python3 "$CONFIG_GENERATOR" "compose" "$INSTANCE_NAME" "" "$SCRIPT_DIR" "11440" "$(whoami)" "12210"
 
             if [ ! -f "$SCRIPT_DIR/awake.${INSTANCE_NAME}.yaml" ]; then
                 echo "awake:" > "$SCRIPT_DIR/awake.${INSTANCE_NAME}.yaml"
@@ -402,7 +391,7 @@ for agent in config.get('agents', []):
                         fi
                         # Reset variables
                         TZ="Asia/Taipei"
-                        TELEGRAM_ENABLED="false"; TELEGRAM_BOT_TOKEN=""; TELEGRAM_CHAT_ID=""; NGROK_AUTHTOKEN=""
+                        TELEGRAM_ENABLED="false"; TELEGRAM_BOT_TOKEN=""; TELEGRAM_CHAT_ID=""
                         DISCORD_ENABLED="false"; DISCORD_TOKEN=""; DISCORD_SERVER_ID=""; DISCORD_CHANNEL_ID=""
                         SLACK_ENABLED="false"; SLACK_APP_TOKEN=""; SLACK_BOT_TOKEN=""; SLACK_WORKSPACE_ID=""; SLACK_CHANNEL_ID=""
                         write_env_file

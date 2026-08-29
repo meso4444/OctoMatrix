@@ -40,7 +40,6 @@ CONFIG_FILE="$SCRIPT_DIR/config.py"
 # Read configuration
 TMUX_SESSION_NAME=$(python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import TMUX_SESSION_NAME; print(TMUX_SESSION_NAME)")
 ROUTER_PORT=$(python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import ROUTER_PORT; print(ROUTER_PORT)")
-TELEGRAM_GATEWAY_PORT=$(python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import TELEGRAM_GATEWAY_PORT; print(TELEGRAM_GATEWAY_PORT)")
 
 echo "📊 OctoMatrix system status (Multi-Agent)"
 echo "⏰ Check time: $(date '+%Y-%m-%d %H:%M:%S')"
@@ -65,16 +64,5 @@ if [ "$API_DATA" != "failed" ]; then
     echo "   ⭐ Currently active Agent: $ACTIVE"
 else
     echo "   ❌ Cannot connect to API service"
-fi
-echo ""
-
-# 3. Check ngrok
-echo "3️⃣  Tunnel status (ngrok):"
-if pgrep -f "ngrok http $TELEGRAM_GATEWAY_PORT" > /dev/null; then
-    echo "   ✅ Running"
-    PUBLIC_URL=$(curl -s http://localhost:4040/api/tunnels | python3 -c "import sys, json; data=json.load(sys.stdin); print(data['tunnels'][0]['public_url'] if data['tunnels'] else 'N/A')" 2>/dev/null)
-    echo "   🌍 Public address: $PUBLIC_URL"
-else
-    echo "   ❌ Not started"
 fi
 echo ""
