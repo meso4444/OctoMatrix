@@ -306,6 +306,12 @@ class CommandHandler:
                 try:
                     with open(template_path, 'r', encoding='utf-8') as f:
                         gen_template = f.read()
+                    # /sys_refresh 只是重建既有 Agent 的規範文件，不是首次建立，不該每次都
+                    # 重新觸發 Avatar 生成任務；此段落只在 setup_agent_env.py 的首次建立
+                    # 流程才需要完整保留 (Kenzan 2026-08-30 要求排除)。
+                    avatar_marker = "=== 視覺形象建構任務 ==="
+                    if avatar_marker in gen_template:
+                        gen_template = gen_template.split(avatar_marker, 1)[0].rstrip() + "\n"
                     check_prompt = f"{SYS_PREFIX}\n" + (gen_template.replace('{agent_name}', t_agent)
                                          .replace('{agent_usecase}', usecase)
                                          .replace('{engine_doc_name}', engine_doc_name)
