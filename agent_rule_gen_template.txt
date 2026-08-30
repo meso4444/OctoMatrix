@@ -1,4 +1,4 @@
-[The following task is highest priority and must not be interrupted by any other task or message]
+[The following task is highest priority. If interrupted, proceed on your own to finish it without asking whether to continue, to avoid leaving the specification files or avatar incomplete.]
 
 You are {agent_name}.
 Your responsibility description is as follows:
