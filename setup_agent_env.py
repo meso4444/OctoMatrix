@@ -137,6 +137,26 @@ def setup_agent_dirs(agent_config, script_dir):
     if os.path.exists(touch_path):
         subprocess.run(['chmod', '666', touch_path], check=False)
 
+    # Pre-create avatar.md, following the same pattern as engine_doc_name above:
+    # owned by the system account, mode 666. The avatar/ directory itself is 755
+    # (see e3fb3dd, "absolute avatar locking mechanism" — only the system account
+    # may create/overwrite avatar image assets there, so the agent's own OS
+    # account can't bypass the Router API and tamper with images directly), but
+    # that also makes it impossible for the agent to "create" any file in that
+    # directory at all, including the plain-text avatar.md motivation notes.
+    # Pre-creating an empty file here means the agent only ever needs to
+    # "overwrite an existing file's contents" rather than "create a new file in
+    # the directory," sidestepping the directory permission while leaving the
+    # avatar image locking mechanism itself untouched (2026-08-31 fix for the
+    # bug Kenzan reported: new agents can't write avatar.md).
+    avatar_md_path = os.path.join(home, 'avatar', 'avatar.md')
+    if not os.path.exists(avatar_md_path):
+        try:
+            with open(avatar_md_path, 'a'): pass
+        except Exception: pass
+    if os.path.exists(avatar_md_path):
+        subprocess.run(['chmod', '666', avatar_md_path], check=False)
+
     knowledge_files = [
         ('tools/avatar/AGENT_AVATAR_GUIDE.md', 'AGENT_AVATAR_GUIDE.md'),
         ('tools/awake/AWAKE_FUNCTIONALITY.md', 'AWAKE_FUNCTIONALITY.md')
