@@ -307,6 +307,14 @@ class CommandHandler:
                 try:
                     with open(template_path, 'r', encoding='utf-8') as f:
                         gen_template = f.read()
+                    # /sys_refresh only rebuilds an existing agent's spec files; it isn't
+                    # first-time creation, so it shouldn't re-trigger the avatar generation
+                    # task every time. Keep the full template (including this section) only
+                    # for setup_agent_env.py's first-time creation flow (Kenzan asked this
+                    # be excluded on 2026-08-30).
+                    avatar_marker = "=== Visual Identity Construction Task ==="
+                    if avatar_marker in gen_template:
+                        gen_template = gen_template.split(avatar_marker, 1)[0].rstrip() + "\n"
                     check_prompt = f"{SYS_PREFIX}\n" + (gen_template.replace('{agent_name}', t_agent)
                                          .replace('{agent_usecase}', usecase)
                                          .replace('{engine_doc_name}', engine_doc_name)
