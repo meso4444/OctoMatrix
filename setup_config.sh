@@ -114,43 +114,51 @@ except: sys.exit(2)
 "
 }
 
+# --- Single-quote-escape a value so a space or shell metacharacter can't
+#     make a `source`d reader misparse this line as an assignment plus a
+#     stray command (2026-08-30 production incident: a nickname with a
+#     space crash-looped the VM on boot; see Solas's report) ---
+_quote_env_value() {
+    printf "'%s'" "${1//\'/\'\\\'\'}"
+}
+
 # --- Write .env function ---
 write_env_file() {
     cat > "$ENV_FILE" << EOF
 # =========================================
 # User Information
 # =========================================
-MATRIX_USERNAME=$MATRIX_USERNAME
+MATRIX_USERNAME=$(_quote_env_value "$MATRIX_USERNAME")
 
 # =========================================
 # Telegram Configuration
 # =========================================
-TELEGRAM_ENABLED=$TELEGRAM_ENABLED
-TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN
-TELEGRAM_CHAT_ID=$TELEGRAM_CHAT_ID
+TELEGRAM_ENABLED=$(_quote_env_value "$TELEGRAM_ENABLED")
+TELEGRAM_BOT_TOKEN=$(_quote_env_value "$TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID=$(_quote_env_value "$TELEGRAM_CHAT_ID")
 
 # =========================================
 # Discord Configuration (Optional)
 # =========================================
-DISCORD_ENABLED=$DISCORD_ENABLED
-DISCORD_TOKEN=$DISCORD_TOKEN
-DISCORD_SERVER_ID=$DISCORD_SERVER_ID
-DISCORD_CHANNEL_ID=$DISCORD_CHANNEL_ID
+DISCORD_ENABLED=$(_quote_env_value "$DISCORD_ENABLED")
+DISCORD_TOKEN=$(_quote_env_value "$DISCORD_TOKEN")
+DISCORD_SERVER_ID=$(_quote_env_value "$DISCORD_SERVER_ID")
+DISCORD_CHANNEL_ID=$(_quote_env_value "$DISCORD_CHANNEL_ID")
 
 # =========================================
 # Slack Configuration (Optional)
 # =========================================
-SLACK_ENABLED=$SLACK_ENABLED
-SLACK_APP_TOKEN=$SLACK_APP_TOKEN
-SLACK_BOT_TOKEN=$SLACK_BOT_TOKEN
-SLACK_WORKSPACE_ID=$SLACK_WORKSPACE_ID
-SLACK_CHANNEL_ID=$SLACK_CHANNEL_ID
+SLACK_ENABLED=$(_quote_env_value "$SLACK_ENABLED")
+SLACK_APP_TOKEN=$(_quote_env_value "$SLACK_APP_TOKEN")
+SLACK_BOT_TOKEN=$(_quote_env_value "$SLACK_BOT_TOKEN")
+SLACK_WORKSPACE_ID=$(_quote_env_value "$SLACK_WORKSPACE_ID")
+SLACK_CHANNEL_ID=$(_quote_env_value "$SLACK_CHANNEL_ID")
 
 # =========================================
 # MC Router Configuration
 # =========================================
 ROUTER_HOST=127.0.0.1
-ROUTER_PORT=$ROUTER_PORT
+ROUTER_PORT=$(_quote_env_value "$ROUTER_PORT")
 EOF
 }
 
