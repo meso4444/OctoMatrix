@@ -135,6 +135,22 @@ def setup_agent_dirs(agent_config, script_dir):
     if os.path.exists(touch_path):
         subprocess.run(['chmod', '666', touch_path], check=False)
 
+    # 預先建立 avatar.md，比照上面 engine_doc_name 的做法設為系統帳戶持有、666
+    # 權限。avatar/ 目錄本身是 755 (見 e3fb3dd「絕對 avatar 鎖定機制」，只讓系統
+    # 帳戶能在此目錄下新建/覆寫 avatar 圖檔資產，防止 Agent 自己的 OS 帳戶繞過
+    # Router API 直接竄改圖檔)，但這連帶讓 Agent 完全無法在該目錄「新建」任何
+    # 檔案，包含純文字的 avatar.md 動機自述筆記。預先在此建立空檔並開 666，讓
+    # Agent 之後只需要「覆寫既有檔案內容」而非「在目錄下新建檔案」，藉此繞過
+    # 目錄權限限制，同時完全不影響 avatar 圖檔本身的鎖定機制
+    # (2026-08-31 修復 Kenzan 回報的新 Agent 無法寫入 avatar.md 問題)。
+    avatar_md_path = os.path.join(home, 'avatar', 'avatar.md')
+    if not os.path.exists(avatar_md_path):
+        try:
+            with open(avatar_md_path, 'a'): pass
+        except Exception: pass
+    if os.path.exists(avatar_md_path):
+        subprocess.run(['chmod', '666', avatar_md_path], check=False)
+
     knowledge_files = [
         ('tools/avatar/AGENT_AVATAR_GUIDE.md', 'AGENT_AVATAR_GUIDE.md'),
         ('tools/awake/AWAKE_FUNCTIONALITY.md', 'AWAKE_FUNCTIONALITY.md')
