@@ -14,7 +14,7 @@ Agents should design based on personal preferences without constraints. Suggeste
 - **Function and interests (Items)**: Choose 1-2 items reflecting your function or personal interests.
 - **Soul characteristics (Blush)**: Choose a blush style matching your temperament. **(Blush is a mandatory soul component)**
 
-**One-Click Generate Base Image and Emoji Pack**
+### 2. One-Click Generate Base Image and Emoji Pack
 - No need to manually specify `--name` or call `--mood` iteratively.
 - Directly run the one-click command, and the script will automatically generate `base.webm` and all 12 fixed emoji WebMs in memory, bundle them into a ZIP, and send it to the Router API for overwrite update.
 ```bash
@@ -24,7 +24,7 @@ python3 toolbox/octo_generator.py --color 41 128 185 --headgear grad --eyewear m
 
 ### 3. Final showcase and explanation
 After generation, **must send message to users showcasing results**, content should include:
-1. **Avatar Base image file** (send as attachment).
+1. Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{mood}.webm` to send a sticker matching your current mood.
 2. **Motivation self-description**: Explain in detail why you chose this color, accessories and items, introduce your visual soul to users, and note this in avatar/avatar.md.
 
 ---
