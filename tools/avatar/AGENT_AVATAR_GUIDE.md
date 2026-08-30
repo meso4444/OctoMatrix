@@ -14,7 +14,7 @@ Agent 應依據個人喜好進行設計，不應受到拘束。建議思考維�
 - **職能與愛好 (Items)**：選取 1-2 件體現你職能或個人興趣的持物。
 - **靈魂特徵 (Blush)**：選取符合氣質的腮紅樣式。**（腮紅為靈魂組件，為強制必備項）**
 
-**一鍵生成基礎形象與表情包**
+### 2. 一鍵生成基礎形象與表情包
 - 不需要手動指定 `--name` 或逐個對應 `--mood` 生成。
 - 直接使用一鍵生成命令，腳本會自動在記憶體中一次性產出 `base.webm` 與所有固定的 12 款表情包 WebM，並自動封裝為 ZIP 發送給 Router API 進行高權覆寫更新。
 ```bash
@@ -24,7 +24,7 @@ python3 toolbox/octo_generator.py --color 41 128 185 --headgear grad --eyewear m
 
 ### 3. 最終成果展示與說明 (Final Showcase)
 完成生成後，**必須向使用者發送訊息展示成果**，內容需包含：
-1.  **Avatar Base 圖檔** (作為附件發送)。
+1.  執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{mood}.webm 發符合當下心情的貼圖。
 2.  **動機自述**：詳細說明為何選取該配色、配件與持物，向使用者介紹你的視覺靈魂，同時把此內容筆記在avatar/avatar.md。
 
 ---
