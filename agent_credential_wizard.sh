@@ -306,17 +306,34 @@ run_container_auth() {
         ;;
       4)
         echo ""
-        echo "🚀 Starting Antigravity CLI authentication..."
+        echo "🚀 Starting Antigravity CLI authentication (via a temporary container)..."
         echo "📂 Auth path: $CONTAINER_HOME"
         echo "💡 Hint: Credentials will be stored in $CONTAINER_HOME/.gemini"
         echo ""
-        if HOME="$CONTAINER_HOME" agy --dangerously-skip-permissions; then
+        # agy's credential storage backend detects whether it's running in a
+        # container: run directly on the host, if the host has a real D-Bus
+        # session/system Keyring (e.g. a desktop environment), agy stores the
+        # credential in the system Keyring instead of a file, completely
+        # independent of the $HOME override. That credential then can't be
+        # handed off to the real deployment container via the mounted folder.
+        # Running the auth step inside a temporary container instead makes agy
+        # correctly detect a container environment and fall back to file-based
+        # storage, so the resulting credential file ends up exactly where the
+        # real container expects it.
+        if ! command -v docker &> /dev/null; then
+          echo "❌ docker not found. agy authentication needs to run inside a temporary container, please install docker first"
+        elif docker run --rm -it \
+            -v "$CONTAINER_HOME:/home/$(whoami)" \
+            -e HOME="/home/$(whoami)" \
+            python:3.11-slim \
+            bash -c 'apt-get update -qq && apt-get install -y -qq curl >/dev/null 2>&1 && curl -fsSL https://antigravity.google/cli/install.sh | bash >/dev/null 2>&1 && "$HOME/.local/bin/agy" --dangerously-skip-permissions'; then
+          chown -R "$(id -u):$(id -g)" "$CONTAINER_HOME" 2>/dev/null || sudo chown -R "$(id -u):$(id -g)" "$CONTAINER_HOME" 2>/dev/null || true
           echo ""
           echo "✅ Antigravity authentication complete!"
           echo "📦 Credentials stored at: $CONTAINER_HOME/.gemini"
         else
           echo ""
-          echo "⚠️  Error occurred during authentication, please check directory permissions"
+          echo "⚠️  Error occurred during authentication, please check that docker is working, or check directory permissions"
           echo "   Try running: sudo chmod 777 $CONTAINER_HOME"
         fi
         ;;
