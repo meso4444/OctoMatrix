@@ -298,17 +298,30 @@ run_container_auth() {
         ;;
       4)
         echo ""
-        echo "🚀 啟動 Antigravity CLI 認證..."
+        echo "🚀 啟動 Antigravity CLI 認證（透過臨時容器執行）..."
         echo "📂 認證路徑: $CONTAINER_HOME"
         echo "💡 提示: 認證將存放在 $CONTAINER_HOME/.gemini"
         echo ""
-        if HOME="$CONTAINER_HOME" agy --dangerously-skip-permissions; then
+        # agy 的憑證儲存後端會偵測是否處於容器環境：直接在 host 執行時，
+        # 若 host 有真實的 D-Bus session/系統 Keyring（例如有跑桌面環境），
+        # agy 會把憑證存進系統 Keyring 而不是檔案，跟 $HOME 覆寫完全無關，
+        # 這樣認證出來的憑證無法透過掛載資料夾傳給正式部署容器使用。改成
+        # 在一個臨時容器裡執行認證，讓 agy 正確偵測到容器環境改用檔案式
+        # 儲存，存下來的憑證檔案位置才會跟正式容器讀取的位置一致。
+        if ! command -v docker &> /dev/null; then
+          echo "❌ 找不到 docker，agy 認證需要透過臨時容器執行，請先安裝 docker"
+        elif docker run --rm -it \
+            -v "$CONTAINER_HOME:/home/$(whoami)" \
+            -e HOME="/home/$(whoami)" \
+            python:3.11-slim \
+            bash -c 'apt-get update -qq && apt-get install -y -qq curl >/dev/null 2>&1 && curl -fsSL https://antigravity.google/cli/install.sh | bash >/dev/null 2>&1 && "$HOME/.local/bin/agy" --dangerously-skip-permissions'; then
+          chown -R "$(id -u):$(id -g)" "$CONTAINER_HOME" 2>/dev/null || sudo chown -R "$(id -u):$(id -g)" "$CONTAINER_HOME" 2>/dev/null || true
           echo ""
           echo "✅ Antigravity 認證完成！"
           echo "📦 憑證已存放至: $CONTAINER_HOME/.gemini"
         else
           echo ""
-          echo "⚠️  認證過程中出現錯誤，請檢查目錄權限"
+          echo "⚠️  認證過程中出現錯誤，請檢查 docker 是否可正常執行、或目錄權限"
           echo "   嘗試執行: sudo chmod 777 $CONTAINER_HOME"
         fi
         ;;
