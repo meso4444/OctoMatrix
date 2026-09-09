@@ -19,6 +19,19 @@
 set -e
 
 # ==============================================================================
+# Flag parsing: --yes / -y enables non-interactive mode (skips the setup
+# wizard that would otherwise auto-launch after dependency installation)
+# ==============================================================================
+NONINTERACTIVE=0
+for arg in "$@"; do
+    case "$arg" in
+        --yes|-y)
+            NONINTERACTIVE=1
+            ;;
+    esac
+done
+
+# ==============================================================================
 # Environment Initialization: Dynamically locate project root and mount virtual environment
 # ==============================================================================
 if [ -z "$VIRTUAL_ENV" ]; then
@@ -308,6 +321,13 @@ install_ai_cli_tools() {
 
 # ===== Launch setup wizard =====
 start_setup_wizard() {
+    if [ "$NONINTERACTIVE" = "1" ]; then
+        echo ""
+        echo "✅ Dependencies installed (non-interactive mode, setup wizard skipped)"
+        echo "   Run ./setup_config.sh manually afterwards to complete configuration"
+        return
+    fi
+
     echo ""
     echo "🚀 Dependency installation complete! Launching setup wizard..."
     sleep 1

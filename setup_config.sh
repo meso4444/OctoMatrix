@@ -17,6 +17,17 @@
 # OctoMatrix Interactive Configuration Wizard
 
 # ==============================================================================
+# Guard: exit immediately when stdin is not a TTY, so the main menu loop
+# doesn't spin forever redrawing itself when input can never be read
+# (e.g. mistakenly invoked from CI/automation, or a non-interactive SSH session)
+# ==============================================================================
+if [ ! -t 0 ]; then
+    echo "❌ Detected a non-interactive terminal (non-TTY). setup_config.sh requires interactive input, aborting."
+    echo "   Please run ./setup_config.sh manually in an interactive terminal to complete configuration."
+    exit 1
+fi
+
+# ==============================================================================
 # Environment Initialization: Dynamically locate project root and mount virtual environment
 # ==============================================================================
 if [ -z "$VIRTUAL_ENV" ]; then
