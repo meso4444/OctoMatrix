@@ -182,6 +182,9 @@ OctoMatrix 簡化了繁瑣的手動編輯設定檔，提供了友善的互動式
 
 ### 1. 取得原始碼與安裝環境依賴
 首先，取得專案程式碼，並執行內建的安裝腳本，系統會自動安裝所需的 Python 套件、Node.js 以及各家 AI CLI 工具。
+
+> 💡 若是全新的機器（例如剛建立的雲端 VM），系統可能未預裝 `git`，請先執行 `sudo apt-get update && sudo apt-get install -y git`（Debian/Ubuntu）再繼續下面的步驟。
+
 ```bash
 git clone -b zh-version https://github.com/meso4444/OctoMatrix.git
 cd OctoMatrix
