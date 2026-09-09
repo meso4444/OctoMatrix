@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [zh-version, main]
+  pull_request:
+    branches: [zh-version, main]
+
+jobs:
+  syntax-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: py_compile all Python files
+        run: |
+          find . -name "*.py" -not -path "./.git/*" -not -path "./agent_home/*" -print0 \
+            | xargs -0 -n1 python3 -m py_compile
+      - name: bash -n all shell scripts
+        run: |
+          find . -name "*.sh" -not -path "./.git/*" -not -path "./agent_home/*" -print0 \
+            | xargs -0 -n1 bash -n
+
+  bilingual-file-list-diff:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Diff tracked file list against counterpart language branch
+        run: |
+          CURRENT_BRANCH="${GITHUB_REF#refs/heads/}"
+          if [ "$CURRENT_BRANCH" = "zh-version" ]; then
+            COUNTERPART="main"
+          elif [ "$CURRENT_BRANCH" = "main" ]; then
+            COUNTERPART="zh-version"
+          else
+            echo "Not a language branch, skipping."
+            exit 0
+          fi
+          git fetch origin "$COUNTERPART"
+          diff <(git ls-files | sort) <(git ls-tree -r --name-only "origin/$COUNTERPART" | sort) || {
+            echo "::error::Tracked file list diverged from $COUNTERPART branch (zh/en repos should stay structurally aligned)"
+            exit 1
+          }
+          echo "File lists match between $CURRENT_BRANCH and $COUNTERPART."
