@@ -2,6 +2,12 @@ FROM python:3.11-slim
 
 # 動態指定容器用戶名（預設: appuser，可在 build 時覆蓋）
 ARG BUILD_USER=appuser
+# 容器內使用者的 UID/GID 需要跟 host 端實際擁有 container_home/{instance} 的使用者一致，
+# 否則 bind mount 進容器的 /home/{user} 會因為 UID 對不上被拒寫入（useradd 不指定 UID 時，
+# 全新 image 裡一律固定拿到 1000，跟 host 端實際使用者的 UID 無關，這正是 host 端若不是
+# UID 1000 的使用者在跑就會撞到權限問題的根因）
+ARG BUILD_UID=1000
+ARG BUILD_GID=1000
 
 # 安裝系統工具（包括 gosu 用於降權）
 RUN apt-get update && apt-get install -y \
@@ -31,8 +37,10 @@ RUN curl -fsSL https://antigravity.google/cli/install.sh | bash && \
     echo "✅ agy CLI installed successfully" && \
     which agy
 
-# 建立非 root 用戶（使用動態指定的用戶名）
-RUN useradd -m -s /bin/bash $BUILD_USER 
+# 建立非 root 用戶（使用動態指定的用戶名與 UID/GID，確保跟 host 端 bind mount 進來的
+# container_home/{instance} 目錄擁有者對得上；若剛好跟系統既有 GID 衝突就沿用該群組）
+RUN groupadd -g $BUILD_GID $BUILD_USER 2>/dev/null || true && \
+    useradd -m -u $BUILD_UID -g $BUILD_GID -s /bin/bash $BUILD_USER
 
 # 【鏡像固化】只複製必要的生產代碼
 RUN mkdir -p /app/octomatrix/docker-deploy/scripts
