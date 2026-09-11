@@ -2,6 +2,13 @@ FROM python:3.11-slim
 
 # Dynamically specify the container username (default: appuser, can be overridden during build)
 ARG BUILD_USER=appuser
+# The container-internal user's UID/GID must match whichever host user actually owns
+# container_home/{instance}, otherwise the bind mount into /home/{user} gets write access
+# denied due to a UID mismatch (useradd without an explicit UID always lands on 1000 in a
+# fresh image, regardless of what the host-side user's UID actually is — that's the root
+# cause whenever the host-side deploying user isn't UID 1000).
+ARG BUILD_UID=1000
+ARG BUILD_GID=1000
 
 # Install system tools (including gosu for privilege de-escalation)
 RUN apt-get update && apt-get install -y \
@@ -31,8 +38,11 @@ RUN curl -fsSL https://antigravity.google/cli/install.sh | bash && \
     echo "✅ agy CLI installed successfully" && \
     which agy
 
-# Create non-root user (using the dynamically specified username)
-RUN useradd -m -s /bin/bash $BUILD_USER 
+# Create non-root user (using the dynamically specified username and UID/GID, so it lines
+# up with the owner of the container_home/{instance} directory bind-mounted from the host;
+# fall back to the existing group if the GID happens to collide with one already present)
+RUN groupadd -g $BUILD_GID $BUILD_USER 2>/dev/null || true && \
+    useradd -m -u $BUILD_UID -g $BUILD_GID -s /bin/bash $BUILD_USER
 
 # [Image Hardening] Only copy necessary production code
 RUN mkdir -p /app/octomatrix/docker-deploy/scripts
