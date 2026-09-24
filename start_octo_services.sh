@@ -54,7 +54,11 @@ trap 'echo "Received OS stop signal (SIGTERM/SIGINT), stopping services..."; "$S
 # Wait for network Ping loop (wait indefinitely to ensure offline boot support)
 # ----------------------------------------------------
 echo "Checking network connection..."
-while ! python3 -c "import socket; socket.create_connection(('8.8.8.8', 53), timeout=2)" &>/dev/null; do
+# Some network environments (corporate firewalls, cloud VPC egress filtering) only allow common
+# ports like 443 and block direct connections to external IPs on port 53, which causes a false
+# "offline" result here. Use "direct connect on 443" OR "DNS resolution" instead — either succeeding
+# is treated as network available.
+while ! ( python3 -c "import socket; socket.create_connection(('8.8.8.8', 443), timeout=2)" &>/dev/null || python3 -c "import socket; socket.getaddrinfo('www.google.com', 443)" &>/dev/null ); do
   # Use wait with sleep in the loop so trap can immediately respond to signals
   sleep 5 &
   wait $!
