@@ -54,7 +54,9 @@ trap 'echo "收到系統停止信號 (SIGTERM/SIGINT)，正在關閉服務..."; 
 # 等待網路的 Ping 迴圈 (無限期等待，確保離線開機時能接續)
 # ----------------------------------------------------
 echo "正在檢查網路連線..."
-while ! python3 -c "import socket; socket.create_connection(('8.8.8.8', 53), timeout=2)" &>/dev/null; do
+# 部分網路環境（公司防火牆／雲端 VPC 出站過濾）只放行 443 等常用埠、擋掉直連外部 IP 的 53 埠，
+# 直連 53 判斷會誤判成離線；改用「直連 443」OR「DNS 解析」兩種方法，任一成功就視為有網路。
+while ! ( python3 -c "import socket; socket.create_connection(('8.8.8.8', 443), timeout=2)" &>/dev/null || python3 -c "import socket; socket.getaddrinfo('www.google.com', 443)" &>/dev/null ); do
   # 在迴圈中使用 wait 來搭配 sleep，這樣 trap 才能即時響應信號
   sleep 5 &
   wait $!
