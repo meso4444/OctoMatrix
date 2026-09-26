@@ -554,6 +554,12 @@ def make_blink_frame(mood, body_rgb, headgear, eyewear, item_r, item_l, blush_st
             d.line([ex-2, ey+1, ex+2, ey+1], fill=DARK, width=2)
             d.point([ex+2, ey], fill=DARK)
 
+    # Redraw eyewear on top: same fix as make_wink_open/closed_frame — headgear like
+    # bucket_hat can overlap the eyewear border, and this frame skips draw_overlay()'s
+    # own eyewear redraw, so without this the lens border gets clipped (pipi report).
+    if eyewear != 'none':
+        _draw_eyewear64(d, eyewear)
+
     return img64.resize((512, 512), Image.NEAREST)
 
 
