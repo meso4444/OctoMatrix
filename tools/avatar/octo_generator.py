@@ -80,7 +80,6 @@ def generate_octopus_image(body_rgb=(150, 150, 150),
     elif mood == "happy":     draw_eye(lx,ly,"smile"); draw_eye(rx,ry,"smile")
     elif mood == "love":
         draw_eye(lx,ly,"heart"); draw_eye(rx,ry,"heart")
-        draw.polygon([(32,12),(30,10),(31,8),(32,9),(33,8),(34,10)],fill=RED)
         # v2: do NOT force cur_blush_style="hearts" — caller's blush_style is used
     elif mood == "wink":
         draw_eye(lx,ly,"closed"); draw_eye(rx,ry,"standard")
@@ -636,7 +635,7 @@ def make_surprised_frame(fi, body_rgb, headgear, eyewear, item_r, item_l, blush_
 
 
 def make_love_base_img(fi, body_rgb, headgear, eyewear, item_r, item_l, blush_style='oval'):
-    """Generate love base at 64×64, erase head heart, draw pixel-art eye hearts, resize.
+    """Generate love base at 64×64, draw pixel-art eye hearts, resize.
     fi drives heart size variation: small ↔ large alternates every 6 frames."""
 
     # Small heart (5 wide × 5 tall) — blush + extra middle row for roundness
@@ -667,13 +666,7 @@ def make_love_base_img(fi, body_rgb, headgear, eyewear, item_r, item_l, blush_st
     px = img64.load()
     d  = ImageDraw.Draw(img64)
 
-    # 1. Erase head heart → transparent (sits above body on transparent background)
-    for x in range(28, 36):
-        for y in range(6, 14):
-            if px[x, y][:3] == (255, 90, 90):
-                px[x, y] = (0, 0, 0, 0)
-
-    # 2. Replace octo_generator heart eyes with pixel-art hearts (no white pixel — adds 8×8 block)
+    # Replace octo_generator heart eyes with pixel-art hearts (no white pixel — adds 8×8 block)
     RED_PX = (255, 90, 90, 255)
     for ex, ey in [(24, 30), (40, 30)]:
         d.ellipse([ex-erase_r, ey-erase_r, ex+erase_r, ey+erase_r], fill=(*body_rgb, 255))
