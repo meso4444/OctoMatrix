@@ -291,7 +291,8 @@ def get_help_text(CURRENT_AGENT):
     help_text += "• <code>/switch [name]</code>: Switch the current active Agent for conversation.\n"
     help_text += "• <code>/menu</code>: Pop up physical management key menu (recommended for mobile).\n\n"
     help_text += "<b>🔍 Monitoring and Diagnostics</b>\n"
-    help_text += "• <code>/status</code>: View all Agent survival, awake content and channel connectivity.\n"
+    help_text += "• <code>/status</code>: View all Agent survival status, the collaboration team, awake task count, and channel connectivity.\n"
+    help_text += "• <code>/awake_list</code>: View the full awake task list (grouped by Agent, with schedule and command).\n"
     help_text += "• <code>/capture [name]</code>: Capture the last 50 lines of a specific window to check for runtime errors.\n"
     help_text += "• <code>/inspect [name]</code>: Assign the current AI to check another AI's status and error messages.\n\n"
     help_text += "<b>🛠️ Control and Fix</b>\n"
@@ -302,7 +303,7 @@ def get_help_text(CURRENT_AGENT):
     help_text += "• <code>/avatar_renew list</code>: View the Avatar backup history list (with preview images).\n"
     help_text += "• <code>/avatar_renew restore {backup_id|filename}</code>: Restore to a specific historical version.\n\n"
     help_text += "<b>⏰ Automated Wake-up</b>\n"
-    help_text += "• Ask the Agent directly to \"create a wake-up task\" to establish a scheduled wake-up task. You can monitor existing tasks via <code>/status</code>.\n\n"
+    help_text += "• Ask the Agent directly to \"create a wake-up task\" to establish a scheduled wake-up task. You can view the full task list via <code>/awake_list</code>.\n\n"
     help_text += "───────────────────────────────\n"
     help_text += "💡 <b>Tip</b>: Use slash <code>/</code> for Telegram and Discord; use exclamation mark <code>!</code> for Slack."
     return help_text
