@@ -570,8 +570,7 @@ def manage_menu():
                 append_to_menu(action_items)
                 
             sys_items = []
-            if prompt_bool("是否加入系統營運與控制功能 (/clear, /awake_list, /help, /status)?", True):
-                sys_items.append({"label": "🧹 清除上下文", "command": "/clear"})
+            if prompt_bool("是否加入系統營運與控制功能 (/awake_list, /help, /status)?", True):
                 sys_items.append({"label": "⏰ 喚醒任務", "command": "/awake_list"})
                 sys_items.append({"label": "📖 說明書", "command": "/help"})
                 sys_items.append({"label": "📊 系統狀態", "command": "/status"})
