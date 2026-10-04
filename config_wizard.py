@@ -578,6 +578,7 @@ def manage_menu():
                 sys_items.append({"label": "🧠 Resume Context", "command": "/resume_latest"})
                 sys_items.append({"label": "📖 User Manual", "command": "/help"})
                 sys_items.append({"label": "📊 System Status", "command": "/status"})
+                sys_items.append({"label": "⏰ Awake Tasks", "command": "/awake_list"})
                 append_to_menu(sys_items)
 
             avatar_items = []

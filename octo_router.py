@@ -222,6 +222,8 @@ class CommandHandler:
             return True
         elif cmd_content == '/status':
             self._send_status(msg); return True
+        elif cmd_content == '/awake_list':
+            self._send_awake_list(msg); return True
         elif cmd_content == '/help':
             self._send_help(msg); return True
         elif cmd_content == '/menu':
@@ -501,28 +503,27 @@ Message from {MATRIX_USERNAME}:
         return success
 
     def _send_status(self, msg: MCMessage):
-        agent_role_map = {}
-        for grp in COLLABORATION_GROUPS:
-            roles = grp.get('roles', {})
-            for member, role in roles.items():
-                agent_role_map[member] = f"[{grp.get('name')}] {role}"
-
+        # Agent Squad: liveness/description/active marker only; collaboration-team info
+        # now lives in its own section below instead of being mixed into each agent's line
         agent_status_list = []
         for a in AGENTS:
             name = a['name']
             status = "🟢" if self.injector.check_session(name) else "🔴"
             active = " (⭐ Active)" if name == CURRENT_AGENT else ""
-            role_info = f"\n      └ {agent_role_map[name]}" if name in agent_role_map else ""
-            agent_status_list.append(f"{status} <b>[{name}]</b> {a.get('description', '')}{active}{role_info}")
+            agent_status_list.append(f"{status} <b>[{name}]</b> {a.get('description', '')}{active}")
 
-        awake_list = []
-        if self.awake:
-            jobs = self.awake.list_jobs().get('jobs', [])
-            for j in jobs:
-                nr = j.get('next_run_time', 'Not awoken').split('.')[0]
-                p = j.get('prompt', 'No command')
-                if len(p) > 500: p = p[:497] + "..."
-                awake_list.append(f"• <b>{j.get('id', '?')}</b>\n  └ Target: {j.get('target_agent', 'Unspecified')}\n  └ Trigger: {j.get('trigger', '?')}\n  └ Command: <code>{p}</code>\n  └ Next: {nr}")
+        # 👥 Collaboration Team: its own section, grouped by team, separated from the agent descriptions above
+        team_sections = []
+        for grp in COLLABORATION_GROUPS:
+            roles = grp.get('roles', {})
+            if not roles: continue
+            member_lines = [f"  • {member}: {role}" for member, role in roles.items()]
+            team_sections.append(f"<b>[{grp.get('name')}]</b> {grp.get('description', '')}\n" + "\n".join(member_lines))
+        team_block = "\n\n👥 <b>Collaboration Team:</b>\n" + "\n\n".join(team_sections) if team_sections else ""
+
+        # ⏰ Awake tasks: status only shows a one-line count; the full list moved to the dedicated /awake_list command/button
+        awake_count = len(self.awake.list_jobs().get('jobs', [])) if self.awake else 0
+        awake_line = f"⏰ <b>Awake Tasks:</b> {awake_count} active (tap 'Awake Tasks' or send /awake_list for details)"
 
         channels_status = []
         try:
@@ -533,10 +534,41 @@ Message from {MATRIX_USERNAME}:
         channels_status.append(f"• Slack: {'🟢' if subprocess.run(['pgrep', '-f', 'slack_socket_gateway.py']).returncode == 0 else '🔴'}")
 
         status_text = "📊 <b>OctoMatrix Status Report</b>\n\n" + \
-                      "🤖 <b>Agent Squad:</b>\n" + "\n".join(agent_status_list) + "\n\n" + \
-                      "⏰ <b>Awake System:</b>\n" + ("\n".join(awake_list) if awake_list else "No active tasks") + "\n\n" + \
+                      "🤖 <b>Agent Squad:</b>\n" + "\n".join(agent_status_list) + \
+                      team_block + "\n\n" + \
+                      awake_line + "\n\n" + \
                       "🌐 <b>Channel Status:</b>\n" + "\n".join(channels_status)
         self.notifier.notify(msg.source, 'custom', {'content': status_text})
+
+    def _send_awake_list(self, msg: MCMessage):
+        if not self.awake:
+            self.notifier.notify(msg.source, 'custom', {'content': '⏰ <b>Awake Tasks</b>\n\nThe awake system is not enabled.'})
+            return
+
+        jobs = self.awake.list_jobs().get('jobs', [])
+        if not jobs:
+            self.notifier.notify(msg.source, 'custom', {'content': '⏰ <b>Awake Tasks (0)</b>\n\nNo active awake tasks right now.'})
+            return
+
+        # Group by target_agent (format version B): tasks under the same Agent are clustered together,
+        # easier to scan than a flat list once there are many tasks
+        grouped = {}
+        for j in jobs:
+            grouped.setdefault(j.get('target_agent', 'Unspecified'), []).append(j)
+
+        sections = []
+        for agent_name, agent_jobs in grouped.items():
+            lines = [f"🐙 <b>{agent_name}</b> ({len(agent_jobs)})"]
+            for j in agent_jobs:
+                nr = j.get('next_run_time', 'Not awoken').split('.')[0]
+                schedule_text = j.get('schedule_text') or j.get('trigger', '?')
+                p = j.get('prompt', 'No command')
+                if len(p) > 500: p = p[:497] + "..."
+                lines.append(f"  • <b>{j.get('id', '?')}</b>: {schedule_text} (next {nr})\n    └ Command: <code>{p}</code>")
+            sections.append("\n".join(lines))
+
+        awake_text = f"⏰ <b>Awake Tasks ({len(jobs)})</b>\n\n" + "\n\n".join(sections)
+        self.notifier.notify(msg.source, 'custom', {'content': awake_text})
 
     def _send_help(self, msg: MCMessage):
         import config

@@ -39,6 +39,58 @@ except ImportError:
     AWAKE_YAML_PATH = "awake.yaml"
     AGENTS = []
 
+_WEEKDAY_EN = {
+    '0': 'Mon', 'mon': 'Mon',
+    '1': 'Tue', 'tue': 'Tue',
+    '2': 'Wed', 'wed': 'Wed',
+    '3': 'Thu', 'thu': 'Thu',
+    '4': 'Fri', 'fri': 'Fri',
+    '5': 'Sat', 'sat': 'Sat',
+    '6': 'Sun', 'sun': 'Sun',
+}
+
+
+def _weekday_label(day_of_week):
+    return _WEEKDAY_EN.get(str(day_of_week).strip().lower(), str(day_of_week))
+
+
+def describe_schedule(original_task):
+    """Build a human-readable schedule description from the original registration
+    fields (trigger type + hour/minute/...), for list display only — does not affect
+    the existing `trigger` field's API behavior (the APScheduler object's string repr).
+    Returns None when no rule applies; the caller decides whether to fall back to the raw string."""
+    trigger_val = original_task.get('trigger')
+    try:
+        if trigger_val == 'daily':
+            return f"Daily {int(original_task.get('hour', 0)):02d}:{int(original_task.get('minute', 0)):02d}"
+        elif trigger_val == 'weekly':
+            dow = _weekday_label(original_task.get('day_of_week', 0))
+            return f"Weekly on {dow} {int(original_task.get('hour', 0)):02d}:{int(original_task.get('minute', 0)):02d}"
+        elif trigger_val == 'monthly':
+            return f"Monthly on day {original_task.get('day', 1)} {int(original_task.get('hour', 0)):02d}:{int(original_task.get('minute', 0)):02d}"
+        elif trigger_val == 'interval':
+            h, m, s = int(original_task.get('hours', 0) or 0), int(original_task.get('minutes', 0) or 0), int(original_task.get('seconds', 0) or 0)
+            parts = []
+            if h: parts.append(f"{h}h")
+            if m: parts.append(f"{m}m")
+            if s and not (h or m): parts.append(f"{s}s")
+            return f"Every {''.join(parts)}" if parts else "Every 60s (default)"
+        elif trigger_val == 'date':
+            return f"Once at {original_task.get('run_time', '?')}"
+        elif trigger_val == 'cron':
+            bits = []
+            if original_task.get('day_of_week') is not None:
+                bits.append(f"on {_weekday_label(original_task.get('day_of_week'))}")
+            if original_task.get('day') is not None:
+                bits.append(f"day {original_task.get('day')}")
+            if original_task.get('hour') is not None and original_task.get('minute') is not None:
+                bits.append(f"{int(original_task.get('hour')):02d}:{int(original_task.get('minute')):02d}")
+            return " ".join(bits) if bits else None
+    except (TypeError, ValueError):
+        return None
+    return None
+
+
 class AwakeManager:
     def __init__(self, command_handler=None, image_manager=None):
         self.scheduler = BackgroundScheduler()
@@ -265,6 +317,7 @@ class AwakeManager:
                 jobs_info.append({
                     "id": job.id,
                     "trigger": str(job.trigger),
+                    "schedule_text": describe_schedule(original_task) or str(job.trigger),
                     "next_run_time": job.next_run_time.strftime("%Y-%m-%d %H:%M:%S") if job.next_run_time else "None",
                     "target_agent": original_task.get('target_agent') or original_task.get('agent') or "Unspecified",
                     "prompt": original_task.get('prompt') or original_task.get('command') or "No command"
