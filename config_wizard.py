@@ -573,12 +573,11 @@ def manage_menu():
                 append_to_menu(action_items)
                 
             sys_items = []
-            if prompt_bool("Add system operation and control functions (/clear, /resume_latest, /help, /status)?", True):
+            if prompt_bool("Add system operation and control functions (/clear, /awake_list, /help, /status)?", True):
                 sys_items.append({"label": "🧹 Clear Context", "command": "/clear"})
-                sys_items.append({"label": "🧠 Resume Context", "command": "/resume_latest"})
+                sys_items.append({"label": "⏰ Awake Tasks", "command": "/awake_list"})
                 sys_items.append({"label": "📖 User Manual", "command": "/help"})
                 sys_items.append({"label": "📊 System Status", "command": "/status"})
-                sys_items.append({"label": "⏰ Awake Tasks", "command": "/awake_list"})
                 append_to_menu(sys_items)
 
             avatar_items = []
