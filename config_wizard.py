@@ -575,6 +575,7 @@ def manage_menu():
                 sys_items.append({"label": "🧠 恢復上下文", "command": "/resume_latest"})
                 sys_items.append({"label": "📖 說明書", "command": "/help"})
                 sys_items.append({"label": "📊 系統狀態", "command": "/status"})
+                sys_items.append({"label": "⏰ 喚醒任務", "command": "/awake_list"})
                 append_to_menu(sys_items)
                 
             avatar_items = []

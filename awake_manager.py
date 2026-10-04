@@ -39,6 +39,57 @@ except ImportError:
     AWAKE_YAML_PATH = "awake.yaml"
     AGENTS = []
 
+_WEEKDAY_ZH = {
+    '0': '一', 'mon': '一',
+    '1': '二', 'tue': '二',
+    '2': '三', 'wed': '三',
+    '3': '四', 'thu': '四',
+    '4': '五', 'fri': '五',
+    '5': '六', 'sat': '六',
+    '6': '日', 'sun': '日',
+}
+
+
+def _weekday_label(day_of_week):
+    return _WEEKDAY_ZH.get(str(day_of_week).strip().lower(), str(day_of_week))
+
+
+def describe_schedule(original_task):
+    """把註冊時的原始語義欄位(trigger類型+hour/minute/...)組成人話排程描述，
+    供列表顯示用，不影響`trigger`欄位(APScheduler物件字串)原有的API行為。
+    查不出對應規則時回傳None，呼叫端自行決定要不要退回原始字串。"""
+    trigger_val = original_task.get('trigger')
+    try:
+        if trigger_val == 'daily':
+            return f"每天 {int(original_task.get('hour', 0)):02d}:{int(original_task.get('minute', 0)):02d}"
+        elif trigger_val == 'weekly':
+            dow = _weekday_label(original_task.get('day_of_week', 0))
+            return f"每週{dow} {int(original_task.get('hour', 0)):02d}:{int(original_task.get('minute', 0)):02d}"
+        elif trigger_val == 'monthly':
+            return f"每月{original_task.get('day', 1)}日 {int(original_task.get('hour', 0)):02d}:{int(original_task.get('minute', 0)):02d}"
+        elif trigger_val == 'interval':
+            h, m, s = int(original_task.get('hours', 0) or 0), int(original_task.get('minutes', 0) or 0), int(original_task.get('seconds', 0) or 0)
+            parts = []
+            if h: parts.append(f"{h}時")
+            if m: parts.append(f"{m}分")
+            if s and not (h or m): parts.append(f"{s}秒")
+            return f"每隔 {''.join(parts)}" if parts else "每隔 60秒(預設)"
+        elif trigger_val == 'date':
+            return f"單次 {original_task.get('run_time', '?')}"
+        elif trigger_val == 'cron':
+            bits = []
+            if original_task.get('day_of_week') is not None:
+                bits.append(f"週{_weekday_label(original_task.get('day_of_week'))}")
+            if original_task.get('day') is not None:
+                bits.append(f"{original_task.get('day')}日")
+            if original_task.get('hour') is not None and original_task.get('minute') is not None:
+                bits.append(f"{int(original_task.get('hour')):02d}:{int(original_task.get('minute')):02d}")
+            return " ".join(bits) if bits else None
+    except (TypeError, ValueError):
+        return None
+    return None
+
+
 class AwakeManager:
     def __init__(self, command_handler=None, image_manager=None):
         self.scheduler = BackgroundScheduler()
@@ -265,6 +316,7 @@ class AwakeManager:
                 jobs_info.append({
                     "id": job.id,
                     "trigger": str(job.trigger),
+                    "schedule_text": describe_schedule(original_task) or str(job.trigger),
                     "next_run_time": job.next_run_time.strftime("%Y-%m-%d %H:%M:%S") if job.next_run_time else "None",
                     "target_agent": original_task.get('target_agent') or original_task.get('agent') or "未指定",
                     "prompt": original_task.get('prompt') or original_task.get('command') or "無指令"

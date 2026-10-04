@@ -221,6 +221,8 @@ class CommandHandler:
             return True
         elif cmd_content == '/status':
             self._send_status(msg); return True
+        elif cmd_content == '/awake_list':
+            self._send_awake_list(msg); return True
         elif cmd_content == '/help':
             self._send_help(msg); return True
         elif cmd_content == '/menu':
@@ -497,28 +499,26 @@ class CommandHandler:
         return success
 
     def _send_status(self, msg: MCMessage):
-        agent_role_map = {}
-        for grp in COLLABORATION_GROUPS:
-            roles = grp.get('roles', {})
-            for member, role in roles.items():
-                agent_role_map[member] = f"[{grp.get('name')}] {role}"
-
+        # Agent 軍團：只放存活狀態/簡介/是否活躍，協作團隊資訊改到下面獨立區塊，不再混在同一行
         agent_status_list = []
         for a in AGENTS:
             name = a['name']
             status = "🟢" if self.injector.check_session(name) else "🔴"
             active = " (⭐ 活躍)" if name == CURRENT_AGENT else ""
-            role_info = f"\n      └ {agent_role_map[name]}" if name in agent_role_map else ""
-            agent_status_list.append(f"{status} <b>[{name}]</b> {a.get('description', '')}{active}{role_info}")
-        
-        awake_list = []
-        if self.awake:
-            jobs = self.awake.list_jobs().get('jobs', [])
-            for j in jobs:
-                nr = j.get('next_run_time', '未喚醒').split('.')[0]
-                p = j.get('prompt', '無指令')
-                if len(p) > 500: p = p[:497] + "..."
-                awake_list.append(f"• <b>{j.get('id', '?')}</b>\n  └ 對象: {j.get('target_agent', '未指定')}\n  └ 觸發: {j.get('trigger', '?')}\n  └ 指令: <code>{p}</code>\n  └ 下次: {nr}")
+            agent_status_list.append(f"{status} <b>[{name}]</b> {a.get('description', '')}{active}")
+
+        # 👥 協作團隊：獨立區塊，依團隊分組列出成員與權責，跟上面的 Agent 簡介分離
+        team_sections = []
+        for grp in COLLABORATION_GROUPS:
+            roles = grp.get('roles', {})
+            if not roles: continue
+            member_lines = [f"  • {member}: {role}" for member, role in roles.items()]
+            team_sections.append(f"<b>[{grp.get('name')}]</b> {grp.get('description', '')}\n" + "\n".join(member_lines))
+        team_block = "\n\n👥 <b>協作團隊:</b>\n" + "\n\n".join(team_sections) if team_sections else ""
+
+        # ⏰ 喚醒任務：status 這裡只留一行數量指標，完整列表改由獨立按鈕/指令 /awake_list 顯示
+        awake_count = len(self.awake.list_jobs().get('jobs', [])) if self.awake else 0
+        awake_line = f"⏰ <b>喚醒任務:</b> {awake_count} 個進行中（詳情請按『⏰ 喚醒任務』或輸入 /awake_list）"
 
         channels_status = []
         try:
@@ -529,10 +529,40 @@ class CommandHandler:
         channels_status.append(f"• Slack: {'🟢' if subprocess.run(['pgrep', '-f', 'slack_socket_gateway.py']).returncode == 0 else '🔴'}")
 
         status_text = "📊 <b>OctoMatrix 狀態報告</b>\n\n" + \
-                      "🤖 <b>Agent 軍團:</b>\n" + "\n".join(agent_status_list) + "\n\n" + \
-                      "⏰ <b>喚醒系統 (Awake):</b>\n" + ("\n".join(awake_list) if awake_list else "無活躍任務") + "\n\n" + \
+                      "🤖 <b>Agent 軍團:</b>\n" + "\n".join(agent_status_list) + \
+                      team_block + "\n\n" + \
+                      awake_line + "\n\n" + \
                       "🌐 <b>通道狀態:</b>\n" + "\n".join(channels_status)
         self.notifier.notify(msg.source, 'custom', {'content': status_text})
+
+    def _send_awake_list(self, msg: MCMessage):
+        if not self.awake:
+            self.notifier.notify(msg.source, 'custom', {'content': '⏰ <b>喚醒任務</b>\n\n喚醒系統未啟用。'})
+            return
+
+        jobs = self.awake.list_jobs().get('jobs', [])
+        if not jobs:
+            self.notifier.notify(msg.source, 'custom', {'content': '⏰ <b>喚醒任務 (0)</b>\n\n目前沒有進行中的喚醒任務。'})
+            return
+
+        # 依 target_agent 分組(版本B)：同一個 Agent 底下的任務集中顯示，任務多時比逐筆平鋪好掃描
+        grouped = {}
+        for j in jobs:
+            grouped.setdefault(j.get('target_agent', '未指定'), []).append(j)
+
+        sections = []
+        for agent_name, agent_jobs in grouped.items():
+            lines = [f"🐙 <b>{agent_name}</b> ({len(agent_jobs)})"]
+            for j in agent_jobs:
+                nr = j.get('next_run_time', '未喚醒').split('.')[0]
+                schedule_text = j.get('schedule_text') or j.get('trigger', '?')
+                p = j.get('prompt', '無指令')
+                if len(p) > 500: p = p[:497] + "..."
+                lines.append(f"  • <b>{j.get('id', '?')}</b>：{schedule_text} (下次 {nr})\n    └ 指令: <code>{p}</code>")
+            sections.append("\n".join(lines))
+
+        awake_text = f"⏰ <b>喚醒任務 ({len(jobs)})</b>\n\n" + "\n\n".join(sections)
+        self.notifier.notify(msg.source, 'custom', {'content': awake_text})
 
     def _send_help(self, msg: MCMessage):
         from config import get_help_text
