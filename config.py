@@ -294,8 +294,6 @@ def get_help_text(CURRENT_AGENT):
     help_text += "• <code>/inspect [名稱]</code>：指派當前的 AI 去檢查另一位 AI 的狀態與錯誤訊息。\n\n"
     help_text += "<b>🛠️ 控制與修復</b>\n"
     help_text += "• <code>/interrupt</code>：向活躍 Agent 發送 Ctrl+C 強制中斷卡死的程序。\n"
-    help_text += "• <code>/clear</code>：清除視窗畫面與 Agent 的當前上下文。\n"
-    help_text += "• <code>/resume_latest</code>：嘗試從 CLI 本地快取恢復最近一次的對話紀錄。\n"
     help_text += "• <code>/fix [名稱]</code>：強制重啟並嘗試恢復對話。若 AI 卡住或無回應時可使用此指令。\n"
     help_text += "• <code>/sys_refresh</code>：檢查並更新 Agent 的系統協定與規範。\n"
     help_text += "• <code>/avatar_renew {需求}</code>：重新定義並建構 Agent 的視覺形象與性格。\n"

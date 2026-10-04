@@ -201,7 +201,7 @@ class CommandHandler:
         def is_cmd(c, name): return c == name or c.startswith(name + ' ')
         
         # 3. 核心指令處理分支
-        interfering_cmds = ['/interrupt', '/clear', '/resume_latest', '/sys_refresh']
+        interfering_cmds = ['/interrupt', '/sys_refresh']
         is_interfering = cmd_content in interfering_cmds or is_cmd(cmd_content, '/inspect') or is_cmd(cmd_content, '/fix') or is_cmd(cmd_content, '/avatar_renew')
 
         if is_interfering:
@@ -249,23 +249,6 @@ class CommandHandler:
                 time.sleep(0.5)
                 subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', "Escape"], check=False)
                 self.notifier.notify(msg.source, 'custom', {'content': f'🛑 已發送中斷訊號至 <b>[{target_agent}]</b>'})
-            return True
-        elif cmd_content == '/clear':
-            if not check_cooldown(target_agent, 'clear'):
-                self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> 操作冷卻中，請稍後再試。'})
-                return True
-            self.injector.send_interrupt(target_agent)
-            self.injector.inject('/clear', target_agent)
-            self.notifier.notify(msg.source, 'custom', {'content': f'🧹 已清除 <b>[{target_agent}]</b> 的畫面與上下文'})
-            return True
-        elif cmd_content == '/resume_latest':
-            if not check_cooldown(target_agent, 'resume_latest'):
-                self.notifier.notify(msg.source, 'custom', {'content': f'⏳ <b>[{target_agent}]</b> 操作冷卻中，請稍後再試。'})
-                return True
-            # 🚀 Enter 鍵物理減肥：僅調用 inject，不再手動補發 Enter，防止 Loop
-            self.injector.inject('/resume', target_agent)
-            subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', 'Escape'], check=False)
-            self.notifier.notify(msg.source, 'custom', {'content': f'🧠 已嘗試恢復 <b>[{target_agent}]</b> 最近一次對話'})
             return True
         elif is_cmd(cmd_content, '/sys_refresh'):
             parts = cmd_content.split(' ', 1)
