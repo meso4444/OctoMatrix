@@ -289,7 +289,8 @@ def get_help_text(CURRENT_AGENT):
     help_text += "• <code>/switch [名稱]</code>：切換當前對話的活躍 Agent。\n"
     help_text += "• <code>/menu</code>：彈出實體管理按鍵選單（手機端推薦）。\n\n"
     help_text += "<b>🔍 監控與診斷</b>\n"
-    help_text += "• <code>/status</code>：查看所有 Agent 存活、喚醒內容與通道連通性。\n"
+    help_text += "• <code>/status</code>：查看所有 Agent 存活、協作團隊、喚醒任務數量與通道連通性。\n"
+    help_text += "• <code>/awake_list</code>：查看完整的喚醒任務列表（依 Agent 分組顯示排程時間與指令）。\n"
     help_text += "• <code>/capture [名稱]</code>：擷取指定視窗最近 50 行內容，檢查運行報錯。\n"
     help_text += "• <code>/inspect [名稱]</code>：指派當前的 AI 去檢查另一位 AI 的狀態與錯誤訊息。\n\n"
     help_text += "<b>🛠️ 控制與修復</b>\n"
@@ -300,7 +301,7 @@ def get_help_text(CURRENT_AGENT):
     help_text += "• <code>/avatar_renew list</code>：查看歷史 Avatar 備份列表（附預覽圖）。\n"
     help_text += "• <code>/avatar_renew restore {編號|檔名}</code>：還原至指定歷史版本。\n\n"
     help_text += "<b>⏰ 自動化喚醒</b>\n"
-    help_text += "• 請直接透過對話「要求 Agent 建立喚醒任務」，即可實現定時喚醒任務。可透過 <code>/status</code> 監控現有喚醒任務。\n\n"
+    help_text += "• 請直接透過對話「要求 Agent 建立喚醒任務」，即可實現定時喚醒任務。可透過 <code>/awake_list</code> 查看完整的喚醒任務列表。\n\n"
     help_text += "───────────────────────────────\n"
     help_text += "💡 <b>提示</b>：Telegram 與 Discord 請使用斜線 <code>/</code> 指令；Slack 請使用驚嘆號 <code>!</code> 引導。"
     return help_text
