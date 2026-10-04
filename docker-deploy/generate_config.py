@@ -185,7 +185,7 @@ router:
   host: {config['router']['host']}
   port: {config['router']['port']}
 
-# [1] 🤖 AI Agent 軍團配置
+# [1] 🤖 Octo AI Agents 配置
 {agents_yaml}
 # 預設啟動時活躍的 Agent 名稱
 default_active_agent: "{config['default_active_agent']}"

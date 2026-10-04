@@ -40,7 +40,7 @@ graph TD
         Awake[Awake 喚醒系統] -- "定時指令" --> Router
         
         subgraph Sandbox [Agent 獨立沙盒環境]
-            Agents[Agent 軍團]
+            Agents[Octo AI Agents]
             Cyberbrain[[Cyberbrain 電子腦]]
             Agents <--> Cyberbrain
         end
@@ -52,7 +52,7 @@ graph TD
 ---
 ## ✨ 核心特色
 *   **對話即操作 (Command-Driven)**：只要在通訊軟體發送訊息，即可直接指揮遠端 AI 執行複雜指令與任務。
-*   **多代理軍團 (Multi-Agent)**：支援同時配置多個具備不同專長（如資料檢索、程式編寫、邏輯分析）的 Agent。
+*   **多個 Octo AI Agents (Multi-Agent)**：支援同時配置多個具備不同專長（如資料檢索、程式編寫、邏輯分析）的 Agent。
 *   **跨平臺不中斷 (Tri-Channel)**：支援 Telegram、Discord 與 Slack。當常用的通訊平臺不穩定時，隨時切換到另一個平臺，AI 團隊與任務進度依然保持同步。
 *   **電子腦系統 (Cyberbrain)**：以「grep-based RAG」取代傳統向量檢索的長期記憶機制。致敬「GHOST in the SHELL」概念，AI 會將對話重點「收攝」與「刻印」為高密度的 GHOST 索引，並透過「深潛 (Deep Dive)」技術從 SHELL 紀錄中物理級提煉歷史脈絡，賦予 Agent 突破上下文窗口限制的高效追溯能力。
 *   **行為約束框架 (Agent Harness)**：有別於傳統大語言模型難以預測的黑箱行為，為 Agent 導入了系統級的 Harness 執行框架。透過底層嚴謹的標準化作業流程來收束 AI 的發散性思維，確保每次協作皆可預測、可觀測且高度穩定。
@@ -203,7 +203,7 @@ cd OctoMatrix
 *   **[1] 👤 設定使用者暱稱 (Username)**：設定您的稱呼，Agent 會以此名稱來稱呼您。
 *   **[2]-[4] 通訊通道設定**：引導綁定 Telegram、Discord 或 Slack 的 Token，並可隨時開關特定通道。
 *   **[5] 🌍 設定網路與連接埠 (Ports)**：自訂 Router 與 Gateway 的本地 Port口，避免與主機其他服務衝突。
-*   **[6] 🤖 設定 AI Agent 軍團與進階參數**：
+*   **[6] 🤖 設定 Octo AI Agents 與進階參數**：
     *   **配置 Agent**：為 AI 命名，指定它的 **職責 (usecase)**（用於 AI 認知）與 **描述 (description)**（用於選單展示給使用者），並自由搭配 AI 引擎（Gemini、Claude、Codex 或 agy (Antigravity)）與模型。
         > **注意：** 建議改用 agy (Antigravity) 引擎較為穩定，且 gemini CLI 已不再支援 Pro 訂閱用戶。
     *   **配置 Agent 協作群組**：建立團隊共享空間，並指定群組內的 Agent 之間互相監督與交辦任務的對接關係。

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# 啟動 Telegram → AI Agent 軍團 遠端控制系統
+# 啟動 Telegram → Octo AI Agents 遠端控制系統
 
 set -e
 
@@ -106,8 +106,8 @@ export TMUX_SESSION_NAME
 echo "🧬  正在初始化 Agent 生態環境…"
 python3 "$SCRIPT_DIR/setup_agent_env.py" --all
 
-# 2. 動態啟動 AI Agent 軍團
-echo "🤖 正在部署 AI Agent 軍團…"
+# 2. 動態啟動 Octo AI Agents
+echo "🤖 正在部署 Octo AI Agents…"
 
 
 echo "   ✅ 所有 Agent 已就緒"

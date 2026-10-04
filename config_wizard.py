@@ -176,7 +176,7 @@ def manage_agents():
         CONFIG["agents"] = []
     
     while True:
-        print("\n--- 🤖 Agent 軍團配置 ---")
+        print("\n--- 🤖 Octo AI Agents 配置 ---")
         current_default = CONFIG.get("default_active_agent", "")
         for i, agent in enumerate(CONFIG["agents"]):
             is_default = " (預設活躍)" if agent.get('name') == current_default else ""
@@ -326,7 +326,7 @@ def manage_collaboration():
             final_members = []
             for m in members:
                 if m not in valid_agents:
-                    print(f"⚠️  警告: Agent '{m}' 尚未在 Agent 軍團中建立！這可能導致執行時的錯誤。")
+                    print(f"⚠️  警告: Agent '{m}' 尚未在 Octo AI Agents 中建立！這可能導致執行時的錯誤。")
                     if prompt_bool(f"是否仍要將 '{m}' 加入群組?", False):
                         final_members.append(m)
                 else:
@@ -372,7 +372,7 @@ def manage_collaboration():
                         final_members = []
                         for m in members:
                             if m not in valid_agents:
-                                print(f"⚠️  警告: Agent '{m}' 尚未在 Agent 軍團中建立！這可能導致執行時的錯誤。")
+                                print(f"⚠️  警告: Agent '{m}' 尚未在 Octo AI Agents 中建立！這可能導致執行時的錯誤。")
                                 if prompt_bool(f"是否仍要將 '{m}' 加入群組?", False):
                                     final_members.append(m)
                             else:
@@ -735,7 +735,7 @@ def main():
         print("=" * 40)
         print(f"當前設定實例: {os.path.basename(CONFIG_PATH)}")
         print("-" * 30)
-        print(" [1] 🤖 Agent 軍團配置")
+        print(" [1] 🤖 Octo AI Agents 配置")
         print(" [2] 🤝 協作群組配置 (Collaboration)")
         print(" [3] 🎮 功能鍵設定 (Menu)")
         print(" [4] 🧠 電子腦與參數設定 (Cyberbrain)")

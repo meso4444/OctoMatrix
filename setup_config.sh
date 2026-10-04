@@ -227,7 +227,7 @@ while true; do
     echo " [3] 💻 設定 Discord"
     echo " [4] ⚡ 設定 Slack"
     echo " [5] 🌍 設定網路與連接埠 (Ports)"
-    echo " [6] 🤖 設定 AI Agent 軍團與進階參數"
+    echo " [6] 🤖 設定 Octo AI Agents 與進階參數"
     echo " [7] 🔐 AI Agent CLI 認證設定"
     echo " [8] ⬆️ AI CLI 版本管理 (升級/退版)"
     echo " [9] 📦 執行全域技能建置 (Install Agent Skills)"
@@ -457,7 +457,7 @@ for agent in config.get('agents', []):
             echo ""
             echo "🧹 清除設定與憑證"
             echo "  [1] 僅清除通訊憑證 (.env)"
-            echo "  [2] 僅清除 Agent 軍團與進階設定 (config.yaml)"
+            echo "  [2] 僅清除 Octo AI Agents 與進階設定 (config.yaml)"
             echo "  [3] 全部清除"
             echo "  [R] 返回"
             read -p "  請選擇清除範圍 [1-3, R]: " CLEAR_CHOICE
@@ -487,7 +487,7 @@ for agent in config.get('agents', []):
                             [ -f "$CONFIG_YAML" ] && cp "$CONFIG_YAML" "${CONFIG_YAML}.${TIMESTAMP}.bak" && echo "✅ 已備份: $(basename "$CONFIG_YAML").${TIMESTAMP}.bak"
                         fi
                         rm -f "$CONFIG_YAML"
-                        echo "✅ Agent 軍團設定 (config.yaml) 已清除。"
+                        echo "✅ Octo AI Agents 設定 (config.yaml) 已清除。"
                     fi
                 fi
             fi
@@ -497,7 +497,7 @@ for agent in config.get('agents', []):
             echo "⚠️  放棄變更並退出..."
             echo "🧹 請問要還原哪些設定至進入選單前的狀態？"
             echo "  [1] 僅還原通訊憑證 (.env)"
-            echo "  [2] 僅還原 Agent 軍團設定 (config.yaml)"
+            echo "  [2] 僅還原 Octo AI Agents 設定 (config.yaml)"
             echo "  [3] 全部還原"
             echo "  [N] 不還原，直接退出"
             read -p "  請選擇還原範圍 [1-3, N]: " RESTORE_CHOICE
@@ -516,7 +516,7 @@ for agent in config.get('agents', []):
             if [[ "$RESTORE_CHOICE" =~ ^[23]$ ]]; then
                 if [ -f "${CONFIG_YAML}.session.bak" ]; then
                     mv "${CONFIG_YAML}.session.bak" "$CONFIG_YAML"
-                    echo "✅ Agent 軍團設定 (config.yaml) 已還原。"
+                    echo "✅ Octo AI Agents 設定 (config.yaml) 已還原。"
                 else
                     rm -f "$CONFIG_YAML" 2>/dev/null
                 fi

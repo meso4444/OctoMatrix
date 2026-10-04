@@ -499,7 +499,7 @@ class CommandHandler:
         return success
 
     def _send_status(self, msg: MCMessage):
-        # Agent 軍團：只放存活狀態/簡介/是否活躍，協作團隊資訊改到下面獨立區塊，不再混在同一行
+        # Octo AI Agents：只放存活狀態/簡介/是否活躍，協作團隊資訊改到下面獨立區塊，不再混在同一行
         agent_status_list = []
         for a in AGENTS:
             name = a['name']
@@ -529,7 +529,7 @@ class CommandHandler:
         channels_status.append(f"• Slack: {'🟢' if subprocess.run(['pgrep', '-f', 'slack_socket_gateway.py']).returncode == 0 else '🔴'}")
 
         status_text = "📊 <b>OctoMatrix 狀態報告</b>\n\n" + \
-                      "🤖 <b>Agent 軍團:</b>\n" + "\n".join(agent_status_list) + \
+                      "🤖 <b>Octo AI Agents:</b>\n" + "\n".join(agent_status_list) + \
                       team_block + "\n\n" + \
                       awake_line + "\n\n" + \
                       "🌐 <b>通道狀態:</b>\n" + "\n".join(channels_status)
