@@ -260,7 +260,8 @@ OctoMatrix provides a highly modular skill expansion mechanism. See [`skills/oct
 In addition to natural language conversation, you can send system commands through communication platforms to manage the status of your Agents.
 **Note: Use a slash `/` as the prefix for Telegram and Discord, and an exclamation mark `!` as the prefix for Slack.**
 
-* **`/status`**: View the survival status of all Agents, registered awake tasks, and the connection health of each communication channel.
+* **`/status`**: View the survival status of all Agents, the collaboration team, the awake task count, and the connection health of each communication channel.
+* **`/awake_list`**: View the full awake task list (grouped by Agent, with schedule and command).
 * **`/switch [Agent Name]`**: Switch the target Agent you are currently talking to in the channel.
 * **`/interrupt`**: Send a Ctrl+C to the active Agent to forcefully interrupt processes that might be stuck or in an infinite loop.
 * **`/fix [Agent Name]`**: Force restart and attempt to recover the conversation. Use this if the AI is stuck or unresponsive.
