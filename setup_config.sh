@@ -230,7 +230,7 @@ while true; do
     echo " [3] 💻 Configure Discord"
     echo " [4] ⚡ Configure Slack"
     echo " [5] 🌍 Configure Network and Ports"
-    echo " [6] 🤖 Configure AI Agent Squad and Advanced Parameters"
+    echo " [6] 🤖 Configure Octo AI Agents and Advanced Parameters"
     echo " [7] 🔐 AI Agent CLI Authentication Settings"
     echo " [8] ⬆️ AI CLI Version Management (Upgrade/Rollback)"
     echo " [9] 📦 Install Global Agent Skills"
@@ -462,7 +462,7 @@ for agent in config.get('agents', []):
             echo ""
             echo "🧹 Clear Configuration and Credentials"
             echo "  [1] Clear only communication credentials (.env)"
-            echo "  [2] Clear only Agent Squad and advanced settings (config.yaml)"
+            echo "  [2] Clear only Octo AI Agents and advanced settings (config.yaml)"
             echo "  [3] Clear all"
             echo "  [R] Return"
             read -p "  Please select clear scope [1-3, R]: " CLEAR_CHOICE
@@ -492,7 +492,7 @@ for agent in config.get('agents', []):
                             [ -f "$CONFIG_YAML" ] && cp "$CONFIG_YAML" "${CONFIG_YAML}.${TIMESTAMP}.bak" && echo "✅ Backed up: $(basename "$CONFIG_YAML").${TIMESTAMP}.bak"
                         fi
                         rm -f "$CONFIG_YAML"
-                        echo "✅ Agent Squad configuration (config.yaml) has been cleared."
+                        echo "✅ Octo AI Agents configuration (config.yaml) has been cleared."
                     fi
                 fi
             fi
@@ -502,7 +502,7 @@ for agent in config.get('agents', []):
             echo "⚠️  Abandoning changes and exiting..."
             echo "🧹 Which settings would you like to restore to their state before entering the menu?"
             echo "  [1] Restore only communication credentials (.env)"
-            echo "  [2] Restore only Agent Squad settings (config.yaml)"
+            echo "  [2] Restore only Octo AI Agents settings (config.yaml)"
             echo "  [3] Restore all"
             echo "  [N] Don't restore, exit directly"
             read -p "  Please select restore scope [1-3, N]: " RESTORE_CHOICE
@@ -521,7 +521,7 @@ for agent in config.get('agents', []):
             if [[ "$RESTORE_CHOICE" =~ ^[23]$ ]]; then
                 if [ -f "${CONFIG_YAML}.session.bak" ]; then
                     mv "${CONFIG_YAML}.session.bak" "$CONFIG_YAML"
-                    echo "✅ Agent Squad configuration (config.yaml) has been restored."
+                    echo "✅ Octo AI Agents configuration (config.yaml) has been restored."
                 else
                     rm -f "$CONFIG_YAML" 2>/dev/null
                 fi

@@ -186,7 +186,7 @@ while true; do
     echo " [2] 💻 Configure Discord"
     echo " [3] ⚡ Configure Slack"
     echo " [4] 🌍 Configure Timezone (TZ)"
-    echo " [5] 🤖 Configure AI Agent Army & Advanced Parameters"
+    echo " [5] 🤖 Configure Octo AI Agents & Advanced Parameters"
     echo " [6] 🔐 AI Agent CLI Credential Settings"
     echo " [7] 📦 Install Global Agent Skills"
     echo "----------------------------------------"
@@ -283,7 +283,7 @@ while true; do
         7)
             echo ""
             if [ ! -f "$SCRIPT_DIR/config.${INSTANCE_NAME}.yaml" ]; then
-                echo "❌ Error: no Agent config file yet -- please run [5] Configure AI Agent Army & Advanced Parameters first."
+                echo "❌ Error: no Agent config file yet -- please run [5] Configure Octo AI Agents & Advanced Parameters first."
                 read -p "Press Enter to continue..." dummy
                 continue
             fi
@@ -374,7 +374,7 @@ for agent in config.get('agents', []):
             echo ""
             echo "🧹 Clear Settings & Credentials"
             echo "  [1] Clear communication credentials only (.env)"
-            echo "  [2] Clear Agent Army & advanced settings only (config.yaml)"
+            echo "  [2] Clear Octo AI Agents & advanced settings only (config.yaml)"
             echo "  [3] Clear everything"
             echo "  [R] Return"
             read -p "  Select clearing scope [1-3, R]: " CLEAR_CHOICE
@@ -404,7 +404,7 @@ for agent in config.get('agents', []):
                             [ -f "$CONFIG_YAML" ] && cp "$CONFIG_YAML" "${CONFIG_YAML}.${TIMESTAMP}.bak" && echo "✅ Backup created: config.yaml.${TIMESTAMP}.bak"
                         fi
                         rm -f "$CONFIG_YAML"
-                        echo "✅ Agent Army settings (config.yaml) cleared."
+                        echo "✅ Octo AI Agents settings (config.yaml) cleared."
                     fi
                 fi
             fi
@@ -414,7 +414,7 @@ for agent in config.get('agents', []):
             echo "⚠️  Discarding changes and quitting..."
             echo "🧹 Which settings would you like to restore to their state before entering the menu?"
             echo "  [1] Restore communication credentials only (.env)"
-            echo "  [2] Restore Agent Army settings only (config.yaml)"
+            echo "  [2] Restore Octo AI Agents settings only (config.yaml)"
             echo "  [3] Restore everything"
             echo "  [N] Don't restore, just exit"
             read -p "  Select restoration scope [1-3, N]: " RESTORE_CHOICE
@@ -434,7 +434,7 @@ for agent in config.get('agents', []):
             if [[ "$RESTORE_CHOICE" =~ ^[23]$ ]]; then
                 if [ -f "${CONFIG_YAML}.session.bak" ]; then
                     mv "${CONFIG_YAML}.session.bak" "$CONFIG_YAML"
-                    echo "✅ Agent Army settings (config.yaml) restored."
+                    echo "✅ Octo AI Agents settings (config.yaml) restored."
                 else
                     rm -f "$CONFIG_YAML" 2>/dev/null
                 fi

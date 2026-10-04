@@ -188,7 +188,7 @@ router:
   host: {config['router']['host']}
   port: {config['router']['port']}
 
-# [1] 🤖 AI Agent Army Configuration
+# [1] 🤖 Octo AI Agents Configuration
 {agents_yaml}
 # Default active agent name on startup
 default_active_agent: "{config['default_active_agent']}"

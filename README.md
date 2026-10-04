@@ -40,7 +40,7 @@ graph TD
         Awake[Awake System] -- "Scheduled Commands" --> Router
         
         subgraph Sandbox [Agent Isolated Sandbox Environment]
-            Agents[Agent Squadron]
+            Agents[Octo AI Agents]
             Cyberbrain[[Cyberbrain]]
             Agents <--> Cyberbrain
         end
@@ -52,7 +52,7 @@ graph TD
 ---
 ## ✨ Core Features
 *   **Conversation as Command**: Simply send a message in any communication platform to directly command remote AI to execute complex commands and tasks.
-*   **Multi-Agent Squadron**: Support simultaneous configuration of multiple Agents with different specialties (such as data retrieval, code authoring, logical analysis).
+*   **Multiple Octo AI Agents (Multi-Agent)**: Support simultaneous configuration of multiple Agents with different specialties (such as data retrieval, code authoring, logical analysis).
 *   **Uninterrupted Cross-Platform Support**: Support for Telegram, Discord, and Slack. When a commonly used communication platform becomes unstable, seamlessly switch to another platform while keeping the AI team and task progress synchronized.
 *   **Cyberbrain System**: A long-term memory mechanism using "grep-based RAG" in place of traditional vector retrieval. Paying homage to the "GHOST in the SHELL" concept, AI will "compress" and "imprint" conversation highlights as high-density GHOST indices, and through "Deep Dive" technology extract historical context at the physical level from SHELL records, granting Agents efficient retrospection ability that breaks through context window limitations.
 *   **Agent Harness Framework**: Distinct from the unpredictable black-box nature of traditional LLMs, a system-level Harness framework is introduced for the Agents. By constraining the AI's divergent thinking through a strict, standardized underlying workflow, it ensures every collaboration is predictable, observable, and highly stable.
@@ -203,7 +203,7 @@ After dependencies are installed, start the interactive configuration wizard. Yo
 *   **[1] 👤 Set Username (Username)**: Set your preferred name, which the Agents will use to address you.
 *   **[2]-[4] Communication Channel Setup**: Guide for binding Telegram, Discord, or Slack tokens, and you can toggle specific channels anytime.
 *   **[5] 🌍 Network & Ports Setup (Ports)**: Customize local port numbers for Router and Gateway to avoid conflicts with other services on your host.
-*   **[6] 🤖 Configure AI Agent Squadron & Advanced Parameters**:
+*   **[6] 🤖 Configure Octo AI Agents & Advanced Parameters**:
     *   **Configure Agent**: Name the AI, specify its **usecase** (for AI awareness) and **description** (for menu display to users), and freely combine AI engines (Gemini, Claude, Codex, or agy (Antigravity)) with models.
         > **Note:** It is recommended to switch to the agy (Antigravity) engine for better stability, as the gemini CLI no longer supports Pro subscription users.
     *   **Configure Agent Collaboration Groups**: Create team shared spaces and specify mutual supervision and task delegation relationships between agents within groups.

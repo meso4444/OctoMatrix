@@ -179,7 +179,7 @@ def manage_agents():
         CONFIG["agents"] = []
     
     while True:
-        print("\n--- 🤖 Agent Squadron Configuration ---")
+        print("\n--- 🤖 Octo AI Agents Configuration ---")
         current_default = CONFIG.get("default_active_agent", "")
         for i, agent in enumerate(CONFIG["agents"]):
             is_default = " (Default Active)" if agent.get('name') == current_default else ""
@@ -737,7 +737,7 @@ def main():
         print("=" * 40)
         print(f"Current Instance: {os.path.basename(CONFIG_PATH)}")
         print("-" * 30)
-        print(" [1] 🤖 Agent Squadron Configuration")
+        print(" [1] 🤖 Octo AI Agents Configuration")
         print(" [2] 🤝 Collaboration Group Configuration")
         print(" [3] 🎮 Custom Menu Settings")
         print(" [4] 🧠 Cyberbrain & Parameter Settings")

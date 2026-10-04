@@ -503,7 +503,7 @@ Message from {MATRIX_USERNAME}:
         return success
 
     def _send_status(self, msg: MCMessage):
-        # Agent Squad: liveness/description/active marker only; collaboration-team info
+        # Octo AI Agents: liveness/description/active marker only; collaboration-team info
         # now lives in its own section below instead of being mixed into each agent's line
         agent_status_list = []
         for a in AGENTS:
@@ -534,7 +534,7 @@ Message from {MATRIX_USERNAME}:
         channels_status.append(f"• Slack: {'🟢' if subprocess.run(['pgrep', '-f', 'slack_socket_gateway.py']).returncode == 0 else '🔴'}")
 
         status_text = "📊 <b>OctoMatrix Status Report</b>\n\n" + \
-                      "🤖 <b>Agent Squad:</b>\n" + "\n".join(agent_status_list) + \
+                      "🤖 <b>Octo AI Agents:</b>\n" + "\n".join(agent_status_list) + \
                       team_block + "\n\n" + \
                       awake_line + "\n\n" + \
                       "🌐 <b>Channel Status:</b>\n" + "\n".join(channels_status)
