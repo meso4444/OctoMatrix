@@ -296,8 +296,6 @@ def get_help_text(CURRENT_AGENT):
     help_text += "• <code>/inspect [name]</code>: Assign the current AI to check another AI's status and error messages.\n\n"
     help_text += "<b>🛠️ Control and Fix</b>\n"
     help_text += "• <code>/interrupt</code>: Send Ctrl+C to the active Agent to forcefully interrupt a frozen process.\n"
-    help_text += "• <code>/clear</code>: Clear the window display and the Agent's current context.\n"
-    help_text += "• <code>/resume_latest</code>: Attempt to restore the last conversation record from CLI local cache.\n"
     help_text += "• <code>/fix [name]</code>: Force restart and attempt to recover the conversation. Use this if the AI is stuck or unresponsive.\n"
     help_text += "• <code>/sys_refresh</code>: Check and update the Agent's system protocol and specification.\n"
     help_text += "• <code>/avatar_renew {requirements}</code>: Redefine and reconstruct the Agent's visual avatar and persona.\n"
