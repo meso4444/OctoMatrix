@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Start Telegram → AI Agent squad remote control system
+# Start Telegram → Octo AI Agents remote control system
 
 set -e
 
@@ -108,8 +108,8 @@ export TMUX_SESSION_NAME
 echo "🧬  Initializing Agent ecosystem environment…"
 python3 "$SCRIPT_DIR/setup_agent_env.py" --all
 
-# 2. Dynamically start AI Agent squad
-echo "🤖 Deploying AI Agent squad…"
+# 2. Dynamically start Octo AI Agents
+echo "🤖 Deploying Octo AI Agents…"
 
 
 echo "   ✅ All Agents ready"
