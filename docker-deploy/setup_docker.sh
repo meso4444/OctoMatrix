@@ -368,6 +368,15 @@ for agent in config.get('agents', []):
             echo "4. Stop and remove containers:"
             echo "   docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} down"
             echo "   docker image rm octo_${INSTANCE_NAME}-bot"
+            echo ""
+            echo "5. After git pull, rebuild and apply the update to the already-deployed container:"
+            echo "   (the source code is baked into the image via COPY, not bind-mounted, so git pull"
+            echo "   only updates host files -- it won't take effect in the running container until you"
+            echo "   rebuild and recreate it)"
+            echo "   docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} build && docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} up -d"
+            echo "   (agent_home/container_home/.env/config.yaml/awake.yaml are all bind-mounted, so"
+            echo "   rebuilding+up won't lose existing data; only add --no-cache if you need to force-refresh"
+            echo "   the apt/npm layers)"
             break
             ;;
         [Cc])
