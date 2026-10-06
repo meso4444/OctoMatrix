@@ -368,11 +368,7 @@ for agent in config.get('agents', []):
             echo "   docker image rm octo_${INSTANCE_NAME}-bot"
             echo ""
             echo "5. git pull 更新原始碼後，重新建置並套用到已部署的容器："
-            echo "   （原始碼是用 COPY 固化進 image 裡，不是 bind mount，git pull 只會更新 host 端檔案，"
-            echo "   不會讓已經在跑的容器自動生效，必須重新 build 再 up 才會套用新版）"
             echo "   docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} build && docker compose -f docker-compose.${INSTANCE_NAME}.yml -p octo_${INSTANCE_NAME} up -d"
-            echo "   （agent_home/container_home/.env/config.yaml/awake.yaml 這些資料都是 bind mount，"
-            echo "   重新 build+up 不會遺失既有資料；若想強制重抓 apt/npm 那幾層套件，才需要加 --no-cache）"
             break
             ;;
         [Cc])
