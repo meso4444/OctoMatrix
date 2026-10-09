@@ -69,6 +69,12 @@ AGENT_MARKERS = ['✦', '│', '╭', '╰', '✓']
 
 STABLE_HISTORY = deque(maxlen=1000)
 
+# 計時尾巴(例如 " · 5m 51s")每秒變動，不納入去重比對，只用來產生比對 key，寫入內容維持原樣
+TIMER_TAIL = re.compile(r'\s*·\s*(?:\d+h\s*)?(?:\d+m\s*)?\d+s\s*$')
+
+def dedup_key(line):
+    return TIMER_TAIL.sub('', line)
+
 def get_screen_snapshot():
     """抓取螢幕快照並裁切底部 9 行"""
     try:
@@ -131,12 +137,13 @@ try:
                 first_run = len(STABLE_HISTORY) == 0
                 
                 for line in snapshot:
-                    if line not in STABLE_HISTORY:
+                    key = dedup_key(line)
+                    if key not in STABLE_HISTORY:
                         if not should_ignore(line):
                             if not first_run:
                                 log_file.write(line + '\n')
                                 log_file.flush()
-                            STABLE_HISTORY.append(line)
+                            STABLE_HISTORY.append(key)
                 
                 last_sync_time = time.time()
 
