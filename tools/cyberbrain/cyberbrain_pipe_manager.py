@@ -69,6 +69,12 @@ AGENT_MARKERS = ['✦', '│', '╭', '╰', '✓']
 
 STABLE_HISTORY = deque(maxlen=1000)
 
+# Elapsed-time tail (e.g. " · 5m 51s") changes every second, so it is excluded from dedup comparison; used only to build the comparison key, the written line is unchanged
+TIMER_TAIL = re.compile(r'\s*·\s*(?:\d+h\s*)?(?:\d+m\s*)?\d+s\s*$')
+
+def dedup_key(line):
+    return TIMER_TAIL.sub('', line)
+
 def get_screen_snapshot():
     """Capture screen snapshot and trim bottom 9 lines"""
     try:
@@ -131,12 +137,13 @@ try:
                 first_run = len(STABLE_HISTORY) == 0
                 
                 for line in snapshot:
-                    if line not in STABLE_HISTORY:
+                    key = dedup_key(line)
+                    if key not in STABLE_HISTORY:
                         if not should_ignore(line):
                             if not first_run:
                                 log_file.write(line + '\n')
                                 log_file.flush()
-                            STABLE_HISTORY.append(line)
+                            STABLE_HISTORY.append(key)
                 
                 last_sync_time = time.time()
 
