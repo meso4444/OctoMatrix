@@ -69,8 +69,8 @@ AGENT_MARKERS = ['✦', '│', '╭', '╰', '✓']
 
 STABLE_HISTORY = deque(maxlen=1000)
 
-# Elapsed-time tail (e.g. " · 5m 51s") changes every second, so it is excluded from dedup comparison; used only to build the comparison key, the written line is unchanged
-TIMER_TAIL = re.compile(r'\s*·\s*(?:\d+h\s*)?(?:\d+m\s*)?\d+s\s*$')
+# Elapsed-time tail (e.g. " · 5m 51s", Pi's "Elapsed 1m 13s") changes every second, so it is excluded from dedup comparison; used only to build the comparison key, the written line is unchanged
+TIMER_TAIL = re.compile(r'\s*(?:·|Elapsed)\s*(?:\d+h\s*)?(?:\d+m\s*)?\d+s\s*$')
 
 def dedup_key(line):
     return TIMER_TAIL.sub('', line)

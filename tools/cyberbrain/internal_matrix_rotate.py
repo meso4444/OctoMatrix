@@ -74,6 +74,8 @@ def get_config(agent_name=None):
                         engine_doc_name = "AGENTS.md"
                     elif engine == 'agy':
                         engine_doc_name = "GEMINI.md"
+                    elif engine == 'pi':
+                        engine_doc_name = "AGENTS.md"
                     break
         return limit, context_size, engine_doc_name, engine
     except Exception:
@@ -184,8 +186,13 @@ def main():
             prompt_markers = ['OpenAI']
         elif ENGINE == 'agy':
             prompt_markers = ['Antigravity CLI']
+        elif ENGINE == 'pi':
+            prompt_markers = ['New session', 'Pi']
         else:  # gemini
             prompt_markers = ['Gemini']
+        # Pi has no /clear, its reset command is /new; its prompt needs both 'New session' and 'Pi' to match, other engines match on any marker
+        RESET_CMD = '/new' if ENGINE == 'pi' else '/clear'
+        marker_match = all if ENGINE == 'pi' else any
 
         # ==========================================
         # Step 1: Physical Interruption and Zero-interference Dump
@@ -195,9 +202,12 @@ def main():
         else:
             open(TEMP_LOG, 'w').close()
             
-        print(f"⏳ Injecting /clear and starting periodic Enter retries (every 3 seconds, 100 times total)...")
+        print(f"⏳ Injecting {RESET_CMD} and starting periodic Enter retries (every 3 seconds, 100 times total)...")
         # 🚀 Hardening Means 1: Pre-wake (Force clear). Send Enter followed immediately by BSpace to prevent blank lines
-        if ENGINE == 'codex':
+        if ENGINE == 'pi':
+            # Pi needs no busy check and Ctrl-C does not apply; interrupt with Escape only
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Escape"])
+        elif ENGINE == 'codex':
             res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
             lines = [line for line in res.stdout.split('\n') if line.strip()]
             if 'Working (' in '\n'.join(lines[-20:]):
@@ -214,7 +224,10 @@ def main():
         
         time.sleep(6.0)
         
-        if ENGINE == 'codex':
+        if ENGINE == 'pi':
+            # Pi needs no busy check and Ctrl-C does not apply; interrupt with Escape only
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Escape"])
+        elif ENGINE == 'codex':
             res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
             lines = [line for line in res.stdout.split('\n') if line.strip()]
             if 'Working (' in '\n'.join(lines[-20:]):
@@ -240,7 +253,7 @@ def main():
             
             # 2. Re-inject /clear
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
-            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", "/clear"])
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", RESET_CMD])
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"]) 
             
             # 3. Send Enter
@@ -252,7 +265,7 @@ def main():
             # Detect if reset was successful
             res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
             screen = res.stdout
-            if any(marker in screen for marker in prompt_markers):
+            if marker_match(marker in screen for marker in prompt_markers):
                 cleared = True
                 print(f"✅ Attempt {i+1} successful! Detected {ENGINE} startup keyword.")
                 break
@@ -260,7 +273,10 @@ def main():
         
         if not cleared:
             print("⚠️ Timeout after 100 attempts, reset keyword not detected. Attempting ultimate fallback...")
-            if ENGINE == 'codex':
+            if ENGINE == 'pi':
+                # Pi needs no busy check and Ctrl-C does not apply; interrupt with Escape only
+                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Escape"])
+            elif ENGINE == 'codex':
                 res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
                 lines = [line for line in res.stdout.split('\n') if line.strip()]
                 if 'Working (' in '\n'.join(lines[-20:]):
@@ -272,7 +288,10 @@ def main():
                 time.sleep(0.5)
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Escape"])
             time.sleep(6.0)
-            if ENGINE == 'codex':
+            if ENGINE == 'pi':
+                # Pi needs no busy check and Ctrl-C does not apply; interrupt with Escape only
+                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Escape"])
+            elif ENGINE == 'codex':
                 res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
                 lines = [line for line in res.stdout.split('\n') if line.strip()]
                 if 'Working (' in '\n'.join(lines[-20:]):
@@ -285,7 +304,7 @@ def main():
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Escape"])
             time.sleep(3.0)
             res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
-            if any(marker in res.stdout for marker in prompt_markers):
+            if marker_match(marker in res.stdout for marker in prompt_markers):
                 cleared = True
                 print("✅ Ultimate fallback successful! Detected startup keyword.")
 

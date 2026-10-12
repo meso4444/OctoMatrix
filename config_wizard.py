@@ -145,6 +145,8 @@ def prompt_model_choice(engine, current_model=None):
             ("Claude Sonnet 4.6 (Thinking)", "Claude Sonnet 4.6 (Thinking)"),
             ("Claude Opus 4.6 (Thinking)", "Claude Opus 4.6 (Thinking)")
         ]
+    elif engine == 'pi':
+        return input(f"Model (enter a model available after Pi login; leave empty to omit --model; press Enter to keep '{current_model or 'not set'}'): ").strip()
     else:
         return input(f"Model (press Enter to keep '{current_model or 'default'}'): ").strip()
 
@@ -197,7 +199,7 @@ def manage_agents():
         if choice == 'a':
             name = input("Agent Name: ").strip()
             if not name: continue
-            engine = input("Engine (gemini/claude/codex/agy) [gemini]: ").strip() or "gemini"
+            engine = input("Engine (gemini/claude/codex/agy/pi) [gemini]: ").strip() or "gemini"
             model = prompt_model_choice(engine)
             usecase = input("Responsibility (usecase) [for Agent system prompt awareness]: ").strip()
             desc = input("Description (description) [for menu and user identification]: ").strip()

@@ -338,16 +338,18 @@ while true; do
                 echo " [2] 🆙 Upgrade Claude Code"
                 echo " [3] 🆙 Upgrade Codex CLI"
                 echo " [4] 🆙 Upgrade agy CLI (Antigravity)"
-                echo " [5] 🚀 Upgrade all CLI tools at once"
+                echo " [5] 🆙 Upgrade Pi CLI"
+                echo " [6] 🚀 Upgrade all CLI tools at once"
                 echo "----------------------------------------"
-                echo " [6] ⏪ Rollback Gemini CLI (Restore from backup)"
-                echo " [7] ⏪ Rollback Claude Code (Restore from backup)"
-                echo " [8] ⏪ Rollback Codex CLI (Restore from backup)"
-                echo " [9] 🛡️ Rollback all CLI tools at once"
+                echo " [7] ⏪ Rollback Gemini CLI (Restore from backup)"
+                echo " [8] ⏪ Rollback Claude Code (Restore from backup)"
+                echo " [9] ⏪ Rollback Codex CLI (Restore from backup)"
+                echo " [10] ⏪ Rollback Pi CLI (Restore from backup)"
+                echo " [11] 🛡️ Rollback all CLI tools at once"
                 echo "----------------------------------------"
                 echo " [R] 🔙 Return to Main Menu"
                 echo "=========================================="
-                read -p "Please select an operation [1-9, R]: " cli_choice
+                read -p "Please select an operation [1-11, R]: " cli_choice
 
                 do_update() {
                     local pkg="$1"
@@ -403,19 +405,23 @@ while true; do
                     2) do_update "@anthropic-ai/claude-code" "Claude Code" ;;
                     3) do_update "@openai/codex" "Codex CLI" ;;
                     4) do_update_agy ;;
-                    5)
+                    5) do_update "@earendil-works/pi-coding-agent" "Pi CLI" ;;
+                    6)
                         do_update "@google/gemini-cli" "Gemini CLI"
                         do_update "@anthropic-ai/claude-code" "Claude Code"
                         do_update "@openai/codex" "Codex CLI"
+                        do_update "@earendil-works/pi-coding-agent" "Pi CLI"
                         do_update_agy
                         ;;
-                    6) do_rollback "@google/gemini-cli" "Gemini CLI" ;;
-                    7) do_rollback "@anthropic-ai/claude-code" "Claude Code" ;;
-                    8) do_rollback "@openai/codex" "Codex CLI" ;;
-                    9)
+                    7) do_rollback "@google/gemini-cli" "Gemini CLI" ;;
+                    8) do_rollback "@anthropic-ai/claude-code" "Claude Code" ;;
+                    9) do_rollback "@openai/codex" "Codex CLI" ;;
+                    10) do_rollback "@earendil-works/pi-coding-agent" "Pi CLI" ;;
+                    11)
                         do_rollback "@google/gemini-cli" "Gemini CLI"
                         do_rollback "@anthropic-ai/claude-code" "Claude Code"
                         do_rollback "@openai/codex" "Codex CLI"
+                        do_rollback "@earendil-works/pi-coding-agent" "Pi CLI"
                         ;;
                     [Rr]) break ;;
                     *) echo "⚠️ Invalid selection"; sleep 1 ;;

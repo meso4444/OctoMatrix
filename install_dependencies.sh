@@ -254,7 +254,7 @@ install_ai_cli_tools() {
     # Ensure local (non-sudo) or old CLIs are uninstalled first to prevent path conflicts
     if command -v npm &> /dev/null; then
         echo "🧹 Clearing potentially conflicting local AI CLIs..."
-        npm uninstall -g @anthropic-ai/claude-code @google/gemini-cli @openai/codex 2>/dev/null || true
+        npm uninstall -g @anthropic-ai/claude-code @google/gemini-cli @openai/codex @earendil-works/pi-coding-agent 2>/dev/null || true
         # agy is a native binary, not an npm package — no npm uninstall needed
     fi
 
@@ -298,6 +298,20 @@ install_ai_cli_tools() {
         fi
     else
         echo "✅ Codex CLI already installed: $(codex --version 2>/dev/null || echo 'Detected')"
+    fi
+
+    # Install Pi CLI (version not pinned, takes the latest from npm)
+    # Note: the npm package exists under two scopes; @earendil-works/pi-coding-agent is the maintained one,
+    # @mariozechner/pi-coding-agent is the old personal scope and is no longer updated.
+    if ! command -v pi &> /dev/null; then
+        if command -v npm &> /dev/null; then
+            echo "📦 Installing Pi CLI via npm..."
+            $npm_prefix npm install -g @earendil-works/pi-coding-agent || echo "⚠️  Pi CLI installation failed (permission denied?)"
+        else
+            echo "❌ Node.js not installed, skipping Pi CLI installation"
+        fi
+    else
+        echo "✅ Pi CLI already installed: $(pi --version 2>/dev/null || echo 'Detected')"
     fi
 
     # Install agy CLI (Antigravity - native binary, not npm package)

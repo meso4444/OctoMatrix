@@ -141,6 +141,13 @@ print(next((a.get('engine', 'gemini') for a in data.get('agents', []) if a.get('
         sudo su - "$AGENT_USER" -c "codex --yolo" || true
         echo ""
         echo "✅ Codex authentication complete!"
+    elif [[ "$AGENT_ENGINE_LOWER" == "pi" ]]; then
+        echo "🚀 Starting Pi CLI authentication (Identity: $AGENT_USER)..."
+        echo "💡 Tip: Once inside Pi, run /login to authenticate; Pi writes the credentials itself under $AGENT_HOME_DIR/.pi"
+        echo ""
+        sudo su - "$AGENT_USER" -c "pi --approve" || true
+        echo ""
+        echo "✅ Pi authentication complete!"
     elif [[ "$AGENT_ENGINE_LOWER" == *"agy"* ]] || [[ "$AGENT_ENGINE_LOWER" == *"antigravity"* ]]; then
         echo "🚀 Starting Antigravity CLI authentication (Identity: $AGENT_USER)..."
         echo "💡 Tip: After authentication, credentials will be stored in $AGENT_HOME_DIR/.gemini"
@@ -199,9 +206,10 @@ run_container_auth() {
     echo "2) Claude"
     echo "3) Codex"
     echo "4) Antigravity (agy)"
+    echo "5) Pi"
     echo "R) Return / Exit"
     echo ""
-    read -p "Please enter your choice [1-4, R]: " CLI_CHOICE
+    read -p "Please enter your choice [1-5, R]: " CLI_CHOICE
 
     case "$CLI_CHOICE" in
       1)
@@ -334,6 +342,22 @@ run_container_auth() {
         else
           echo ""
           echo "⚠️  Error occurred during authentication, please check that docker is working, or check directory permissions"
+          echo "   Try running: sudo chmod 777 $CONTAINER_HOME"
+        fi
+        ;;
+      5)
+        echo ""
+        echo "🚀 Starting Pi CLI authentication..."
+        echo "📂 Authentication path: $CONTAINER_HOME"
+        echo "💡 Tip: Once inside Pi, run /login to authenticate; Pi writes the credentials itself under $CONTAINER_HOME/.pi"
+        echo ""
+        if HOME="$CONTAINER_HOME" pi --approve; then
+          echo ""
+          echo "✅ Pi authentication completed!"
+          echo "📦 Credentials stored at: $CONTAINER_HOME/.pi"
+        else
+          echo ""
+          echo "⚠️  An error occurred during authentication, please check directory permissions"
           echo "   Try running: sudo chmod 777 $CONTAINER_HOME"
         fi
         ;;

@@ -204,11 +204,11 @@ After dependencies are installed, start the interactive configuration wizard. Yo
 *   **[2]-[4] Communication Channel Setup**: Guide for binding Telegram, Discord, or Slack tokens, and you can toggle specific channels anytime.
 *   **[5] 🌍 Network & Ports Setup (Ports)**: Customize local port numbers for Router and Gateway to avoid conflicts with other services on your host.
 *   **[6] 🤖 Configure Octo AI Agents & Advanced Parameters**:
-    *   **Configure Agent**: Name the AI, specify its **usecase** (for AI awareness) and **description** (for menu display to users), and freely combine AI engines (Gemini, Claude, Codex, or agy (Antigravity)) with models.
+    *   **Configure Agent**: Name the AI, specify its **usecase** (for AI awareness) and **description** (for menu display to users), and freely combine AI engines (Gemini, Claude, Codex, agy (Antigravity), or Pi) with models. For Pi, the model is entered by the user (leave empty to omit `--model`).
         > **Note:** It is recommended to switch to the agy (Antigravity) engine for better stability, as the gemini CLI no longer supports Pro subscription users.
     *   **Configure Agent Collaboration Groups**: Create team shared spaces and specify mutual supervision and task delegation relationships between agents within groups.
     *   **Communication Menu Configuration**: In addition to the system's built-in basic menu, you can "customize dedicated buttons" to bind commonly used prompts or commands to graphical buttons for one-click sending.
-*   **[7] 🔐 AI Agent CLI Authentication Setup**: Built-in authentication flow to help you with one-click authorization from Google, Anthropic, or OpenAI to complete terminal login.
+*   **[7] 🔐 AI Agent CLI Authentication Setup**: Built-in authentication flow to help you with one-click authorization from Google, Anthropic, or OpenAI to complete terminal login. For Pi, the wizard opens the Pi CLI; run `/login` there to authenticate (Pi manages its own credentials).
 *   **[8] ⬆️ AI CLI Version Management (Upgrade/Rollback)**: Built-in mechanism to upgrade or rollback various AI CLI tools, ensuring optimal compatibility between underlying tools and the project.
 *   **[9] 📦 Install Global Agent Skills**: Unpacks skill packages from the [`skills`](./skills) directory into the global cache and automatically deploys them to every Agent.
 

@@ -27,9 +27,9 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs
 
 # Install AI Agent CLIs
-RUN npm install -g @google/gemini-cli @anthropic-ai/claude-code @openai/codex && \
+RUN npm install -g @google/gemini-cli @anthropic-ai/claude-code @openai/codex @earendil-works/pi-coding-agent && \
     echo "✅ AI CLI tools installed successfully" && \
-    which gemini && which claude && which codex
+    which gemini && which claude && which codex && which pi
 
 # Install agy CLI (Antigravity - native binary, not npm package)
 RUN curl -fsSL https://antigravity.google/cli/install.sh | bash && \

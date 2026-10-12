@@ -126,7 +126,7 @@ def setup_agent_dirs(agent_config, script_dir):
     engine_doc_name = 'CLAUDE.md'
     if engine == 'gemini' or engine == 'agy':
         engine_doc_name = 'GEMINI.md'
-    elif engine == 'codex':
+    elif engine == 'codex' or engine == 'pi':
         engine_doc_name = 'AGENTS.md'
         
     touch_path = os.path.join(home, engine_doc_name)
@@ -261,6 +261,8 @@ def wait_for_prompt(session_name, window_name, engine, max_wait=30):
         prompt_markers = ['OpenAI', '› ']
     elif engine == 'agy':
         prompt_markers = ['Antigravity CLI', '>']
+    elif engine == 'pi':
+        prompt_markers = ['Pi']
     else:  # gemini
         prompt_markers = ['Gemini', 'YOLO']
 
@@ -284,7 +286,7 @@ def wait_for_prompt(session_name, window_name, engine, max_wait=30):
             if all(marker in output for marker in prompt_markers):
                 detected = True
 
-            if not trust_handled and ('Trust folder' in output or 'trust the contents' in output.lower() or 'trust' in output.lower()):
+            if engine != 'pi' and not trust_handled and ('Trust folder' in output or 'trust the contents' in output.lower() or 'trust' in output.lower()):
                 print(f"       🛡️  Detected {engine.capitalize()} trust prompt, auto-authorizing…")
                 subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{window_name}', 'Enter']))
                 trust_handled = True
@@ -363,6 +365,9 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
     responder_script = os.path.join(script_dir, 'auto_permission_responder.py')
 
     pipe_cmd = f"bash -c 'tee >(python3 -u {responder_script} {session_name}:{name}) | python3 -u {pipe_manager} {shell_log_path} {session_name}:{name}'"
+    if engine == 'pi':
+        # Pi's --approve doesn't surface interactive permission prompts, so no auto_permission_responder stage is needed
+        pipe_cmd = f"python3 -u {pipe_manager} {shell_log_path} {session_name}:{name}"
     subprocess.run(['tmux'] + tmux_cmd(['pipe-pane', '-o', '-t', f'{session_name}:{name}', pipe_cmd]), check=True)
 
     # Initialize correct permissions for shell log, ghost json, and task memo
@@ -420,6 +425,10 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
         cmd = 'agy --dangerously-skip-permissions'
         if model: cmd += f' --model "{model}"'
         engine_doc_name = 'GEMINI.md'
+    elif engine == 'pi':
+        cmd = 'pi --approve'
+        if model: cmd += f' --model {model}'
+        engine_doc_name = 'AGENTS.md'
     else:
         cmd = 'claude --permission-mode bypassPermissions'
         if model and model.lower() != 'auto': cmd += f' --model {model}'
@@ -505,9 +514,13 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
 
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
         time.sleep(1)
-        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'q']), check=True)
-        time.sleep(0.5)
-        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'BSpace']), check=True)
+        if engine == 'pi':
+            # After /resume opens the session list, the Enter above selects and loads the session; finish with Escape
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Escape']), check=True)
+        else:
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'q']), check=True)
+            time.sleep(0.5)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'BSpace']), check=True)
         time.sleep(0.5)
 
         print(f"     ⏳ Waiting for prompt recovery…")
