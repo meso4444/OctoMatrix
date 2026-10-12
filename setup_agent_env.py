@@ -124,7 +124,7 @@ def setup_agent_dirs(agent_config, script_dir):
     engine_doc_name = 'CLAUDE.md'
     if engine == 'gemini' or engine == 'agy':
         engine_doc_name = 'GEMINI.md'
-    elif engine == 'codex':
+    elif engine == 'codex' or engine == 'pi':
         engine_doc_name = 'AGENTS.md'
         
     touch_path = os.path.join(home, engine_doc_name)
@@ -255,6 +255,8 @@ def wait_for_prompt(session_name, window_name, engine, max_wait=30):
         prompt_markers = ['OpenAI', '› ']
     elif engine == 'agy':
         prompt_markers = ['Antigravity CLI', '>']
+    elif engine == 'pi':
+        prompt_markers = ['Pi']
     else:  # gemini
         prompt_markers = ['Gemini', 'YOLO']
 
@@ -278,7 +280,7 @@ def wait_for_prompt(session_name, window_name, engine, max_wait=30):
             if all(marker in output for marker in prompt_markers):
                 detected = True
 
-            if not trust_handled and ('Trust folder' in output or 'trust the contents' in output.lower() or 'trust' in output.lower()):
+            if engine != 'pi' and not trust_handled and ('Trust folder' in output or 'trust the contents' in output.lower() or 'trust' in output.lower()):
                 print(f"       🛡️  偵測到 {engine.capitalize()} 信任目錄提示，正在自動授權…")
                 subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{window_name}', 'Enter']))
                 trust_handled = True
@@ -357,6 +359,9 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
     responder_script = os.path.join(script_dir, 'auto_permission_responder.py')
 
     pipe_cmd = f"bash -c 'tee >(python3 -u {responder_script} {session_name}:{name}) | python3 -u {pipe_manager} {shell_log_path} {session_name}:{name}'"
+    if engine == 'pi':
+        # Pi 的 --approve 不會跳出互動式權限提示，不需要 auto_permission_responder 這層自動核准分流
+        pipe_cmd = f"python3 -u {pipe_manager} {shell_log_path} {session_name}:{name}"
     subprocess.run(['tmux'] + tmux_cmd(['pipe-pane', '-o', '-t', f'{session_name}:{name}', pipe_cmd]), check=True)
 
     # 統一初始化 shell log 與 ghost json 的正確權限
@@ -414,6 +419,10 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
         cmd = 'agy --dangerously-skip-permissions'
         if model: cmd += f' --model "{model}"'
         engine_doc_name = 'GEMINI.md'
+    elif engine == 'pi':
+        cmd = 'pi --approve'
+        if model: cmd += f' --model {model}'
+        engine_doc_name = 'AGENTS.md'
     else:
         cmd = 'claude --permission-mode bypassPermissions'
         if model and model.lower() != 'auto': cmd += f' --model {model}'
@@ -499,9 +508,13 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
 
         subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Enter']), check=True)
         time.sleep(1)
-        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'q']), check=True)
-        time.sleep(0.5)
-        subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'BSpace']), check=True)
+        if engine == 'pi':
+            # /resume 開出 session 清單後，上面的 Enter 已選取並載入紀錄，最後送 Esc 收尾
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'Escape']), check=True)
+        else:
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'q']), check=True)
+            time.sleep(0.5)
+            subprocess.run(['tmux'] + tmux_cmd(['send-keys', '-t', f'{session_name}:{name}', 'BSpace']), check=True)
         time.sleep(0.5)
 
         print(f"     ⏳ 等待提示符復原…")

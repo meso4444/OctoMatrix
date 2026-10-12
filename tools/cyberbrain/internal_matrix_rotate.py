@@ -74,6 +74,8 @@ def get_config(agent_name=None):
                         engine_doc_name = "AGENTS.md"
                     elif engine == 'agy':
                         engine_doc_name = "GEMINI.md"
+                    elif engine == 'pi':
+                        engine_doc_name = "AGENTS.md"
                     break
         return limit, context_size, engine_doc_name, engine
     except Exception:
@@ -184,8 +186,13 @@ def main():
             prompt_markers = ['OpenAI']
         elif ENGINE == 'agy':
             prompt_markers = ['Antigravity CLI']
+        elif ENGINE == 'pi':
+            prompt_markers = ['New session', 'Pi']
         else:  # gemini
             prompt_markers = ['Gemini']
+        # Pi 沒有 /clear，重置指令為 /new；其提示符需同時命中 'New session' 與 'Pi'，其他引擎任一命中即可
+        RESET_CMD = '/new' if ENGINE == 'pi' else '/clear'
+        marker_match = all if ENGINE == 'pi' else any
 
         # ==========================================
         # Step 1: 物理中斷與零幹擾轉儲
@@ -195,9 +202,12 @@ def main():
         else:
             open(TEMP_LOG, 'w').close()
             
-        print(f"⏳ 注入 /clear 並開始週期性嘗試 Enter (每 3 秒一次，共 100 次)...")
+        print(f"⏳ 注入 {RESET_CMD} 並開始週期性嘗試 Enter (每 3 秒一次，共 100 次)...")
         # 🚀 強化手段 1: 前置喚醒 (暴力淨空)。每次擊發 Enter 隨即緊接發送 BSpace 以防空行
-        if ENGINE == 'codex':
+        if ENGINE == 'pi':
+            # Pi 不需要忙碌判斷，Ctrl-C 不適用，中斷操作直接送 Escape
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Escape"])
+        elif ENGINE == 'codex':
             res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
             lines = [line for line in res.stdout.split('\n') if line.strip()]
             if 'Working (' in '\n'.join(lines[-20:]):
@@ -214,7 +224,10 @@ def main():
         
         time.sleep(6.0)
         
-        if ENGINE == 'codex':
+        if ENGINE == 'pi':
+            # Pi 不需要忙碌判斷，Ctrl-C 不適用，中斷操作直接送 Escape
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Escape"])
+        elif ENGINE == 'codex':
             res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
             lines = [line for line in res.stdout.split('\n') if line.strip()]
             if 'Working (' in '\n'.join(lines[-20:]):
@@ -240,7 +253,7 @@ def main():
             
             # 2. 重新注入 /clear
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[200~"])
-            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", "/clear"])
+            subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "-l", "--", RESET_CMD])
             subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "\x1b[201~"]) 
             
             # 3. 發送 Enter
@@ -252,7 +265,7 @@ def main():
             # 檢測是否重置成功
             res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
             screen = res.stdout
-            if any(marker in screen for marker in prompt_markers):
+            if marker_match(marker in screen for marker in prompt_markers):
                 cleared = True
                 print(f"✅ 第 {i+1} 次嘗試成功！偵測到 {ENGINE} 啟動關鍵字。")
                 break
@@ -260,7 +273,10 @@ def main():
         
         if not cleared:
             print("⚠️ 逾時 100 次嘗試仍未偵測到重置關鍵字，嘗試終極保險 [Ctrl+C] -> 6s -> [Ctrl+C]...")
-            if ENGINE == 'codex':
+            if ENGINE == 'pi':
+                # Pi 不需要忙碌判斷，Ctrl-C 不適用，中斷操作直接送 Escape
+                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Escape"])
+            elif ENGINE == 'codex':
                 res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
                 lines = [line for line in res.stdout.split('\n') if line.strip()]
                 if 'Working (' in '\n'.join(lines[-20:]):
@@ -272,7 +288,10 @@ def main():
                 time.sleep(0.5)
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Escape"])
             time.sleep(6.0)
-            if ENGINE == 'codex':
+            if ENGINE == 'pi':
+                # Pi 不需要忙碌判斷，Ctrl-C 不適用，中斷操作直接送 Escape
+                subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Escape"])
+            elif ENGINE == 'codex':
                 res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
                 lines = [line for line in res.stdout.split('\n') if line.strip()]
                 if 'Working (' in '\n'.join(lines[-20:]):
@@ -285,7 +304,7 @@ def main():
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Escape"])
             time.sleep(3.0)
             res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
-            if any(marker in res.stdout for marker in prompt_markers):
+            if marker_match(marker in res.stdout for marker in prompt_markers):
                 cleared = True
                 print("✅ 終極保險救援成功！偵測到啟動關鍵字。")
 

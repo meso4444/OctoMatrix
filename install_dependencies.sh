@@ -253,7 +253,7 @@ install_ai_cli_tools() {
     # 確保先卸載可能存在於局部 (非 sudo) 或舊版的 CLI，避免路徑衝突或未更新
     if command -v npm &> /dev/null; then
         echo "🧹 正在清除可能衝突的局部 AI CLI..."
-        npm uninstall -g @anthropic-ai/claude-code @google/gemini-cli @openai/codex 2>/dev/null || true
+        npm uninstall -g @anthropic-ai/claude-code @google/gemini-cli @openai/codex @earendil-works/pi-coding-agent 2>/dev/null || true
         # agy 是原生 binary 非 npm 套件，不需 npm uninstall
     fi
 
@@ -297,6 +297,20 @@ install_ai_cli_tools() {
         fi
     else
         echo "✅ Codex CLI 已安裝: $(codex --version 2>/dev/null || echo 'Detected')"
+    fi
+
+    # 安裝 Pi CLI（不綁定版本，吃 npm 最新版）
+    # 特別留意：npm上同名套件有兩個scope，@earendil-works/pi-coding-agent才是維護中版本，
+    # @mariozechner/pi-coding-agent是舊個人scope已停更。
+    if ! command -v pi &> /dev/null; then
+        if command -v npm &> /dev/null; then
+            echo "📦 正在透過 npm 安裝 Pi CLI..."
+            $npm_prefix npm install -g @earendil-works/pi-coding-agent || echo "⚠️  Pi CLI 安裝失敗 (權限不足?)"
+        else
+            echo "❌ Node.js 未安裝，跳過 Pi CLI 安裝"
+        fi
+    else
+        echo "✅ Pi CLI 已安裝: $(pi --version 2>/dev/null || echo 'Detected')"
     fi
 
     # 安裝 agy CLI (Antigravity - 原生 binary，非 npm 套件)

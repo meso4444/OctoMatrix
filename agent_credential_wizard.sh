@@ -139,6 +139,13 @@ print(next((a.get('engine', 'gemini') for a in data.get('agents', []) if a.get('
         sudo su - "$AGENT_USER" -c "codex --yolo" || true
         echo ""
         echo "✅ Codex 認證完成！"
+    elif [[ "$AGENT_ENGINE_LOWER" == "pi" ]]; then
+        echo "🚀 啟動 Pi CLI 認證 (身分: $AGENT_USER)..."
+        echo "💡 提示: 進入 Pi 後請執行 /login 完成認證，憑證由 Pi 自行寫入 $AGENT_HOME_DIR/.pi"
+        echo ""
+        sudo su - "$AGENT_USER" -c "pi --approve" || true
+        echo ""
+        echo "✅ Pi 認證完成！"
     elif [[ "$AGENT_ENGINE_LOWER" == *"agy"* ]] || [[ "$AGENT_ENGINE_LOWER" == *"antigravity"* ]]; then
         echo "🚀 啟動 Antigravity CLI 認證 (身分: $AGENT_USER)..."
         echo "💡 提示: 完成認證後，憑證將存放在 $AGENT_HOME_DIR/.gemini"
@@ -197,9 +204,10 @@ run_container_auth() {
     echo "2) Claude"
     echo "3) Codex"
     echo "4) Antigravity (agy)"
+    echo "5) Pi"
     echo "R) 返回 / 退出"
     echo ""
-    read -p "請輸入選擇 [1-4, R]: " CLI_CHOICE
+    read -p "請輸入選擇 [1-5, R]: " CLI_CHOICE
 
     case "$CLI_CHOICE" in
       1)
@@ -322,6 +330,22 @@ run_container_auth() {
         else
           echo ""
           echo "⚠️  認證過程中出現錯誤，請檢查 docker 是否可正常執行、或目錄權限"
+          echo "   嘗試執行: sudo chmod 777 $CONTAINER_HOME"
+        fi
+        ;;
+      5)
+        echo ""
+        echo "🚀 啟動 Pi CLI 認證..."
+        echo "📂 認證路徑: $CONTAINER_HOME"
+        echo "💡 提示: 進入 Pi 後請執行 /login 完成認證，憑證由 Pi 自行寫入 $CONTAINER_HOME/.pi"
+        echo ""
+        if HOME="$CONTAINER_HOME" pi --approve; then
+          echo ""
+          echo "✅ Pi 認證完成！"
+          echo "📦 憑證已存放至: $CONTAINER_HOME/.pi"
+        else
+          echo ""
+          echo "⚠️  認證過程中出現錯誤，請檢查目錄權限"
           echo "   嘗試執行: sudo chmod 777 $CONTAINER_HOME"
         fi
         ;;

@@ -109,7 +109,12 @@ class AtomicInjector:
         target_info = get_agent_info(agent_name)
         engine = target_info.get('engine', '').lower() if target_info else 'gemini'
         
-        if engine == 'codex':
+        if engine == 'pi':
+            # Pi 不需要忙碌判斷，Ctrl-C 不適用，中斷操作直接送 Escape
+            subprocess.run(['tmux', 'send-keys', '-t', target, "Escape"], check=False)
+            time.sleep(0.5)
+            return True
+        elif engine == 'codex':
             try:
                 res = subprocess.run(['tmux', 'capture-pane', '-p', '-t', target], capture_output=True, text=True)
                 lines = [line for line in res.stdout.split('\n') if line.strip()]
@@ -233,7 +238,10 @@ class CommandHandler:
                 return True
             target_info = get_agent_info(target_agent)
             engine = target_info.get('engine', '').lower() if target_info else 'gemini'
-            if engine == 'codex':
+            if engine == 'pi':
+                subprocess.run(['tmux', 'send-keys', '-t', f'{TMUX_SESSION_NAME}:{target_agent}', "Escape"], check=False)
+                self.notifier.notify(msg.source, 'custom', {'content': f'🛑 已發送中斷訊號至 <b>[{target_agent}]</b>'})
+            elif engine == 'codex':
                 target = f'{TMUX_SESSION_NAME}:{target_agent}'
                 res = subprocess.run(['tmux', 'capture-pane', '-p', '-t', target], capture_output=True, text=True)
                 lines = [line for line in res.stdout.split('\n') if line.strip()]
@@ -264,7 +272,7 @@ class CommandHandler:
                 usecase = target_info.get('usecase', '無描述') if target_info else '無描述'
                 if engine == "claude":
                     engine_doc_name = "CLAUDE.md"
-                elif engine == "codex":
+                elif engine == "codex" or engine == "pi":
                     engine_doc_name = "AGENTS.md"
                 elif engine == "agy":
                     engine_doc_name = "GEMINI.md"

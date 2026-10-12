@@ -142,6 +142,8 @@ def prompt_model_choice(engine, current_model=None):
             ("Claude Sonnet 4.6 (Thinking)", "Claude Sonnet 4.6 (Thinking)"),
             ("Claude Opus 4.6 (Thinking)", "Claude Opus 4.6 (Thinking)")
         ]
+    elif engine == 'pi':
+        return input(f"模型 (model，請自行填寫 pi 認證後可用的模型，留空則不帶 --model；按 Enter 保留 '{current_model or '未設定'}'): ").strip()
     else:
         return input(f"模型 (model，按 Enter 保留 '{current_model or '預設'}'): ").strip()
 
@@ -194,7 +196,7 @@ def manage_agents():
         if choice == 'a':
             name = input("Agent 名稱: ").strip()
             if not name: continue
-            engine = input("引擎 (gemini/claude/codex/agy) [gemini]: ").strip() or "gemini"
+            engine = input("引擎 (gemini/claude/codex/agy/pi) [gemini]: ").strip() or "gemini"
             model = prompt_model_choice(engine)
             usecase = input("職責 (usecase) [用於 Agent 系統提示認知]: ").strip()
             desc = input("描述 (description) [用於選單與使用者辨認]: ").strip()

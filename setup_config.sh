@@ -335,16 +335,18 @@ while true; do
                 echo " [2] 🆙 升級 Claude Code"
                 echo " [3] 🆙 升級 Codex CLI"
                 echo " [4] 🆙 升級 agy CLI (Antigravity)"
-                echo " [5] 🚀 一併升級所有 CLI 工具"
+                echo " [5] 🆙 升級 Pi CLI"
+                echo " [6] 🚀 一併升級所有 CLI 工具"
                 echo "----------------------------------------"
-                echo " [6] ⏪ 退版 Gemini CLI (還原至備份版本)"
-                echo " [7] ⏪ 退版 Claude Code (還原至備份版本)"
-                echo " [8] ⏪ 退版 Codex CLI (還原至備份版本)"
-                echo " [9] 🛡️ 一併退版所有 CLI 工具"
+                echo " [7] ⏪ 退版 Gemini CLI (還原至備份版本)"
+                echo " [8] ⏪ 退版 Claude Code (還原至備份版本)"
+                echo " [9] ⏪ 退版 Codex CLI (還原至備份版本)"
+                echo " [10] ⏪ 退版 Pi CLI (還原至備份版本)"
+                echo " [11] 🛡️ 一併退版所有 CLI 工具"
                 echo "----------------------------------------"
                 echo " [R] 🔙 返回主選單"
                 echo "=========================================="
-                read -p "請選擇操作 [1-9, R]: " cli_choice
+                read -p "請選擇操作 [1-11, R]: " cli_choice
 
                 do_update() {
                     local pkg="$1"
@@ -399,19 +401,23 @@ while true; do
                     2) do_update "@anthropic-ai/claude-code" "Claude Code" ;;
                     3) do_update "@openai/codex" "Codex CLI" ;;
                     4) do_update_agy ;;
-                    5)
+                    5) do_update "@earendil-works/pi-coding-agent" "Pi CLI" ;;
+                    6)
                         do_update "@google/gemini-cli" "Gemini CLI"
                         do_update "@anthropic-ai/claude-code" "Claude Code"
                         do_update "@openai/codex" "Codex CLI"
+                        do_update "@earendil-works/pi-coding-agent" "Pi CLI"
                         do_update_agy
                         ;;
-                    6) do_rollback "@google/gemini-cli" "Gemini CLI" ;;
-                    7) do_rollback "@anthropic-ai/claude-code" "Claude Code" ;;
-                    8) do_rollback "@openai/codex" "Codex CLI" ;;
-                    9)
+                    7) do_rollback "@google/gemini-cli" "Gemini CLI" ;;
+                    8) do_rollback "@anthropic-ai/claude-code" "Claude Code" ;;
+                    9) do_rollback "@openai/codex" "Codex CLI" ;;
+                    10) do_rollback "@earendil-works/pi-coding-agent" "Pi CLI" ;;
+                    11)
                         do_rollback "@google/gemini-cli" "Gemini CLI"
                         do_rollback "@anthropic-ai/claude-code" "Claude Code"
                         do_rollback "@openai/codex" "Codex CLI"
+                        do_rollback "@earendil-works/pi-coding-agent" "Pi CLI"
                         ;;
                     [Rr]) break ;;
                     *) echo "⚠️ 無效的選擇"; sleep 1 ;;

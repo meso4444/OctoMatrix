@@ -46,7 +46,11 @@ def notify_agent(agent_name):
         target = f"{session_name}:{agent_name}"
         agents = getattr(config, 'AGENTS', [])
         engine = next((a.get('engine', '').lower() for a in agents if a['name'] == agent_name), 'gemini')
-        if engine == 'codex':
+        if engine == 'pi':
+            # Pi 不需要忙碌判斷，Ctrl-C 不適用，中斷操作直接送 Escape
+            subprocess.run(["tmux", "send-keys", "-t", target, "Escape"])
+            time.sleep(6)
+        elif engine == 'codex':
             res = subprocess.run(["tmux", "capture-pane", "-p", "-t", target], capture_output=True, text=True)
             lines = [line for line in res.stdout.split('\n') if line.strip()]
             if 'Working (' in '\n'.join(lines[-20:]):
