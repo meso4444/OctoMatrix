@@ -57,9 +57,18 @@ for _ in range(5):
 
 # 不呼叫 root basicConfig：模組被 router import 時會搶先設定 root logger，讓 router 自己的 log 設定失效
 # (octo_router.log 因此恆為 0KB)。改為只對本模組的 logger 掛 handler 並關閉 propagate。
+# log 放專案根目錄的 logs/；找不到根目錄或無法建立時退回 /tmp
+_log_dir = '/tmp'
+if os.path.exists(os.path.join(_root_dir, 'config.py')):
+    try:
+        os.makedirs(os.path.join(_root_dir, 'logs'), mode=0o750, exist_ok=True)
+        _log_dir = os.path.join(_root_dir, 'logs')
+    except OSError:
+        pass
+
 _log_handlers = [logging.StreamHandler()]
 try:
-    _log_handlers.append(RotatingFileHandler('/tmp/matrix_notifier.log', maxBytes=1*1024*1024, backupCount=2, encoding='utf-8'))
+    _log_handlers.append(RotatingFileHandler(os.path.join(_log_dir, 'matrix_notifier.log'), maxBytes=1*1024*1024, backupCount=2, encoding='utf-8'))
 except PermissionError:
     # 防止容器內多用戶權限衝突
     pass

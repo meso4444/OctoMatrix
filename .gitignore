@@ -37,3 +37,6 @@
 
 # OctoMatrix Global Skill Cache
 skills/.global_skills_cache/
+
+# 服務 log 目錄
+/logs/

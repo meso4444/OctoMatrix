@@ -84,6 +84,9 @@ fi
 # 讀取配置
 TMUX_SESSION_NAME=$(python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import TMUX_SESSION_NAME; print(TMUX_SESSION_NAME)")
 
+# 建立集中的 log 目錄(各服務的 log 都放這裡；只有系統帳號可讀寫，避免 agent 帳號讀到其他對話)
+mkdir -p "$SCRIPT_DIR/logs" && chmod 750 "$SCRIPT_DIR/logs" 2>/dev/null || true
+
 echo "🚀 啟動 OctoMatrix"
 echo "==========================================="
 

@@ -38,8 +38,12 @@ _rot_fmt = logging.Formatter('[%(asctime)s] [%(levelname)s] [' + os.path.basenam
 for _rot_h in (logging.StreamHandler(),):
     _rot_h.setFormatter(_rot_fmt)
     logger.addHandler(_rot_h)
+# log 放專案根目錄(agent_home 的上兩層)的 logs/，目錄不存在時退回 /tmp
+_rot_dir = os.path.join(os.path.dirname(os.path.dirname(AGENT_HOME)), 'logs')
+if not os.path.isdir(_rot_dir):
+    _rot_dir = '/tmp'
 try:
-    _rot_f = RotatingFileHandler('/tmp/octo_rotate.log', maxBytes=1*1024*1024, backupCount=3, encoding='utf-8')
+    _rot_f = RotatingFileHandler(os.path.join(_rot_dir, 'octo_rotate.log'), maxBytes=1*1024*1024, backupCount=3, encoding='utf-8')
     _rot_f.setFormatter(_rot_fmt)
     logger.addHandler(_rot_f)
 except OSError:
