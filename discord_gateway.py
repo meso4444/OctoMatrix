@@ -47,11 +47,18 @@ import yaml
 # Configuration and Logging
 # ============================================================================
 
+# Logs are kept in logs/ under the project root (created automatically at service start); fall back to /tmp only if it cannot be created
+LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
+try:
+    os.makedirs(LOG_DIR, mode=0o750, exist_ok=True)
+except OSError:
+    LOG_DIR = '/tmp'
+
 logging.basicConfig(
     level=logging.INFO,
     format='[%(asctime)s] [%(levelname)s] %(message)s',
     handlers=[
-        RotatingFileHandler('/tmp/discord_gateway.log', maxBytes=2*1024*1024, backupCount=3, encoding='utf-8'),
+        RotatingFileHandler(os.path.join(LOG_DIR, 'discord_gateway.log'), maxBytes=2*1024*1024, backupCount=3, encoding='utf-8'),
         logging.StreamHandler()
     ]
 )

@@ -86,6 +86,9 @@ fi
 # Read configuration
 TMUX_SESSION_NAME=$(python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from config import TMUX_SESSION_NAME; print(TMUX_SESSION_NAME)")
 
+# Create the central log directory (all service logs live here; system account only, so agent accounts cannot read other conversations)
+mkdir -p "$SCRIPT_DIR/logs" && chmod 750 "$SCRIPT_DIR/logs" 2>/dev/null || true
+
 echo "🚀 Starting OctoMatrix"
 echo "==========================================="
 

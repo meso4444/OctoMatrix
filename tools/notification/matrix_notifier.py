@@ -58,9 +58,18 @@ for _ in range(5):
 # Do not call root basicConfig: when this module is imported by the router it would configure the root
 # logger first and disable the router's own log setup (octo_router.log stayed 0KB). Attach handlers to
 # this module's logger only and disable propagation.
+# Logs go to logs/ under the project root; fall back to /tmp if the root is not found or the dir cannot be created
+_log_dir = '/tmp'
+if os.path.exists(os.path.join(_root_dir, 'config.py')):
+    try:
+        os.makedirs(os.path.join(_root_dir, 'logs'), mode=0o750, exist_ok=True)
+        _log_dir = os.path.join(_root_dir, 'logs')
+    except OSError:
+        pass
+
 _log_handlers = [logging.StreamHandler()]
 try:
-    _log_handlers.append(RotatingFileHandler('/tmp/matrix_notifier.log', maxBytes=1*1024*1024, backupCount=2, encoding='utf-8'))
+    _log_handlers.append(RotatingFileHandler(os.path.join(_log_dir, 'matrix_notifier.log'), maxBytes=1*1024*1024, backupCount=2, encoding='utf-8'))
 except PermissionError:
     # Prevent multi-user permission conflicts in container
     pass
