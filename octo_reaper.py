@@ -19,6 +19,7 @@ from config import SYS_PREFIX
 import subprocess
 import sys
 import time
+import glob
 import requests
 from datetime import datetime
 
@@ -149,9 +150,36 @@ def trigger_inactivity_greeting(agent_name):
         logger.error(f"[Reaper] 連線 Router 注入空閒問候失敗: {e}")
         return False
 
+# 清檔機制：只處理 logs/ 內的輪替備份(*.log.N)；現行 *.log 不刪、不截斷。
+# 1) 備份超過保留天數即刪 2) logs/ 總量超過上限時，從最舊的備份開始刪
+LOG_RETENTION_DAYS = getattr(config, 'LOG_RETENTION_DAYS', 7)
+LOG_MAX_TOTAL_MB = getattr(config, 'LOG_MAX_TOTAL_MB', 50)
+LOG_CLEANUP_INTERVAL = 24 * 3600
+
+def cleanup_logs():
+    try:
+        backups = [f for f in glob.glob(os.path.join(LOG_DIR, '*.log.*')) if os.path.isfile(f)]
+        now = time.time()
+        for f in list(backups):
+            if now - os.path.getmtime(f) > LOG_RETENTION_DAYS * 86400:
+                os.remove(f)
+                backups.remove(f)
+        total = sum(os.path.getsize(f) for f in glob.glob(os.path.join(LOG_DIR, '*.log*')) if os.path.isfile(f))
+        for f in sorted(backups, key=os.path.getmtime):
+            if total <= LOG_MAX_TOTAL_MB * 1024 * 1024:
+                break
+            total -= os.path.getsize(f)
+            os.remove(f)
+    except Exception as e:
+        logger.error(f"[Reaper] 清理 log 失敗: {e}")
+
 def main():
     logger.info("🐙 Global Reaper Daemon Started")
+    last_log_cleanup = 0
     while True:
+        if time.time() - last_log_cleanup >= LOG_CLEANUP_INTERVAL:
+            cleanup_logs()
+            last_log_cleanup = time.time()
         polling_interval, threshold_kb = get_reaper_config()
         threshold_bytes = threshold_kb * 1024
         
