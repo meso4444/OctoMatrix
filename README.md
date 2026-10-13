@@ -204,7 +204,7 @@ cd OctoMatrix
 *   **[2]-[4] 通訊通道設定**：引導綁定 Telegram、Discord 或 Slack 的 Token，並可隨時開關特定通道。
 *   **[5] 🌍 設定網路與連接埠 (Ports)**：自訂 Router 與 Gateway 的本地 Port口，避免與主機其他服務衝突。
 *   **[6] 🤖 設定 Octo AI Agents 與進階參數**：
-    *   **配置 Agent**：為 AI 命名，指定它的 **職責 (usecase)**（用於 AI 認知）與 **描述 (description)**（用於選單展示給使用者），並自由搭配 AI 引擎（Gemini、Claude、Codex、agy (Antigravity) 或 Pi）與模型。Pi 的模型由使用者自行填寫（留空則不帶 `--model`）。
+    *   **配置 Agent**：為 AI 命名，指定它的 **職責 (usecase)**（用於 AI 認知）與 **描述 (description)**（用於選單展示給使用者），並自由搭配 AI 引擎（Gemini、Claude、Codex、agy (Antigravity) 或 Pi）與模型。Pi 的模型由使用者自行填寫（留空則不帶 `--model`）；Pi 需要 Node.js 22.19.0 以上與 Pi 1.0.0 以上版本。
         > **注意：** 建議改用 agy (Antigravity) 引擎較為穩定，且 gemini CLI 已不再支援 Pro 訂閱用戶。
     *   **配置 Agent 協作群組**：建立團隊共享空間，並指定群組內的 Agent 之間互相監督與交辦任務的對接關係。
     *   **通訊選單配置**：除了系統已內建基礎選單，還可以「自訂專屬按鈕」，將常用的提示詞或指令綁定至圖形化按鍵，一鍵發送。

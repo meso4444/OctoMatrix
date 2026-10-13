@@ -245,6 +245,15 @@ install_nodejs() {
     fi
 }
 
+# ===== Pi CLI 最低版本限制 =====
+PI_MIN_VERSION="1.0.0"
+NODE_MIN_VERSION="22.19.0"
+
+# version_ge A B：A >= B（以 sort -V 做版本比較）
+version_ge() {
+    [ "$(printf '%s\n%s\n' "$2" "$1" | sort -V | head -n1)" = "$2" ]
+}
+
 # ===== AI Agent CLI 安裝 =====
 install_ai_cli_tools() {
     echo ""
@@ -253,7 +262,7 @@ install_ai_cli_tools() {
     # 確保先卸載可能存在於局部 (非 sudo) 或舊版的 CLI，避免路徑衝突或未更新
     if command -v npm &> /dev/null; then
         echo "🧹 正在清除可能衝突的局部 AI CLI..."
-        npm uninstall -g @anthropic-ai/claude-code @google/gemini-cli @openai/codex @earendil-works/pi-coding-agent 2>/dev/null || true
+        npm uninstall -g @anthropic-ai/claude-code @google/gemini-cli @openai/codex 2>/dev/null || true
         # agy 是原生 binary 非 npm 套件，不需 npm uninstall
     fi
 
@@ -299,18 +308,28 @@ install_ai_cli_tools() {
         echo "✅ Codex CLI 已安裝: $(codex --version 2>/dev/null || echo 'Detected')"
     fi
 
-    # 安裝 Pi CLI（不綁定版本，吃 npm 最新版）
+    # 安裝 Pi CLI（不綁定特定版本，但限制最低版本；Node.js 也有最低版本要求）
+    # 最低版本依據：pi 0.78 以前沒有 --approve 參數，0.79.0 起才有，1.0.0 為實際驗證過的版本；
+    # 0.75 起 pi 要求 Node.js >=22.19.0（npm 上 legacy-node20 標籤的 0.74.2 給舊 Node 用，缺 --approve，不可用）。
     # 特別留意：npm上同名套件有兩個scope，@earendil-works/pi-coding-agent才是維護中版本，
     # @mariozechner/pi-coding-agent是舊個人scope已停更。
-    if ! command -v pi &> /dev/null; then
-        if command -v npm &> /dev/null; then
-            echo "📦 正在透過 npm 安裝 Pi CLI..."
-            $npm_prefix npm install -g @earendil-works/pi-coding-agent || echo "⚠️  Pi CLI 安裝失敗 (權限不足?)"
-        else
-            echo "❌ Node.js 未安裝，跳過 Pi CLI 安裝"
-        fi
+    local pi_installed_ver=""
+    if command -v pi &> /dev/null; then
+        pi_installed_ver=$(pi --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+    fi
+    if [ -n "$pi_installed_ver" ] && version_ge "$pi_installed_ver" "$PI_MIN_VERSION"; then
+        echo "✅ Pi CLI 已安裝: $pi_installed_ver"
+    elif ! command -v npm &> /dev/null; then
+        echo "❌ Node.js 未安裝，跳過 Pi CLI 安裝"
     else
-        echo "✅ Pi CLI 已安裝: $(pi --version 2>/dev/null || echo 'Detected')"
+        local node_ver
+        node_ver=$($npm_prefix node --version 2>/dev/null | sed 's/^v//')
+        if [ -z "$node_ver" ] || ! version_ge "$node_ver" "$NODE_MIN_VERSION"; then
+            echo "❌ Node.js 版本 ${node_ver:-未知} 低於 Pi CLI 要求的最低版本 ${NODE_MIN_VERSION}，跳過 Pi CLI 安裝（請升級 Node.js 後重新執行）"
+        else
+            echo "📦 正在透過 npm 安裝 Pi CLI (>=${PI_MIN_VERSION})..."
+            $npm_prefix npm install -g "@earendil-works/pi-coding-agent@>=${PI_MIN_VERSION}" || echo "⚠️  Pi CLI 安裝失敗 (權限不足?)"
+        fi
     fi
 
     # 安裝 agy CLI (Antigravity - 原生 binary，非 npm 套件)
