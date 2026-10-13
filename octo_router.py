@@ -541,19 +541,36 @@ class CommandHandler:
         for j in jobs:
             grouped.setdefault(j.get('target_agent', '未指定'), []).append(j)
 
-        sections = []
+        pieces = []
         for agent_name, agent_jobs in grouped.items():
-            lines = [f"🐙 <b>{agent_name}</b> ({len(agent_jobs)})"]
+            title = f"🐙 <b>{agent_name}</b> ({len(agent_jobs)})"
             for j in agent_jobs:
                 nr = j.get('next_run_time', '未喚醒').split('.')[0]
                 schedule_text = j.get('schedule_text') or j.get('trigger', '?')
                 p = j.get('prompt', '無指令')
                 if len(p) > 500: p = p[:497] + "..."
-                lines.append(f"  • <b>{j.get('id', '?')}</b>：{schedule_text} (下次 {nr})\n    └ 指令: <code>{p}</code>")
-            sections.append("\n".join(lines))
+                pieces.append((agent_name, title, f"  • <b>{j.get('id', '?')}</b>：{schedule_text} (下次 {nr})\n    └ 指令: <code>{p}</code>"))
 
-        awake_text = f"⏰ <b>喚醒任務 ({len(jobs)})</b>\n\n" + "\n\n".join(sections)
-        self.notifier.notify(msg.source, 'custom', {'content': awake_text})
+        header = f"⏰ <b>喚醒任務 ({len(jobs)})</b>\n\n"
+        # 以任務為單位分則：單則上限 3500 字(Telegram 3800 硬切會劈開 HTML 標籤)，整筆任務不切開，換則時重印 Agent 標題
+        LIMIT = 3500
+        messages, current, current_agent = [], "", None
+        for agent_name, title, job_line in pieces:
+            if agent_name == current_agent:
+                add = "\n" + job_line
+            else:
+                add = ("\n\n" if current else "") + title + "\n" + job_line
+            used = len(current) + (len(header) if not messages else 0)
+            if current and used + len(add) > LIMIT:
+                messages.append(current)
+                current = ""
+                add = title + "\n" + job_line
+            current += add
+            current_agent = agent_name
+        messages.append(current)
+        messages[0] = header + messages[0]
+        for text in messages:
+            self.notifier.notify(msg.source, 'custom', {'content': text})
 
     def _send_help(self, msg: MCMessage):
         from config import get_help_text
