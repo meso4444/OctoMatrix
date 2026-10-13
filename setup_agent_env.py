@@ -370,13 +370,16 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
         pipe_cmd = f"python3 -u {pipe_manager} {shell_log_path} {session_name}:{name}"
     subprocess.run(['tmux'] + tmux_cmd(['pipe-pane', '-o', '-t', f'{session_name}:{name}', pipe_cmd]), check=True)
 
-    # Initialize correct permissions for shell log, ghost json, and task memo
-    # octo_shell.log → 644: Only Owner (agent account) can write, Others read-only
-    # octo_ghost.json → 666: Readable/writable by all
-    if os.path.exists(shell_log_path):
-        subprocess.run(['chmod', '644', shell_log_path], check=False)
-    if os.path.exists(ghost_json_path):
-        subprocess.run(['chmod', '666', ghost_json_path], check=False)
+    # Pre-create octo_shell.log and octo_ghost.json so their inodes are locked with 666 permissions,
+    # avoiding agent-owned 644 files created on first write, which cause EACCES for other accounts (rotate script)
+    for pre_path, pre_content in ((shell_log_path, ""), (ghost_json_path, '{"keywords": [], "file_paths": [], "semantic_outline": []}')):
+        if not os.path.exists(pre_path):
+            try:
+                with open(pre_path, 'w', encoding='utf-8') as f:
+                    f.write(pre_content)
+            except: pass
+        if os.path.exists(pre_path):
+            subprocess.run(['chmod', '666', pre_path], check=False)
 
     # Pre-initialize task_memo.txt to ensure Inode and owner are locked with 666 permissions
     task_memo_path = os.path.join(cyber_path, 'task_memo.txt')
