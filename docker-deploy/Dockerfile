@@ -23,11 +23,11 @@ RUN set -eux; \
     gosu nobody true
 
 # Install Node.js
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y nodejs
 
 # Install AI Agent CLIs
-RUN npm install -g @google/gemini-cli @anthropic-ai/claude-code @openai/codex @earendil-works/pi-coding-agent && \
+RUN npm install -g @google/gemini-cli @anthropic-ai/claude-code @openai/codex '@earendil-works/pi-coding-agent@>=1.0.0' && \
     echo "✅ AI CLI tools installed successfully" && \
     which gemini && which claude && which codex && which pi
 

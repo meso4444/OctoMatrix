@@ -204,7 +204,7 @@ After dependencies are installed, start the interactive configuration wizard. Yo
 *   **[2]-[4] Communication Channel Setup**: Guide for binding Telegram, Discord, or Slack tokens, and you can toggle specific channels anytime.
 *   **[5] 🌍 Network & Ports Setup (Ports)**: Customize local port numbers for Router and Gateway to avoid conflicts with other services on your host.
 *   **[6] 🤖 Configure Octo AI Agents & Advanced Parameters**:
-    *   **Configure Agent**: Name the AI, specify its **usecase** (for AI awareness) and **description** (for menu display to users), and freely combine AI engines (Gemini, Claude, Codex, agy (Antigravity), or Pi) with models. For Pi, the model is entered by the user (leave empty to omit `--model`).
+    *   **Configure Agent**: Name the AI, specify its **usecase** (for AI awareness) and **description** (for menu display to users), and freely combine AI engines (Gemini, Claude, Codex, agy (Antigravity), or Pi) with models. For Pi, the model is entered by the user (leave empty to omit `--model`); Pi requires Node.js 22.19.0+ and Pi 1.0.0+.
         > **Note:** It is recommended to switch to the agy (Antigravity) engine for better stability, as the gemini CLI no longer supports Pro subscription users.
     *   **Configure Agent Collaboration Groups**: Create team shared spaces and specify mutual supervision and task delegation relationships between agents within groups.
     *   **Communication Menu Configuration**: In addition to the system's built-in basic menu, you can "customize dedicated buttons" to bind commonly used prompts or commands to graphical buttons for one-click sending.

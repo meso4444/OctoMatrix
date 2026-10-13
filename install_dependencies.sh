@@ -246,6 +246,15 @@ install_nodejs() {
     fi
 }
 
+# ===== Pi CLI minimum versions =====
+PI_MIN_VERSION="1.0.0"
+NODE_MIN_VERSION="22.19.0"
+
+# version_ge A B: A >= B (version comparison via sort -V)
+version_ge() {
+    [ "$(printf '%s\n%s\n' "$2" "$1" | sort -V | head -n1)" = "$2" ]
+}
+
 # ===== AI Agent CLI installation =====
 install_ai_cli_tools() {
     echo ""
@@ -254,7 +263,7 @@ install_ai_cli_tools() {
     # Ensure local (non-sudo) or old CLIs are uninstalled first to prevent path conflicts
     if command -v npm &> /dev/null; then
         echo "🧹 Clearing potentially conflicting local AI CLIs..."
-        npm uninstall -g @anthropic-ai/claude-code @google/gemini-cli @openai/codex @earendil-works/pi-coding-agent 2>/dev/null || true
+        npm uninstall -g @anthropic-ai/claude-code @google/gemini-cli @openai/codex 2>/dev/null || true
         # agy is a native binary, not an npm package — no npm uninstall needed
     fi
 
@@ -300,18 +309,28 @@ install_ai_cli_tools() {
         echo "✅ Codex CLI already installed: $(codex --version 2>/dev/null || echo 'Detected')"
     fi
 
-    # Install Pi CLI (version not pinned, takes the latest from npm)
+    # Install Pi CLI (no exact pin, but a minimum version is enforced; Node.js also has a minimum version)
+    # Basis: pi before 0.79.0 has no --approve flag, 1.0.0 is the version actually verified;
+    # since 0.75 pi requires Node.js >=22.19.0 (the npm legacy-node20 tag, 0.74.2, targets old Node, lacks --approve and is unusable).
     # Note: the npm package exists under two scopes; @earendil-works/pi-coding-agent is the maintained one,
     # @mariozechner/pi-coding-agent is the old personal scope and is no longer updated.
-    if ! command -v pi &> /dev/null; then
-        if command -v npm &> /dev/null; then
-            echo "📦 Installing Pi CLI via npm..."
-            $npm_prefix npm install -g @earendil-works/pi-coding-agent || echo "⚠️  Pi CLI installation failed (permission denied?)"
-        else
-            echo "❌ Node.js not installed, skipping Pi CLI installation"
-        fi
+    local pi_installed_ver=""
+    if command -v pi &> /dev/null; then
+        pi_installed_ver=$(pi --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+    fi
+    if [ -n "$pi_installed_ver" ] && version_ge "$pi_installed_ver" "$PI_MIN_VERSION"; then
+        echo "✅ Pi CLI already installed: $pi_installed_ver"
+    elif ! command -v npm &> /dev/null; then
+        echo "❌ Node.js not installed, skipping Pi CLI installation"
     else
-        echo "✅ Pi CLI already installed: $(pi --version 2>/dev/null || echo 'Detected')"
+        local node_ver
+        node_ver=$($npm_prefix node --version 2>/dev/null | sed 's/^v//')
+        if [ -z "$node_ver" ] || ! version_ge "$node_ver" "$NODE_MIN_VERSION"; then
+            echo "❌ Node.js version ${node_ver:-unknown} is below the minimum ${NODE_MIN_VERSION} required by Pi CLI, skipping Pi CLI installation (upgrade Node.js and re-run)"
+        else
+            echo "📦 Installing Pi CLI via npm (>=${PI_MIN_VERSION})..."
+            $npm_prefix npm install -g "@earendil-works/pi-coding-agent@>=${PI_MIN_VERSION}" || echo "⚠️  Pi CLI installation failed (permission denied?)"
+        fi
     fi
 
     # Install agy CLI (Antigravity - native binary, not npm package)
