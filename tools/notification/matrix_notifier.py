@@ -30,6 +30,7 @@ import sys
 import json
 import html
 import logging
+from logging.handlers import RotatingFileHandler
 import argparse
 from typing import Dict, Any, Optional, List
 from enum import Enum
@@ -54,19 +55,23 @@ for _ in range(5):
         break
     _root_dir = os.path.dirname(_root_dir)
 
+# Do not call root basicConfig: when this module is imported by the router it would configure the root
+# logger first and disable the router's own log setup (octo_router.log stayed 0KB). Attach handlers to
+# this module's logger only and disable propagation.
 _log_handlers = [logging.StreamHandler()]
 try:
-    _log_handlers.append(logging.FileHandler('/tmp/matrix_notifier.log'))
+    _log_handlers.append(RotatingFileHandler('/tmp/matrix_notifier.log', maxBytes=1*1024*1024, backupCount=2, encoding='utf-8'))
 except PermissionError:
     # Prevent multi-user permission conflicts in container
     pass
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(asctime)s] [%(levelname)s] %(message)s',
-    handlers=_log_handlers
-)
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.propagate = False
+_log_fmt = logging.Formatter('[%(asctime)s] [%(levelname)s] %(message)s')
+for _h in _log_handlers:
+    _h.setFormatter(_log_fmt)
+    logger.addHandler(_h)
 
 # Notification service configuration
 try:

@@ -28,6 +28,22 @@ from datetime import datetime
 # ==========================================
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 AGENT_HOME = os.path.dirname(SCRIPT_DIR)
+# The reaper starts this script with DEVNULL so all its output used to vanish; write to a rotating log file (shared by agents, tagged by name)
+import logging
+from logging.handlers import RotatingFileHandler
+logger = logging.getLogger('octo_rotate')
+logger.setLevel(logging.INFO)
+logger.propagate = False
+_rot_fmt = logging.Formatter('[%(asctime)s] [%(levelname)s] [' + os.path.basename(AGENT_HOME) + '] %(message)s')
+for _rot_h in (logging.StreamHandler(),):
+    _rot_h.setFormatter(_rot_fmt)
+    logger.addHandler(_rot_h)
+try:
+    _rot_f = RotatingFileHandler('/tmp/octo_rotate.log', maxBytes=1*1024*1024, backupCount=3, encoding='utf-8')
+    _rot_f.setFormatter(_rot_fmt)
+    logger.addHandler(_rot_f)
+except OSError:
+    pass
 ENV_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/.cyberbrain_env")
 
 # Define lock and log paths (Absolute Paths)
@@ -128,18 +144,18 @@ def union_dedup(source_set_kws, source_set_paths, target_kw_path, target_path_pa
 
 def cleanup():
     # 🚀 Centralized cleanup for Flag and Lock to prevent deadlock
-    print("🧹 Executing final cleanup procedure...")
+    logger.info("🧹 Executing final cleanup procedure...")
     for f in [FLAG_FILE]:
         if os.path.exists(f):
             try:
                 os.remove(f)
-                print(f"   Removed: {f}")
+                logger.info(f"   Removed: {f}")
             except Exception as e:
-                print(f"   Removal failed for {f}: {e}")
+                logger.error(f"   Removal failed for {f}: {e}")
 
 def main():
     if not os.path.exists(FLAG_FILE):
-        print(f"⚠️ Rotation Flag not found ({FLAG_FILE}), aborting.")
+        logger.warning(f"⚠️ Rotation Flag not found ({FLAG_FILE}), aborting.")
         sys.exit(0)
         
     try:
@@ -149,7 +165,7 @@ def main():
         flag_content = ""
         
     if flag_content != "" and flag_content != "READY_FOR_REAPER":
-        print(f"⚠️ Detected an existing reset process (Flag: {flag_content}), or invalid trigger. Skipping.")
+        logger.warning(f"⚠️ Detected an existing reset process (Flag: {flag_content}), or invalid trigger. Skipping.")
         sys.exit(0)
         
     try:
@@ -162,7 +178,7 @@ def main():
         TMUX_SESSION_NAME = env.get("TMUX_SESSION_NAME")
         
         if not AGENT_NAME or not TMUX_SESSION_NAME:
-            print(f"❌ Failed to get AGENT_NAME or TMUX_SESSION_NAME (Source: {ENV_FILE}). Aborting reset.")
+            logger.error(f"❌ Failed to get AGENT_NAME or TMUX_SESSION_NAME (Source: {ENV_FILE}). Aborting reset.")
             sys.exit(1)
 
         TMUX_TARGET = f"{TMUX_SESSION_NAME}:{AGENT_NAME}"
@@ -202,7 +218,7 @@ def main():
         else:
             open(TEMP_LOG, 'w').close()
             
-        print(f"⏳ Injecting {RESET_CMD} and starting periodic Enter retries (every 3 seconds, 100 times total)...")
+        logger.info(f"⏳ Injecting {RESET_CMD} and starting periodic Enter retries (every 3 seconds, 100 times total)...")
         # 🚀 Hardening Means 1: Pre-wake (Force clear). Send Enter followed immediately by BSpace to prevent blank lines
         if ENGINE == 'pi':
             # Pi needs no busy check and Ctrl-C does not apply; interrupt with Escape only
@@ -267,12 +283,12 @@ def main():
             screen = res.stdout
             if marker_match(marker in screen for marker in prompt_markers):
                 cleared = True
-                print(f"✅ Attempt {i+1} successful! Detected {ENGINE} startup keyword.")
+                logger.info(f"✅ Attempt {i+1} successful! Detected {ENGINE} startup keyword.")
                 break
-            print(f"⚠️ Attempt {i+1} failed (CLI is busy), re-injecting in 3 seconds...")
+            logger.warning(f"⚠️ Attempt {i+1} failed (CLI is busy), re-injecting in 3 seconds...")
         
         if not cleared:
-            print("⚠️ Timeout after 100 attempts, reset keyword not detected. Attempting ultimate fallback...")
+            logger.warning("⚠️ Timeout after 100 attempts, reset keyword not detected. Attempting ultimate fallback...")
             if ENGINE == 'pi':
                 # Pi needs no busy check and Ctrl-C does not apply; interrupt with Escape only
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Escape"])
@@ -306,10 +322,10 @@ def main():
             res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
             if marker_match(marker in res.stdout for marker in prompt_markers):
                 cleared = True
-                print("✅ Ultimate fallback successful! Detected startup keyword.")
+                logger.info("✅ Ultimate fallback successful! Detected startup keyword.")
 
         if not cleared:
-            print("❌ Reset failed. Offloading /fix command to Router Web API for repair...")
+            logger.error("❌ Reset failed. Offloading /fix command to Router Web API for repair...")
             # 1. Restore temp.log to shell.log
             if os.path.exists(TEMP_LOG):
                 shutil.copy2(TEMP_LOG, SHELL_LOG)
@@ -332,9 +348,9 @@ def main():
                     json={"source": "system", "user_id": "system", "content": f"/fix {AGENT_NAME}"},
                     timeout=5
                 )
-                print(f"✅ Successfully requested /fix {AGENT_NAME} to Router API (Port: {port}).")
+                logger.info(f"✅ Successfully requested /fix {AGENT_NAME} to Router API (Port: {port}).")
             except Exception as e:
-                print(f"⚠️ Failed to request /fix: {e}")
+                logger.warning(f"⚠️ Failed to request /fix: {e}")
                 
             # 4. Clean up own .rotation_flag
             if os.path.exists(FLAG_FILE):
@@ -377,11 +393,11 @@ Message from {MATRIX_USERNAME}:
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
                         time.sleep(0.3)
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
-                        print("📩 Pending user commands injected successfully!")
+                        logger.info("📩 Pending user commands injected successfully!")
                     
                     os.remove(PENDING_USER_FILE)
                 except Exception as e:
-                    print(f"❌ Error processing pending user commands: {e}")
+                    logger.error(f"❌ Error processing pending user commands: {e}")
 
             if os.path.exists(PENDING_AGENT_FILE):
                 try:
@@ -397,10 +413,10 @@ Message from {MATRIX_USERNAME}:
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
                         time.sleep(0.3)
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
-                        print("📩 Pending agent commands injected successfully!")
+                        logger.info("📩 Pending agent commands injected successfully!")
                     os.remove(PENDING_AGENT_FILE)
                 except Exception as e:
-                    print(f"❌ Error processing pending agent commands: {e}")
+                    logger.error(f"❌ Error processing pending agent commands: {e}")
             
             # No need to manually clean up here, let finally handle it
             sys.exit(1)
@@ -414,10 +430,10 @@ Message from {MATRIX_USERNAME}:
         try:
             subprocess.run(["zstd", "-T0", "--rm", TEMP_LOG, "-o", zst_target], stdout=subprocess.DEVNULL, check=True)
         except FileNotFoundError:
-            print("⚠️ zstd command not found, skipping compression, saving raw log instead")
+            logger.warning("⚠️ zstd command not found, skipping compression, saving raw log instead")
             os.rename(TEMP_LOG, os.path.join(AGENT_HOME, f"octo_cyberbrain/shell/octo_shell.log.{TS}.bak"))
         except subprocess.CalledProcessError as e:
-            print(f"⚠️ zstd compression failed: {e}")
+            logger.warning(f"⚠️ zstd compression failed: {e}")
             os.rename(TEMP_LOG, os.path.join(AGENT_HOME, f"octo_cyberbrain/shell/octo_shell.log.{TS}.bak"))
         
         # Check Snapshot count
@@ -518,7 +534,7 @@ Message from {MATRIX_USERNAME}:
                     if memo_content:
                         local_combined += build_sop_block("Task Resumption Message:", memo_content) + "\n\n"
                 except Exception as e:
-                    print(f"Error processing task_memo.txt: {e}")
+                    logger.error(f"Error processing task_memo.txt: {e}")
 
             # 2. pending_user (Middle)
             if os.path.exists(PENDING_USER_FILE):
@@ -530,7 +546,7 @@ Message from {MATRIX_USERNAME}:
                         had_new_pending = True
                     os.remove(PENDING_USER_FILE)
                 except Exception as e:
-                    print(f"Error processing pending_user: {e}")
+                    logger.error(f"Error processing pending_user: {e}")
 
             # 3. pending_agent (Bottom)
             if os.path.exists(PENDING_AGENT_FILE):
@@ -543,7 +559,7 @@ Message from {MATRIX_USERNAME}:
                         had_new_pending = True
                     os.remove(PENDING_AGENT_FILE)
                 except Exception as e:
-                    print(f"Error processing pending_agent: {e}")
+                    logger.error(f"Error processing pending_agent: {e}")
 
             # Write unified task_memo (overwrite only, never deleted here; actual clearing is left to the
             # Agent itself, which runs `true > task_memo.txt` after reading it)
@@ -608,9 +624,9 @@ Message from {MATRIX_USERNAME}:
                     },
                     timeout=10
                 )
-                print(f"📩 Soft-flushed the buffer window reminder (Port: {port}), without C-c.")
+                logger.info(f"📩 Soft-flushed the buffer window reminder (Port: {port}), without C-c.")
             except Exception as e:
-                print(f"⚠️ Failed to soft-flush the buffer window reminder: {e}")
+                logger.warning(f"⚠️ Failed to soft-flush the buffer window reminder: {e}")
 
         # Only unlock the buffer restriction after the reminder was sent (or wasn't needed this round)
         if os.path.exists(FLAG_FILE):
@@ -625,9 +641,9 @@ Message from {MATRIX_USERNAME}:
             if e.code == 0: # Normal exit does not error
                 pass
             else:
-                print(f"❌ Process aborted due to sys.exit({e.code})")
+                logger.error(f"❌ Process aborted due to sys.exit({e.code})")
         else:
-            print(f"❌ Exception occurred during reset: {e}")
+            logger.error(f"❌ Exception occurred during reset: {e}")
     finally:
         cleanup()
 

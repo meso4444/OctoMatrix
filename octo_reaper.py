@@ -27,6 +27,18 @@ base_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(base_dir)
 
 import config
+import logging
+from logging.handlers import RotatingFileHandler
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] [%(levelname)s] %(message)s',
+    handlers=[
+        RotatingFileHandler('/tmp/octo_reaper.log', maxBytes=2*1024*1024, backupCount=3, encoding='utf-8'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 def get_reaper_config():
     polling_interval = getattr(config, 'CYBERBRAIN_REAPER_POLLING_INTERVAL', 60)
@@ -64,7 +76,7 @@ def notify_agent(agent_name):
             subprocess.run(["tmux", "send-keys", "-t", target, "Escape"])
             time.sleep(6)
     except Exception as e:
-        print(f"[Reaper] Failed to execute pre-wake Ctrl+C: {e}")
+        logger.error(f"[Reaper] Failed to execute pre-wake Ctrl+C: {e}")
 
     # Inject command to Agent (implicit maintenance mode)
     inject_url = f"http://{router_host}:{router_port}/inject"
@@ -79,10 +91,10 @@ def notify_agent(agent_name):
 
     try:
         requests.post(inject_url, json=payload, timeout=15)
-        print(f"[Reaper] Notified Agent: {agent_name} for implicit GHOST status update")
+        logger.info(f"[Reaper] Notified Agent: {agent_name} for implicit GHOST status update")
         return True
     except Exception as e:
-        print(f"[Reaper] Failed to notify Agent {agent_name}: {e}")
+        logger.error(f"[Reaper] Failed to notify Agent {agent_name}: {e}")
         return False
 
 def is_in_dnd(dnd_str):
@@ -101,7 +113,7 @@ def is_in_dnd(dnd_str):
         else:
             return now_min >= start_min or now_min <= end_min
     except Exception as e:
-        print(f"[Reaper] Failed to parse DND range: {e}")
+        logger.error(f"[Reaper] Failed to parse DND range: {e}")
         return False
 
 def trigger_inactivity_greeting(agent_name):
@@ -121,17 +133,17 @@ def trigger_inactivity_greeting(agent_name):
     try:
         res = requests.post(inject_url, json=payload, timeout=15)
         if res.status_code == 200:
-            print(f"[Reaper] Successfully triggered idle greeting injection for Agent {agent_name}")
+            logger.info(f"[Reaper] Successfully triggered idle greeting injection for Agent {agent_name}")
             return True
         else:
-            print(f"[Reaper] Failed to trigger idle greeting injection for Agent {agent_name}: HTTP {res.status_code}")
+            logger.error(f"[Reaper] Failed to trigger idle greeting injection for Agent {agent_name}: HTTP {res.status_code}")
             return False
     except Exception as e:
-        print(f"[Reaper] Connection failed when injecting idle greeting to Router: {e}")
+        logger.error(f"[Reaper] Connection failed when injecting idle greeting to Router: {e}")
         return False
 
 def main():
-    print("🐙 Global Reaper Daemon Started")
+    logger.info("🐙 Global Reaper Daemon Started")
     while True:
         polling_interval, threshold_kb = get_reaper_config()
         threshold_bytes = threshold_kb * 1024
@@ -154,7 +166,7 @@ def main():
                 try:
                     if time.time() - os.path.getmtime(flag_file) > polling_interval + 840:
                         os.remove(flag_file)
-                        print(f"[Reaper] Found abnormal Flag existing too long (> {polling_interval + 840}s), forcefully removed ({agent_name})")
+                        logger.info(f"[Reaper] Found abnormal Flag existing too long (> {polling_interval + 840}s), forcefully removed ({agent_name})")
                         continue
                 except Exception:
                     pass
@@ -164,19 +176,19 @@ def main():
                         elapsed = time.time() - os.path.getmtime(flag_file)
                         # Check intervals: 180-245, 420-485, 660-725
                         if (180 < elapsed <= 245) or (420 < elapsed <= 485) or (660 < elapsed <= 725):
-                            print(f"[Reaper] Found empty Flag (exists for {int(elapsed)}s) in retry interval, resending notification ({agent_name})")
+                            logger.info(f"[Reaper] Found empty Flag (exists for {int(elapsed)}s) in retry interval, resending notification ({agent_name})")
                             notify_agent(agent_name)
                     except Exception as e:
-                        print(f"[Reaper] Failed to check timed out Flag ({agent_name}): {e}")
+                        logger.error(f"[Reaper] Failed to check timed out Flag ({agent_name}): {e}")
 
                 if flag_content == "READY_FOR_REAPER":
                     try:
                         # Only responsible for triggering, internal script handles locking
                         rotate_script = os.path.join(agent_dir, 'octo_cyberbrain', 'internal_matrix_rotate.py')
                         subprocess.Popen(["python3", rotate_script], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
-                        print(f"[Reaper] Starting Rotation process ({agent_name})")
+                        logger.info(f"[Reaper] Starting Rotation process ({agent_name})")
                     except Exception as e:
-                        print(f"[Reaper] Failed to start Rotation ({agent_name}): {e}")
+                        logger.error(f"[Reaper] Failed to start Rotation ({agent_name}): {e}")
                     continue
                 elif "internal_matrix_rotate.py" in flag_content:
                     # Rotation script is running, let it manage flags and logs
@@ -194,11 +206,11 @@ def main():
                             if trigger_inactivity_greeting(agent_name):
                                 try:
                                     os.utime(shell_log, None)
-                                    print(f"[Reaper] Updated mtime of {agent_name} log to prevent duplicate greetings.")
+                                    logger.info(f"[Reaper] Updated mtime of {agent_name} log to prevent duplicate greetings.")
                                 except Exception as e:
-                                    print(f"[Reaper] Failed to touch log file: {e}")
+                                    logger.error(f"[Reaper] Failed to touch log file: {e}")
                 except Exception as e:
-                    print(f"[Reaper] Failed to check idle state for Agent {agent_name}: {e}")
+                    logger.error(f"[Reaper] Failed to check idle state for Agent {agent_name}: {e}")
                 # --------------------------------------
 
                 size = os.path.getsize(shell_log)
@@ -215,12 +227,12 @@ def main():
                                     try: os.remove(flag_file)
                                     except: pass
                         except Exception as e:
-                            print(f"[Reaper] Failed to create Flag ({agent_name}): {e}")
+                            logger.error(f"[Reaper] Failed to create Flag ({agent_name}): {e}")
                 else:
                     if os.path.exists(flag_file):
                         try:
                             os.remove(flag_file)
-                            print(f"[Reaper] Removed expired residual Flag ({agent_name})")
+                            logger.info(f"[Reaper] Removed expired residual Flag ({agent_name})")
                         except FileNotFoundError:
                             pass
         

@@ -29,6 +29,17 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.date import DateTrigger
+import threading
+
+logger = logging.getLogger(__name__)
+
+
+def _with_file_lock(fn):
+    """Serialize read-modify-write on awake.yaml (Flask threads and the scheduler thread run concurrently)"""
+    def wrapper(self, *a, **k):
+        with self._file_lock:
+            return fn(self, *a, **k)
+    return wrapper
 
 # Import configuration
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -94,6 +105,7 @@ def describe_schedule(original_task):
 class AwakeManager:
     def __init__(self, command_handler=None, image_manager=None):
         self.scheduler = BackgroundScheduler()
+        self._file_lock = threading.RLock()
         self.awake_file = AWAKE_YAML_PATH
         self.load_jobs()
 
@@ -101,7 +113,7 @@ class AwakeManager:
         """Start task scheduler"""
         if not self.scheduler.running:
             self.scheduler.start()
-            print("⏰ [Awake] Awake system scheduler started")
+            logger.info("⏰ [Awake] Awake system scheduler started")
 
     def load_jobs(self, jobs_data=None):
         """Load awake tasks from YAML or passed data"""
@@ -120,11 +132,30 @@ class AwakeManager:
                 jobs = yaml.safe_load(f) or []
             
             if isinstance(jobs, list):
+                # Drop expired date tasks on load (e.g. missed while down); they will never run again
+                live = [t for t in jobs if not self._is_expired_date_task(t)]
+                if len(live) != len(jobs):
+                    with self._file_lock:
+                        with open(self.awake_file, 'w', encoding='utf-8') as f:
+                            yaml.dump(live, f, allow_unicode=True)
+                    logger.info(f"[Awake] {len(jobs) - len(live)} expired date task(s) removed on load")
+                jobs = live
                 self.scheduler.remove_all_jobs()
                 for task in jobs:
                     self._add_task_to_scheduler(task)
         except Exception as e:
-            print(f"❌ Failed to load awake tasks: {e}")
+            logger.error(f"❌ Failed to load awake tasks: {e}")
+
+    @staticmethod
+    def _is_expired_date_task(task):
+        if not isinstance(task, dict) or task.get('trigger') != 'date': return False
+        run_time = task.get('run_time')
+        try:
+            if isinstance(run_time, str):
+                run_time = datetime.strptime(run_time, "%Y-%m-%d %H:%M:%S")
+            return run_time is not None and run_time < datetime.now()
+        except Exception:
+            return False
 
     def _add_task_to_scheduler(self, task):
         """Add single task to apscheduler (with advanced Trigger translation)"""
@@ -158,12 +189,34 @@ class AwakeManager:
                 replace_existing=True
             )
         except Exception as e:
-            print(f"❌ Failed to add task {task_id}: {e}")
+            logger.error(f"❌ Failed to add task {task_id}: {e}")
 
     def execute_task(self, task):
         task_type = task.get('type', 'agent_command')
-        if task_type == 'agent_command':
-            self._execute_agent_command(task)
+        try:
+            if task_type == 'agent_command':
+                self._execute_agent_command(task)
+        finally:
+            # A date task fires only once: remove it from awake.yaml after the run (success or not) so expired tasks do not linger
+            if task.get('trigger') == 'date':
+                self._remove_date_job(task)
+
+    @_with_file_lock
+    def _remove_date_job(self, task):
+        task_id = task.get('id') or task.get('name')
+        try:
+            if not task_id or not os.path.exists(self.awake_file): return
+            with open(self.awake_file, 'r', encoding='utf-8') as f:
+                jobs = yaml.safe_load(f) or []
+            if not isinstance(jobs, list): return
+            # A different run_time means the task was re-registered/updated: do not delete it
+            keep = [t for t in jobs if not ((t.get('id') or t.get('name')) == task_id and str(t.get('run_time')) == str(task.get('run_time')))]
+            if len(keep) == len(jobs): return
+            with open(self.awake_file, 'w', encoding='utf-8') as f:
+                yaml.dump(keep, f, allow_unicode=True)
+            logger.info(f"[Awake] Removed executed date task: {task_id}")
+        except Exception as e:
+            logger.error(f"[Awake] Failed to remove date task ({task_id}): {e}")
 
     def _execute_agent_command(self, task):
         from config import ROUTER_PORT, SYS_PREFIX
@@ -181,9 +234,9 @@ class AwakeManager:
         }
         try:
             requests.post(url, json=payload, timeout=5)
-            print(f"⏰ [Awake] Successfully awakened Agent: {target_agent}")
+            logger.info(f"⏰ [Awake] Successfully awakened Agent: {target_agent}")
         except Exception as e:
-            print(f"⏰ [Awake] Failed to awaken Agent (Internal API error): {e}")
+            logger.error(f"⏰ [Awake] Failed to awaken Agent (Internal API error): {e}")
 
     def _validate_job_data(self, task_data):
         allowed_fields = {'id', 'name', 'trigger', 'type', 'target_agent', 'agent', 'prompt', 'command', 'hour', 'minute', 'second', 'day_of_week', 'day', 'hours', 'minutes', 'seconds', 'run_time'}
@@ -222,6 +275,7 @@ class AwakeManager:
                 return {"status": "error", "message": f"Trigger 'interval' requires at least one of hours, minutes, or seconds"}
         return None
 
+    @_with_file_lock
     def register_job(self, task_data):
         try:
             validation_error = self._validate_job_data(task_data)
@@ -241,9 +295,10 @@ class AwakeManager:
             self._add_task_to_scheduler(task_data)
             return {"status": "success", "message": f"Registered awake task: {task_id}"}
         except Exception as e:
-            print(f"❌ [Awake] register_job failed: {e}")
+            logger.error(f"❌ [Awake] register_job failed: {e}")
             return {"status": "error", "message": f"Failed to register awake task: {e}"}
 
+    @_with_file_lock
     def update_job(self, job_id, update_data):
         try:
             if not os.path.exists(self.awake_file):
@@ -290,9 +345,10 @@ class AwakeManager:
 
             return {"status": "success", "message": f"Updated awake task: {job_id}"}
         except Exception as e:
-            print(f"❌ [Awake] update_job failed: {e}")
+            logger.error(f"❌ [Awake] update_job failed: {e}")
             return {"status": "error", "message": f"Failed to update awake task: {e}"}
 
+    @_with_file_lock
     def delete_job(self, job_id):
         try:
             if not os.path.exists(self.awake_file): return {"status": "error", "message": "File does not exist"}
@@ -306,7 +362,7 @@ class AwakeManager:
             except: pass
             return {"status": "success", "message": f"Deleted awake task: {job_id}"}
         except Exception as e:
-            print(f"❌ [Awake] delete_job failed: {e}")
+            logger.error(f"❌ [Awake] delete_job failed: {e}")
             return {"status": "error", "message": f"Failed to delete awake task: {e}"}
 
     def list_jobs(self):
@@ -324,5 +380,5 @@ class AwakeManager:
                 })
             return {"status": "ok", "total": len(jobs_info), "jobs": jobs_info}
         except Exception as e:
-            print(f"❌ [Awake] list_jobs failed: {e}")
+            logger.error(f"❌ [Awake] list_jobs failed: {e}")
             return {"status": "error", "message": f"Failed to list awake tasks: {e}"}
