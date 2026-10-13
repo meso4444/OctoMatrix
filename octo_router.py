@@ -547,19 +547,36 @@ Message from {MATRIX_USERNAME}:
         for j in jobs:
             grouped.setdefault(j.get('target_agent', 'Unspecified'), []).append(j)
 
-        sections = []
+        pieces = []
         for agent_name, agent_jobs in grouped.items():
-            lines = [f"🐙 <b>{agent_name}</b> ({len(agent_jobs)})"]
+            title = f"🐙 <b>{agent_name}</b> ({len(agent_jobs)})"
             for j in agent_jobs:
                 nr = j.get('next_run_time', 'Not awoken').split('.')[0]
                 schedule_text = j.get('schedule_text') or j.get('trigger', '?')
                 p = j.get('prompt', 'No command')
                 if len(p) > 500: p = p[:497] + "..."
-                lines.append(f"  • <b>{j.get('id', '?')}</b>: {schedule_text} (next {nr})\n    └ Command: <code>{p}</code>")
-            sections.append("\n".join(lines))
+                pieces.append((agent_name, title, f"  • <b>{j.get('id', '?')}</b>: {schedule_text} (next {nr})\n    └ Command: <code>{p}</code>"))
 
-        awake_text = f"⏰ <b>Awake Tasks ({len(jobs)})</b>\n\n" + "\n\n".join(sections)
-        self.notifier.notify(msg.source, 'custom', {'content': awake_text})
+        header = f"⏰ <b>Awake Tasks ({len(jobs)})</b>\n\n"
+        # Split by whole task: each message <= 3500 chars (the 3800 hard cut in the Telegram sender would split HTML tags); a task is never cut, and the agent title is reprinted on a new message
+        LIMIT = 3500
+        messages, current, current_agent = [], "", None
+        for agent_name, title, job_line in pieces:
+            if agent_name == current_agent:
+                add = "\n" + job_line
+            else:
+                add = ("\n\n" if current else "") + title + "\n" + job_line
+            used = len(current) + (len(header) if not messages else 0)
+            if current and used + len(add) > LIMIT:
+                messages.append(current)
+                current = ""
+                add = title + "\n" + job_line
+            current += add
+            current_agent = agent_name
+        messages.append(current)
+        messages[0] = header + messages[0]
+        for text in messages:
+            self.notifier.notify(msg.source, 'custom', {'content': text})
 
     def _send_help(self, msg: MCMessage):
         import config
