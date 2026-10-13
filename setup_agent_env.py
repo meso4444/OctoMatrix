@@ -364,13 +364,16 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
         pipe_cmd = f"python3 -u {pipe_manager} {shell_log_path} {session_name}:{name}"
     subprocess.run(['tmux'] + tmux_cmd(['pipe-pane', '-o', '-t', f'{session_name}:{name}', pipe_cmd]), check=True)
 
-    # 統一初始化 shell log 與 ghost json 的正確權限
-    # octo_shell.log → 644: 只有 Owner (agent 帳戶) 可寫，Others 唯讀
-    # octo_ghost.json → 666: 全域可讀寫，供 Agent 自行調用 updater 寫入
-    if os.path.exists(shell_log_path):
-        subprocess.run(['chmod', '644', shell_log_path], check=False)
-    if os.path.exists(ghost_json_path):
-        subprocess.run(['chmod', '666', ghost_json_path], check=False)
+    # 預先建立 octo_shell.log 與 octo_ghost.json，確保其 Inode 被鎖定為 666 權限，
+    # 避免之後由 agent 帳戶首次建立而變成 agent 擁有的 644，導致其他帳戶(重置腳本)寫入 EACCES
+    for pre_path, pre_content in ((shell_log_path, ""), (ghost_json_path, '{"keywords": [], "file_paths": [], "semantic_outline": []}')):
+        if not os.path.exists(pre_path):
+            try:
+                with open(pre_path, 'w', encoding='utf-8') as f:
+                    f.write(pre_content)
+            except: pass
+        if os.path.exists(pre_path):
+            subprocess.run(['chmod', '666', pre_path], check=False)
 
     # 預先建立 task_memo.txt，確保其 Inode 被鎖定為 666 權限，避免權限衝突
     task_memo_path = os.path.join(cyber_path, 'task_memo.txt')
