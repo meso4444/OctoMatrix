@@ -34,6 +34,7 @@ import sys
 import json
 import asyncio
 import logging
+from logging.handlers import RotatingFileHandler
 from typing import Optional, Set
 from datetime import datetime
 
@@ -50,7 +51,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='[%(asctime)s] [%(levelname)s] %(message)s',
     handlers=[
-        logging.FileHandler('/tmp/discord_gateway.log'),
+        RotatingFileHandler('/tmp/discord_gateway.log', maxBytes=2*1024*1024, backupCount=3, encoding='utf-8'),
         logging.StreamHandler()
     ]
 )

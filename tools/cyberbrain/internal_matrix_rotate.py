@@ -28,6 +28,22 @@ from datetime import datetime
 # ==========================================
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 AGENT_HOME = os.path.dirname(SCRIPT_DIR)
+# 重置腳本由 reaper 以 DEVNULL 啟動，原本的輸出全部消失；改為落檔輪替(各 Agent 共用一檔，以名稱區分)
+import logging
+from logging.handlers import RotatingFileHandler
+logger = logging.getLogger('octo_rotate')
+logger.setLevel(logging.INFO)
+logger.propagate = False
+_rot_fmt = logging.Formatter('[%(asctime)s] [%(levelname)s] [' + os.path.basename(AGENT_HOME) + '] %(message)s')
+for _rot_h in (logging.StreamHandler(),):
+    _rot_h.setFormatter(_rot_fmt)
+    logger.addHandler(_rot_h)
+try:
+    _rot_f = RotatingFileHandler('/tmp/octo_rotate.log', maxBytes=1*1024*1024, backupCount=3, encoding='utf-8')
+    _rot_f.setFormatter(_rot_fmt)
+    logger.addHandler(_rot_f)
+except OSError:
+    pass
 ENV_FILE = os.path.join(AGENT_HOME, "octo_cyberbrain/.cyberbrain_env")
 
 # 定義鎖檔路徑 (絕對路徑)
@@ -128,18 +144,18 @@ def union_dedup(source_set_kws, source_set_paths, target_kw_path, target_path_pa
 
 def cleanup():
     # 🚀 統一清理 Flag 與 Lock，防止死鎖
-    print("🧹 執行最後的清理程序...")
+    logger.info("🧹 執行最後的清理程序...")
     for f in [FLAG_FILE]:
         if os.path.exists(f):
             try:
                 os.remove(f)
-                print(f"   已移除: {f}")
+                logger.info(f"   已移除: {f}")
             except Exception as e:
-                print(f"   移除失敗 {f}: {e}")
+                logger.error(f"   移除失敗 {f}: {e}")
 
 def main():
     if not os.path.exists(FLAG_FILE):
-        print(f"⚠️ 找不到 Rotation Flag ({FLAG_FILE})，中止程序。")
+        logger.warning(f"⚠️ 找不到 Rotation Flag ({FLAG_FILE})，中止程序。")
         sys.exit(0)
 
     try:
@@ -149,7 +165,7 @@ def main():
         flag_content = ""
 
     if flag_content != "" and flag_content != "READY_FOR_REAPER":
-        print(f"⚠️ 偵測到已有重置進程正在執行 (Flag: {flag_content})，跳過本次啟動。")
+        logger.warning(f"⚠️ 偵測到已有重置進程正在執行 (Flag: {flag_content})，跳過本次啟動。")
         sys.exit(0)
 
     try:
@@ -162,7 +178,7 @@ def main():
         TMUX_SESSION_NAME = env.get("TMUX_SESSION_NAME")
         
         if not AGENT_NAME or not TMUX_SESSION_NAME:
-            print(f"❌ 無法取得 AGENT_NAME 或 TMUX_SESSION_NAME (來源: {ENV_FILE})。中止重置。")
+            logger.error(f"❌ 無法取得 AGENT_NAME 或 TMUX_SESSION_NAME (來源: {ENV_FILE})。中止重置。")
             sys.exit(1)
 
         TMUX_TARGET = f"{TMUX_SESSION_NAME}:{AGENT_NAME}"
@@ -202,7 +218,7 @@ def main():
         else:
             open(TEMP_LOG, 'w').close()
             
-        print(f"⏳ 注入 {RESET_CMD} 並開始週期性嘗試 Enter (每 3 秒一次，共 100 次)...")
+        logger.info(f"⏳ 注入 {RESET_CMD} 並開始週期性嘗試 Enter (每 3 秒一次，共 100 次)...")
         # 🚀 強化手段 1: 前置喚醒 (暴力淨空)。每次擊發 Enter 隨即緊接發送 BSpace 以防空行
         if ENGINE == 'pi':
             # Pi 不需要忙碌判斷，Ctrl-C 不適用，中斷操作直接送 Escape
@@ -267,12 +283,12 @@ def main():
             screen = res.stdout
             if marker_match(marker in screen for marker in prompt_markers):
                 cleared = True
-                print(f"✅ 第 {i+1} 次嘗試成功！偵測到 {ENGINE} 啟動關鍵字。")
+                logger.info(f"✅ 第 {i+1} 次嘗試成功！偵測到 {ENGINE} 啟動關鍵字。")
                 break
-            print(f"⚠️ 第 {i+1} 次嘗試失敗 (CLI 忙碌中)，3 秒後重新注入...")
+            logger.warning(f"⚠️ 第 {i+1} 次嘗試失敗 (CLI 忙碌中)，3 秒後重新注入...")
         
         if not cleared:
-            print("⚠️ 逾時 100 次嘗試仍未偵測到重置關鍵字，嘗試終極保險 [Ctrl+C] -> 6s -> [Ctrl+C]...")
+            logger.warning("⚠️ 逾時 100 次嘗試仍未偵測到重置關鍵字，嘗試終極保險 [Ctrl+C] -> 6s -> [Ctrl+C]...")
             if ENGINE == 'pi':
                 # Pi 不需要忙碌判斷，Ctrl-C 不適用，中斷操作直接送 Escape
                 subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Escape"])
@@ -306,10 +322,10 @@ def main():
             res = subprocess.run(TMUX_BASE + ["capture-pane", "-p", "-t", TMUX_TARGET], capture_output=True, text=True)
             if marker_match(marker in res.stdout for marker in prompt_markers):
                 cleared = True
-                print("✅ 終極保險救援成功！偵測到啟動關鍵字。")
+                logger.info("✅ 終極保險救援成功！偵測到啟動關鍵字。")
 
         if not cleared:
-            print("❌ 重置失敗，外拋 /fix 指令給 Router Web API 進行修復...")
+            logger.error("❌ 重置失敗，外拋 /fix 指令給 Router Web API 進行修復...")
             # 1. 還原 temp.log 到 shell.log
             if os.path.exists(TEMP_LOG):
                 shutil.copy2(TEMP_LOG, SHELL_LOG)
@@ -332,9 +348,9 @@ def main():
                     json={"source": "system", "user_id": "system", "content": f"/fix {AGENT_NAME}"},
                     timeout=5
                 )
-                print(f"✅ 已成功外拋 /fix {AGENT_NAME} 至 Router API (Port: {port})。")
+                logger.info(f"✅ 已成功外拋 /fix {AGENT_NAME} 至 Router API (Port: {port})。")
             except Exception as e:
-                print(f"⚠️ 外拋 /fix 失敗: {e}")
+                logger.warning(f"⚠️ 外拋 /fix 失敗: {e}")
                 
             # 4. 清理自身的 .rotation_flag
             if os.path.exists(FLAG_FILE):
@@ -374,10 +390,10 @@ def main():
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
                         time.sleep(0.3)
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
-                        print("📩 已將積累的用戶指令注入完成！")
+                        logger.info("📩 已將積累的用戶指令注入完成！")
                     os.remove(PENDING_USER_FILE)
                 except Exception as e:
-                    print(f"❌ 處理積累的 User 指令時發生錯誤: {e}")
+                    logger.error(f"❌ 處理積累的 User 指令時發生錯誤: {e}")
 
             if os.path.exists(PENDING_AGENT_FILE):
                 try:
@@ -393,10 +409,10 @@ def main():
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
                         time.sleep(0.3)
                         subprocess.run(TMUX_BASE + ["send-keys", "-t", TMUX_TARGET, "Enter"], check=True)
-                        print("📩 已將積累的 Agent 交互指令注入完成！")
+                        logger.info("📩 已將積累的 Agent 交互指令注入完成！")
                     os.remove(PENDING_AGENT_FILE)
                 except Exception as e:
-                    print(f"❌ 處理積累的 Agent 指令時發生錯誤: {e}")
+                    logger.error(f"❌ 處理積累的 Agent 指令時發生錯誤: {e}")
             
             # 這裡不需手動清理，交由 finally 處理
             sys.exit(1)
@@ -410,10 +426,10 @@ def main():
         try:
             subprocess.run(["zstd", "-T0", "--rm", TEMP_LOG, "-o", zst_target], stdout=subprocess.DEVNULL, check=True)
         except FileNotFoundError:
-            print("⚠️ 找不到 zstd 指令，跳過壓縮，直接保存原始 log 檔案")
+            logger.warning("⚠️ 找不到 zstd 指令，跳過壓縮，直接保存原始 log 檔案")
             os.rename(TEMP_LOG, os.path.join(AGENT_HOME, f"octo_cyberbrain/shell/octo_shell.log.{TS}.bak"))
         except subprocess.CalledProcessError as e:
-            print(f"⚠️ zstd 壓縮失敗: {e}")
+            logger.warning(f"⚠️ zstd 壓縮失敗: {e}")
             os.rename(TEMP_LOG, os.path.join(AGENT_HOME, f"octo_cyberbrain/shell/octo_shell.log.{TS}.bak"))
         
         # Check Snapshot count
@@ -512,7 +528,7 @@ def main():
                     if memo_content:
                         local_combined += build_sop_block("任務接續訊息:", memo_content) + "\n\n"
                 except Exception as e:
-                    print(f"處理 task_memo.txt 時發生錯誤: {e}")
+                    logger.error(f"處理 task_memo.txt 時發生錯誤: {e}")
 
             # 2. pending_user (Middle)
             if os.path.exists(PENDING_USER_FILE):
@@ -524,7 +540,7 @@ def main():
                         had_new_pending = True
                     os.remove(PENDING_USER_FILE)
                 except Exception as e:
-                    print(f"處理 pending_user 時發生錯誤: {e}")
+                    logger.error(f"處理 pending_user 時發生錯誤: {e}")
 
             # 3. pending_agent (Bottom)
             if os.path.exists(PENDING_AGENT_FILE):
@@ -537,7 +553,7 @@ def main():
                         had_new_pending = True
                     os.remove(PENDING_AGENT_FILE)
                 except Exception as e:
-                    print(f"處理 pending_agent 時發生錯誤: {e}")
+                    logger.error(f"處理 pending_agent 時發生錯誤: {e}")
 
             # 寫入統一的 task_memo（只覆寫，不刪除；真正清空交由 Agent 讀完後自行執行 true > task_memo.txt）
             if local_combined.strip():
@@ -597,9 +613,9 @@ def main():
                     },
                     timeout=10
                 )
-                print(f"📩 已軟性送出緩衝期間累積的提醒 (Port: {port})，不夾帶 C-c。")
+                logger.info(f"📩 已軟性送出緩衝期間累積的提醒 (Port: {port})，不夾帶 C-c。")
             except Exception as e:
-                print(f"⚠️ 軟性送出緩衝期間提醒失敗: {e}")
+                logger.warning(f"⚠️ 軟性送出緩衝期間提醒失敗: {e}")
 
         # 確認提醒已送出（或本輪無需送出）後，才解除緩衝限制
         if os.path.exists(FLAG_FILE):
@@ -614,9 +630,9 @@ def main():
             if e.code == 0: # 正常退出不報錯
                 pass
             else:
-                print(f"❌ 程序因 sys.exit({e.code}) 中止")
+                logger.error(f"❌ 程序因 sys.exit({e.code}) 中止")
         else:
-            print(f"❌ 重置過程中發生異常: {e}")
+            logger.error(f"❌ 重置過程中發生異常: {e}")
     finally:
         cleanup()
 

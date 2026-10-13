@@ -30,6 +30,7 @@ import sys
 import json
 import html
 import logging
+from logging.handlers import RotatingFileHandler
 import argparse
 from typing import Dict, Any, Optional, List
 from enum import Enum
@@ -54,19 +55,22 @@ for _ in range(5):
         break
     _root_dir = os.path.dirname(_root_dir)
 
+# 不呼叫 root basicConfig：模組被 router import 時會搶先設定 root logger，讓 router 自己的 log 設定失效
+# (octo_router.log 因此恆為 0KB)。改為只對本模組的 logger 掛 handler 並關閉 propagate。
 _log_handlers = [logging.StreamHandler()]
 try:
-    _log_handlers.append(logging.FileHandler('/tmp/matrix_notifier.log'))
+    _log_handlers.append(RotatingFileHandler('/tmp/matrix_notifier.log', maxBytes=1*1024*1024, backupCount=2, encoding='utf-8'))
 except PermissionError:
     # 防止容器內多用戶權限衝突
     pass
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(asctime)s] [%(levelname)s] %(message)s',
-    handlers=_log_handlers
-)
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.propagate = False
+_log_fmt = logging.Formatter('[%(asctime)s] [%(levelname)s] %(message)s')
+for _h in _log_handlers:
+    _h.setFormatter(_log_fmt)
+    logger.addHandler(_h)
 
 # 通知服務配置
 try:

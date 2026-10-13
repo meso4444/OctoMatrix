@@ -29,6 +29,17 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.date import DateTrigger
+import threading
+
+logger = logging.getLogger(__name__)
+
+
+def _with_file_lock(fn):
+    """序列化對 awake.yaml 的讀-改-寫(Flask 多執行緒與排程執行緒並行)"""
+    def wrapper(self, *a, **k):
+        with self._file_lock:
+            return fn(self, *a, **k)
+    return wrapper
 
 # 導入配置
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -93,6 +104,7 @@ def describe_schedule(original_task):
 class AwakeManager:
     def __init__(self, command_handler=None, image_manager=None):
         self.scheduler = BackgroundScheduler()
+        self._file_lock = threading.RLock()
         self.awake_file = AWAKE_YAML_PATH
         self.load_jobs()
 
@@ -100,7 +112,7 @@ class AwakeManager:
         """啟動任務調度器"""
         if not self.scheduler.running:
             self.scheduler.start()
-            print("⏰ [Awake] 喚醒系統調度器已啟動")
+            logger.info("⏰ [Awake] 喚醒系統調度器已啟動")
 
     def load_jobs(self, jobs_data=None):
         """從 YAML 或傳入資料載入喚醒任務"""
@@ -119,11 +131,30 @@ class AwakeManager:
                 jobs = yaml.safe_load(f) or []
             
             if isinstance(jobs, list):
+                # 載入時清掉已過期的 date 任務(例如停機期間錯過的)，它們不會再被執行
+                live = [t for t in jobs if not self._is_expired_date_task(t)]
+                if len(live) != len(jobs):
+                    with self._file_lock:
+                        with open(self.awake_file, 'w', encoding='utf-8') as f:
+                            yaml.dump(live, f, allow_unicode=True)
+                    logger.info(f"[Awake] 載入時已清除 {len(jobs) - len(live)} 筆過期 date 任務")
+                jobs = live
                 self.scheduler.remove_all_jobs()
                 for task in jobs:
                     self._add_task_to_scheduler(task)
         except Exception as e:
-            print(f"❌ 載入喚醒任務失敗: {e}")
+            logger.error(f"❌ 載入喚醒任務失敗: {e}")
+
+    @staticmethod
+    def _is_expired_date_task(task):
+        if not isinstance(task, dict) or task.get('trigger') != 'date': return False
+        run_time = task.get('run_time')
+        try:
+            if isinstance(run_time, str):
+                run_time = datetime.strptime(run_time, "%Y-%m-%d %H:%M:%S")
+            return run_time is not None and run_time < datetime.now()
+        except Exception:
+            return False
 
     def _add_task_to_scheduler(self, task):
         """將單個任務加入 apscheduler (含高階 Trigger 轉譯)"""
@@ -157,12 +188,34 @@ class AwakeManager:
                 replace_existing=True
             )
         except Exception as e:
-            print(f"❌ 新增任務 {task_id} 失敗: {e}")
+            logger.error(f"❌ 新增任務 {task_id} 失敗: {e}")
 
     def execute_task(self, task):
         task_type = task.get('type', 'agent_command')
-        if task_type == 'agent_command':
-            self._execute_agent_command(task)
+        try:
+            if task_type == 'agent_command':
+                self._execute_agent_command(task)
+        finally:
+            # date 任務只會觸發一次：執行後(不論成敗)從 awake.yaml 移除，避免已過期的任務殘留
+            if task.get('trigger') == 'date':
+                self._remove_date_job(task)
+
+    @_with_file_lock
+    def _remove_date_job(self, task):
+        task_id = task.get('id') or task.get('name')
+        try:
+            if not task_id or not os.path.exists(self.awake_file): return
+            with open(self.awake_file, 'r', encoding='utf-8') as f:
+                jobs = yaml.safe_load(f) or []
+            if not isinstance(jobs, list): return
+            # run_time 與本次執行的任務不同代表已被重新註冊/更新，不可誤刪
+            keep = [t for t in jobs if not ((t.get('id') or t.get('name')) == task_id and str(t.get('run_time')) == str(task.get('run_time')))]
+            if len(keep) == len(jobs): return
+            with open(self.awake_file, 'w', encoding='utf-8') as f:
+                yaml.dump(keep, f, allow_unicode=True)
+            logger.info(f"[Awake] 已清除已執行的 date 任務: {task_id}")
+        except Exception as e:
+            logger.error(f"[Awake] 清除 date 任務失敗 ({task_id}): {e}")
 
     def _execute_agent_command(self, task):
         from config import ROUTER_PORT, SYS_PREFIX
@@ -180,9 +233,9 @@ class AwakeManager:
         }
         try:
             requests.post(url, json=payload, timeout=5)
-            print(f"⏰ [Awake] 成功喚醒 Agent: {target_agent}")
+            logger.info(f"⏰ [Awake] 成功喚醒 Agent: {target_agent}")
         except Exception as e:
-            print(f"⏰ [Awake] 喚醒 Agent 失敗 (內部 API 錯誤): {e}")
+            logger.error(f"⏰ [Awake] 喚醒 Agent 失敗 (內部 API 錯誤): {e}")
 
     def _validate_job_data(self, task_data):
         allowed_fields = {'id', 'name', 'trigger', 'type', 'target_agent', 'agent', 'prompt', 'command', 'hour', 'minute', 'second', 'day_of_week', 'day', 'hours', 'minutes', 'seconds', 'run_time'}
@@ -221,6 +274,7 @@ class AwakeManager:
                 return {"status": "error", "message": f"Trigger 'interval' 至少需要 hours, minutes, seconds 其中一個欄位"}
         return None
 
+    @_with_file_lock
     def register_job(self, task_data):
         try:
             validation_error = self._validate_job_data(task_data)
@@ -240,9 +294,10 @@ class AwakeManager:
             self._add_task_to_scheduler(task_data)
             return {"status": "success", "message": f"已註冊喚醒任務: {task_id}"}
         except Exception as e:
-            print(f"❌ [Awake] register_job 失敗: {e}")
+            logger.error(f"❌ [Awake] register_job 失敗: {e}")
             return {"status": "error", "message": f"註冊喚醒任務失敗: {e}"}
 
+    @_with_file_lock
     def update_job(self, job_id, update_data):
         try:
             if not os.path.exists(self.awake_file):
@@ -289,9 +344,10 @@ class AwakeManager:
 
             return {"status": "success", "message": f"已更新喚醒任務: {job_id}"}
         except Exception as e:
-            print(f"❌ [Awake] update_job 失敗: {e}")
+            logger.error(f"❌ [Awake] update_job 失敗: {e}")
             return {"status": "error", "message": f"更新喚醒任務失敗: {e}"}
 
+    @_with_file_lock
     def delete_job(self, job_id):
         try:
             if not os.path.exists(self.awake_file): return {"status": "error", "message": "檔案不存在"}
@@ -305,7 +361,7 @@ class AwakeManager:
             except: pass
             return {"status": "success", "message": f"已刪除喚醒任務: {job_id}"}
         except Exception as e:
-            print(f"❌ [Awake] delete_job 失敗: {e}")
+            logger.error(f"❌ [Awake] delete_job 失敗: {e}")
             return {"status": "error", "message": f"刪除喚醒任務失敗: {e}"}
 
     def list_jobs(self):
@@ -323,6 +379,6 @@ class AwakeManager:
                 })
             return {"status": "ok", "total": len(jobs_info), "jobs": jobs_info}
         except Exception as e:
-            print(f"❌ [Awake] list_jobs 失敗: {e}")
+            logger.error(f"❌ [Awake] list_jobs 失敗: {e}")
             return {"status": "error", "message": f"列出喚醒任務失敗: {e}"}
 

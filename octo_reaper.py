@@ -27,6 +27,18 @@ base_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(base_dir)
 
 import config
+import logging
+from logging.handlers import RotatingFileHandler
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] [%(levelname)s] %(message)s',
+    handlers=[
+        RotatingFileHandler('/tmp/octo_reaper.log', maxBytes=2*1024*1024, backupCount=3, encoding='utf-8'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 def get_reaper_config():
     polling_interval = getattr(config, 'CYBERBRAIN_REAPER_POLLING_INTERVAL', 60)
@@ -64,7 +76,7 @@ def notify_agent(agent_name):
             subprocess.run(["tmux", "send-keys", "-t", target, "Escape"])
             time.sleep(6)
     except Exception as e:
-        print(f"[Reaper] 執行前置 Ctrl+C 失敗: {e}")
+        logger.error(f"[Reaper] 執行前置 Ctrl+C 失敗: {e}")
 
     # 注入指令給 Agent (隱性維護模式)
     inject_url = f"http://{router_host}:{router_port}/inject"
@@ -79,10 +91,10 @@ def notify_agent(agent_name):
 
     try:
         requests.post(inject_url, json=payload, timeout=15)
-        print(f"[Reaper] 已通知 Agent: {agent_name} 進行隱性 GHOST 狀態更新")
+        logger.info(f"[Reaper] 已通知 Agent: {agent_name} 進行隱性 GHOST 狀態更新")
         return True
     except Exception as e:
-        print(f"[Reaper] 通知 Agent {agent_name} 失敗: {e}")
+        logger.error(f"[Reaper] 通知 Agent {agent_name} 失敗: {e}")
         return False
 
 def is_in_dnd(dnd_str):
@@ -101,7 +113,7 @@ def is_in_dnd(dnd_str):
         else:
             return now_min >= start_min or now_min <= end_min
     except Exception as e:
-        print(f"[Reaper] 解析 DND 區間失敗: {e}")
+        logger.error(f"[Reaper] 解析 DND 區間失敗: {e}")
         return False
 
 def trigger_inactivity_greeting(agent_name):
@@ -121,17 +133,17 @@ def trigger_inactivity_greeting(agent_name):
     try:
         res = requests.post(inject_url, json=payload, timeout=15)
         if res.status_code == 200:
-            print(f"[Reaper] 成功觸發 Agent {agent_name} 的空閒問候注入")
+            logger.info(f"[Reaper] 成功觸發 Agent {agent_name} 的空閒問候注入")
             return True
         else:
-            print(f"[Reaper] 觸發 Agent {agent_name} 空閒問候注入失敗: HTTP {res.status_code}")
+            logger.error(f"[Reaper] 觸發 Agent {agent_name} 空閒問候注入失敗: HTTP {res.status_code}")
             return False
     except Exception as e:
-        print(f"[Reaper] 連線 Router 注入空閒問候失敗: {e}")
+        logger.error(f"[Reaper] 連線 Router 注入空閒問候失敗: {e}")
         return False
 
 def main():
-    print("🐙 Global Reaper Daemon Started")
+    logger.info("🐙 Global Reaper Daemon Started")
     while True:
         polling_interval, threshold_kb = get_reaper_config()
         threshold_bytes = threshold_kb * 1024
@@ -154,7 +166,7 @@ def main():
                 try:
                     if time.time() - os.path.getmtime(flag_file) > polling_interval + 840:
                         os.remove(flag_file)
-                        print(f"[Reaper] 發現存在過久 (超過 {polling_interval + 840} 秒) 的異常 Flag，強制清除 ({agent_name})")
+                        logger.error(f"[Reaper] 發現存在過久 (超過 {polling_interval + 840} 秒) 的異常 Flag，強制清除 ({agent_name})")
                         continue
                 except Exception:
                     pass
@@ -164,18 +176,18 @@ def main():
                         elapsed = time.time() - os.path.getmtime(flag_file)
                         # Check intervals: 180-245, 420-485, 660-725
                         if (180 < elapsed <= 245) or (420 < elapsed <= 485) or (660 < elapsed <= 725):
-                            print(f"[Reaper] 發現逾時空 Flag (已存在 {int(elapsed)} 秒)，位於重試區間內，發送通知 ({agent_name})")
+                            logger.info(f"[Reaper] 發現逾時空 Flag (已存在 {int(elapsed)} 秒)，位於重試區間內，發送通知 ({agent_name})")
                             notify_agent(agent_name)
                     except Exception as e:
-                        print(f"[Reaper] 檢查逾時 Flag 失敗 ({agent_name}): {e}")
+                        logger.error(f"[Reaper] 檢查逾時 Flag 失敗 ({agent_name}): {e}")
 
                 if flag_content == "READY_FOR_REAPER":
                     try:
                         rotate_script = os.path.join(agent_dir, 'octo_cyberbrain', 'internal_matrix_rotate.py')
                         subprocess.Popen(["python3", rotate_script], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
-                        print(f"[Reaper] 啟動 Rotation 程序 ({agent_name})")
+                        logger.info(f"[Reaper] 啟動 Rotation 程序 ({agent_name})")
                     except Exception as e:
-                        print(f"[Reaper] 啟動 Rotation 失敗 ({agent_name}): {e}")
+                        logger.error(f"[Reaper] 啟動 Rotation 失敗 ({agent_name}): {e}")
                     continue
                 elif "internal_matrix_rotate.py" in flag_content:
                     # Rotation script is running
@@ -193,11 +205,11 @@ def main():
                             if trigger_inactivity_greeting(agent_name):
                                 try:
                                     os.utime(shell_log, None)
-                                    print(f"[Reaper] 已更新 {agent_name} 日誌時間戳，防止重複發送。")
+                                    logger.info(f"[Reaper] 已更新 {agent_name} 日誌時間戳，防止重複發送。")
                                 except Exception as e:
-                                    print(f"[Reaper] touch 日誌失敗: {e}")
+                                    logger.error(f"[Reaper] touch 日誌失敗: {e}")
                 except Exception as e:
-                    print(f"[Reaper] 檢查 Agent {agent_name} 空閒狀態失敗: {e}")
+                    logger.error(f"[Reaper] 檢查 Agent {agent_name} 空閒狀態失敗: {e}")
                 # -------------------
 
                 size = os.path.getsize(shell_log)
@@ -214,12 +226,12 @@ def main():
                                     try: os.remove(flag_file)
                                     except: pass
                         except Exception as e:
-                            print(f"[Reaper] 建立 Flag 失敗 ({agent_name}): {e}")
+                            logger.error(f"[Reaper] 建立 Flag 失敗 ({agent_name}): {e}")
                 else:
                     if os.path.exists(flag_file):
                         try:
                             os.remove(flag_file)
-                            print(f"[Reaper] 移除過期殘留 Flag ({agent_name})")
+                            logger.info(f"[Reaper] 移除過期殘留 Flag ({agent_name})")
                         except FileNotFoundError:
                             pass
                     

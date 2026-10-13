@@ -38,6 +38,7 @@ import os
 import sys
 import json
 import logging
+from logging.handlers import RotatingFileHandler
 import time
 from datetime import datetime
 from typing import Optional, Set, Dict, Any
@@ -57,7 +58,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='[%(asctime)s] [%(levelname)s] %(message)s',
     handlers=[
-        logging.FileHandler('/tmp/slack_gateway.log'),
+        RotatingFileHandler('/tmp/slack_gateway.log', maxBytes=2*1024*1024, backupCount=3, encoding='utf-8'),
         logging.StreamHandler()
     ]
 )

@@ -19,6 +19,7 @@ import time
 import threading
 import requests
 import logging
+from logging.handlers import RotatingFileHandler
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from datetime import datetime
 from config import (
@@ -31,7 +32,11 @@ from config import (
 # 日誌配置
 logging.basicConfig(
     level=logging.INFO,
-    format='[%(asctime)s] [%(levelname)s] %(message)s'
+    format='[%(asctime)s] [%(levelname)s] %(message)s',
+    handlers=[
+        RotatingFileHandler('/tmp/telegram_gateway.log', maxBytes=2*1024*1024, backupCount=3, encoding='utf-8'),
+        logging.StreamHandler()
+    ]
 )
 logger = logging.getLogger(__name__)
 

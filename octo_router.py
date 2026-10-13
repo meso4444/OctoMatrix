@@ -23,6 +23,7 @@ import sys
 import json
 import threading
 import logging
+from logging.handlers import RotatingFileHandler
 import subprocess
 import time
 import requests
@@ -45,7 +46,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='[%(asctime)s] [%(levelname)s] %(message)s',
     handlers=[
-        logging.FileHandler('/tmp/octo_router.log'),
+        RotatingFileHandler('/tmp/octo_router.log', maxBytes=2*1024*1024, backupCount=3, encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
