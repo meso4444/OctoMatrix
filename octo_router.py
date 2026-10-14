@@ -18,6 +18,7 @@
 🔄 OctoMatrix Router (octo_router.py) - Ultimate Stable Feature Parity Version (Fix Loop Recursion)
 """
 
+import html
 import os
 import sys
 import json
@@ -563,6 +564,7 @@ Message from {MATRIX_USERNAME}:
                 schedule_text = j.get('schedule_text') or j.get('trigger', '?')
                 p = j.get('prompt', 'No command')
                 if len(p) > 500: p = p[:497] + "..."
+                p = html.escape(p, quote=False)
                 pieces.append((agent_name, title, f"  • <b>{j.get('id', '?')}</b>: {schedule_text} (next {nr})\n    └ Command: <code>{p}</code>"))
 
         header = f"⏰ <b>Awake Tasks ({len(jobs)})</b>\n\n"
