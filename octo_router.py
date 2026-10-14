@@ -18,6 +18,7 @@
 🔄 OctoMatrix Router (octo_router.py) - 終極穩定功能對標版 (修復 Loop 遞迴)
 """
 
+import html
 import os
 import sys
 import json
@@ -557,6 +558,7 @@ class CommandHandler:
                 schedule_text = j.get('schedule_text') or j.get('trigger', '?')
                 p = j.get('prompt', '無指令')
                 if len(p) > 500: p = p[:497] + "..."
+                p = html.escape(p, quote=False)
                 pieces.append((agent_name, title, f"  • <b>{j.get('id', '?')}</b>：{schedule_text} (下次 {nr})\n    └ 指令: <code>{p}</code>"))
 
         header = f"⏰ <b>喚醒任務 ({len(jobs)})</b>\n\n"
