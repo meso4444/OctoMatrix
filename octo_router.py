@@ -848,6 +848,9 @@ def notify_file_proxy():
     file.save(temp)
     try:
         success = notifier.notify_file(p, temp, ft, c, tid, display_name=safe_name); os.remove(temp)
+        # A sticker does not count as a reply; documents, photos, videos and audio (usually with a caption) do
+        if success and ft != 'sticker':
+            _reply_watch_text_sent(request.form.get('agent_name'))
         return jsonify({"status": "success" if success else "failed"}), 200 if success else 502
     except Exception as e:
         if os.path.exists(temp): os.remove(temp)
