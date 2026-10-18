@@ -798,7 +798,7 @@ def _reply_watch_fire(agent, seq):
         st['timer'] = None
     logger.warning(f"⚠️ [Router] {agent} 注入後 {REPLY_WATCH_SECONDS} 秒內未發文字，已注入提醒")
     try:
-        handler.injector.inject(f"{SYS_PREFIX} 你剛才的回覆文字沒有透過 matrix_notifier.py 發送，直出文字用戶看不到。請補答用戶最近一則訊息。", agent, interrupt_first=False)
+        handler.injector.inject(f"{SYS_PREFIX} 你剛才的回覆文字沒有透過 matrix_notifier.py 發送，直出文字用戶看不到。請補答用戶最近一則訊息或當前狀態回報。", agent, interrupt_first=False)
     except Exception as e:
         logger.error(f"❌ [Router] 注入回覆提醒失敗: {e}")
 
