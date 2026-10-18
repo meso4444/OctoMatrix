@@ -470,6 +470,24 @@ def get_router_url() -> str:
         curr = os.path.dirname(curr)
     return f"http://localhost:{os.getenv('ROUTER_PORT', 12210)}"
 
+def get_agent_name():
+    # 與 agent_intercom 的 get_source_agent 同邏輯：環境變數優先，否則向上找 octo_cyberbrain/.cyberbrain_env；
+    # 找不到回傳 None（router 端 agent_name 為選填，舊版或取不到時退回最近起算的 agent）
+    name = os.getenv("AGENT_NAME")
+    if name: return name
+    curr = os.path.dirname(os.path.abspath(__file__))
+    for _ in range(4):
+        env_file = os.path.join(curr, 'octo_cyberbrain', '.cyberbrain_env')
+        if os.path.exists(env_file):
+            try:
+                with open(env_file, 'r') as f:
+                    for line in f:
+                        if line.startswith("AGENT_NAME="):
+                            return line.strip().split('=', 1)[1] or None
+            except Exception: pass
+        curr = os.path.dirname(curr)
+    return None
+
 def get_source_info():
     curr = os.path.dirname(os.path.abspath(__file__))
     enabled_platforms = {}
@@ -573,6 +591,7 @@ if __name__ == '__main__':
             with open(f_path, 'rb') as f:
                 # 【優化】僅在 target_id 有效時發送，避免傳遞無效字串
                 payload = {'platform': platform, 'file_type': f_type, 'caption': caption}
+                if get_agent_name(): payload['agent_name'] = get_agent_name()
                 if target_id and str(target_id).lower() not in ['none', 'null', 'undefined']:
                     payload['target_id'] = target_id
                     
@@ -593,6 +612,7 @@ if __name__ == '__main__':
             msg_content = html.escape(msg_content, quote=False)
         context['content'] = msg_content
         payload = {'platform': platform, 'template_id': args.template, 'context': context, 'target_id': target_id}
+        if get_agent_name(): payload['agent_name'] = get_agent_name()
         try:
             resp = requests.post(f"{router_url}/notify", json=payload, timeout=10)
             # 同上：Router 對 /notify 也是一律回傳 HTTP 200，須另外檢查 JSON body 的 status 欄位

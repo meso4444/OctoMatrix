@@ -383,6 +383,7 @@ class CommandHandler:
 
 {SYS_PREFIX}請務必嚴格遵守上述 [SOP] 進行回覆。"""
                 self.injector.inject(prompt, target_agent)
+                _reply_watch_on_inject(target_agent, msg.source)
                 self.notifier.notify(msg.source, 'custom', {'content': f'🔍 已指派 {target_agent} 檢查 {target}...'})
             return True
         elif is_cmd(cmd_content, '/fix'):
@@ -471,6 +472,8 @@ class CommandHandler:
                 logger.error(f"❌ [Router] 寫入暫存檔失敗: {e}")
 
         success = self.injector.inject(final_message, target_agent, interrupt_first=(msg.source not in ['awake', 'reaper_idle', 'system_flush']))
+        if success:
+            _reply_watch_on_inject(target_agent, msg.source)
         if success and msg.source not in ['awake', 'reaper_idle']:
             self.notifier.notify(msg.source, 'matrix_connected', {'timestamp': timestamp, 'agent_name': target_agent})
             
@@ -747,6 +750,58 @@ awake = AwakeManager()
 injector = AtomicInjector(TMUX_SESSION_NAME)
 handler = CommandHandler(injector, notifier, awake)
 
+# 注入後 REPLY_WATCH_SECONDS 秒內若該 agent 沒有任何文字 /notify，就對它注入一次提醒並記 log（不硬擋、不重試）。
+# 每個 agent 一個 Timer；任何來源對該 agent 的注入都會取代上一輪計時，只有要求文字回覆的來源(REPLY_WATCH_SOURCES)才起算新計時。
+REPLY_WATCH_SECONDS = 120
+REPLY_WATCH_SOURCES = ('telegram', 'discord', 'slack', 'awake', 'reaper_idle', 'system_flush')
+_reply_watch = {}
+_reply_watch_last = None
+_reply_watch_lock = threading.Lock()
+
+def _reply_watch_cancel_locked(agent):
+    st = _reply_watch.get(agent)
+    if st and st['timer']:
+        st['timer'].cancel()
+        st['timer'] = None
+
+def _reply_watch_cancel_agent(agent):
+    with _reply_watch_lock:
+        _reply_watch_cancel_locked(agent)
+
+def _reply_watch_on_inject(agent, source):
+    global _reply_watch_last
+    with _reply_watch_lock:
+        st = _reply_watch.setdefault(agent, {'seq': 0, 'timer': None})
+        _reply_watch_cancel_locked(agent)
+        st['seq'] += 1
+        if source not in REPLY_WATCH_SOURCES:
+            return
+        t = threading.Timer(REPLY_WATCH_SECONDS, _reply_watch_fire, args=(agent, st['seq']))
+        t.daemon = True
+        st['timer'] = t
+        _reply_watch_last = agent
+        t.start()
+
+def _reply_watch_text_sent(agent):
+    with _reply_watch_lock:
+        # 舊版 notifier 沒帶 agent_name 時的退路：取消最近一次起算的 agent
+        target = agent if agent in _reply_watch else _reply_watch_last
+        if target:
+            _reply_watch_cancel_locked(target)
+
+def _reply_watch_fire(agent, seq):
+    with _reply_watch_lock:
+        st = _reply_watch.get(agent)
+        # cancel 來不及擋下已開始執行的回呼時，以 timer 已清空或序號過時作防呆
+        if not st or st['seq'] != seq or st['timer'] is None:
+            return
+        st['timer'] = None
+    logger.warning(f"⚠️ [Router] {agent} 注入後 {REPLY_WATCH_SECONDS} 秒內未發文字，已注入提醒")
+    try:
+        handler.injector.inject(f"{SYS_PREFIX} 你剛才的回覆文字沒有透過 matrix_notifier.py 發送，直出文字用戶看不到。請補答用戶最近一則訊息。", agent, interrupt_first=False)
+    except Exception as e:
+        logger.error(f"❌ [Router] 注入回覆提醒失敗: {e}")
+
 @app.route('/awake/jobs/register', methods=['POST'])
 def awake_register():
     data = request.get_json(); return jsonify(awake.register_job(data))
@@ -765,6 +820,8 @@ def notify_proxy():
     # 2026-07-31：內部發送失敗時回傳 502，而非一律 200。body 的 status 欄位本來就已標記成敗，
     # 呼叫端 (matrix_notifier.py) 也已改為同時檢查 status_code 與 body status，這裡讓 HTTP
     # 語意本身也如實反映內部結果，屬防禦性補強，不影響既有呼叫端判斷邏輯。
+    if success:
+        _reply_watch_text_sent(data.get('agent_name'))
     return jsonify({"status": "success" if success else "failed"}), 200 if success else 502
 
 @app.route('/notify_file', methods=['POST'])
@@ -851,6 +908,8 @@ def inter_agent_message():
     # 調用 AtomicInjector 進行物理按鍵注入
     # 強制 interrupt_first=False，保留 User 的絕對中斷特權，Agent 訊息僅能排隊
     success = handler.injector.inject(formatted_message, target_agent, interrupt_first=False)
+    if success:
+        _reply_watch_cancel_agent(target_agent)
     
     return jsonify({"status": "success" if success else "failed"}), 200
 
