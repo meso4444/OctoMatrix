@@ -473,6 +473,25 @@ def get_router_url() -> str:
         curr = os.path.dirname(curr)
     return f"http://localhost:{os.getenv('ROUTER_PORT', 12210)}"
 
+def get_agent_name():
+    # Same logic as agent_intercom's get_source_agent: env var first, else walk up to octo_cyberbrain/.cyberbrain_env;
+    # returns None if not found (agent_name is optional on the router side; older notifiers or unknown names fall back
+    # to the most recently armed agent)
+    name = os.getenv("AGENT_NAME")
+    if name: return name
+    curr = os.path.dirname(os.path.abspath(__file__))
+    for _ in range(4):
+        env_file = os.path.join(curr, 'octo_cyberbrain', '.cyberbrain_env')
+        if os.path.exists(env_file):
+            try:
+                with open(env_file, 'r') as f:
+                    for line in f:
+                        if line.startswith("AGENT_NAME="):
+                            return line.strip().split('=', 1)[1] or None
+            except Exception: pass
+        curr = os.path.dirname(curr)
+    return None
+
 def get_source_info():
     curr = os.path.dirname(os.path.abspath(__file__))
     enabled_platforms = {}
@@ -577,6 +596,7 @@ if __name__ == '__main__':
             with open(f_path, 'rb') as f:
                 # [Optimization] Send only when target_id is valid to avoid passing invalid strings
                 payload = {'platform': platform, 'file_type': f_type, 'caption': caption}
+                if get_agent_name(): payload['agent_name'] = get_agent_name()
                 if target_id and str(target_id).lower() not in ['none', 'null', 'undefined']:
                     payload['target_id'] = target_id
                     
@@ -598,6 +618,7 @@ if __name__ == '__main__':
             msg_content = html.escape(msg_content, quote=False)
         context['content'] = msg_content
         payload = {'platform': platform, 'template_id': args.template, 'context': context, 'target_id': target_id}
+        if get_agent_name(): payload['agent_name'] = get_agent_name()
         try:
             resp = requests.post(f"{router_url}/notify", json=payload, timeout=10)
             # Same as above: /notify also always returns HTTP 200, so the JSON body's status field

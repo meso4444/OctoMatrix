@@ -386,6 +386,7 @@ Here is the current status of {target}, please analyze...
 
 {SYS_PREFIX} Please strictly follow the [SOP] above to reply."""
                 self.injector.inject(prompt, target_agent)
+                _reply_watch_on_inject(target_agent, msg.source)
                 self.notifier.notify(msg.source, 'custom', {'content': f'🔍 Assigned {target_agent} to inspect {target}...'})
             return True
         elif is_cmd(cmd_content, '/fix'):
@@ -475,6 +476,8 @@ Message from {MATRIX_USERNAME}:
                 logger.error(f"❌ [Router] Failed to write temporary file: {e}")
 
         success = self.injector.inject(final_message, target_agent, interrupt_first=(msg.source not in ['awake', 'system_flush']))
+        if success:
+            _reply_watch_on_inject(target_agent, msg.source)
         if success and msg.source != 'awake':
             self.notifier.notify(msg.source, 'matrix_connected', {'timestamp': timestamp, 'agent_name': target_agent})
             
@@ -753,6 +756,58 @@ awake = AwakeManager()
 injector = AtomicInjector(TMUX_SESSION_NAME)
 handler = CommandHandler(injector, notifier, awake)
 
+# If an agent sends no text /notify within REPLY_WATCH_SECONDS of an injection, inject one reminder and log it (no hard block, no retry).
+# One Timer per agent; any injection to the agent supersedes the previous round, and only sources that require a text reply (REPLY_WATCH_SOURCES) start a new timer.
+REPLY_WATCH_SECONDS = 120
+REPLY_WATCH_SOURCES = ('telegram', 'discord', 'slack', 'awake', 'reaper_idle', 'system_flush')
+_reply_watch = {}
+_reply_watch_last = None
+_reply_watch_lock = threading.Lock()
+
+def _reply_watch_cancel_locked(agent):
+    st = _reply_watch.get(agent)
+    if st and st['timer']:
+        st['timer'].cancel()
+        st['timer'] = None
+
+def _reply_watch_cancel_agent(agent):
+    with _reply_watch_lock:
+        _reply_watch_cancel_locked(agent)
+
+def _reply_watch_on_inject(agent, source):
+    global _reply_watch_last
+    with _reply_watch_lock:
+        st = _reply_watch.setdefault(agent, {'seq': 0, 'timer': None})
+        _reply_watch_cancel_locked(agent)
+        st['seq'] += 1
+        if source not in REPLY_WATCH_SOURCES:
+            return
+        t = threading.Timer(REPLY_WATCH_SECONDS, _reply_watch_fire, args=(agent, st['seq']))
+        t.daemon = True
+        st['timer'] = t
+        _reply_watch_last = agent
+        t.start()
+
+def _reply_watch_text_sent(agent):
+    with _reply_watch_lock:
+        # Fallback when an older notifier sends no agent_name: cancel the most recently armed agent
+        target = agent if agent in _reply_watch else _reply_watch_last
+        if target:
+            _reply_watch_cancel_locked(target)
+
+def _reply_watch_fire(agent, seq):
+    with _reply_watch_lock:
+        st = _reply_watch.get(agent)
+        # cancel 來不及擋下已開始執行的回呼時，以 timer 已清空或序號過時作防呆
+        if not st or st['seq'] != seq or st['timer'] is None:
+            return
+        st['timer'] = None
+    logger.warning(f"⚠️ [Router] {agent} sent no text within {REPLY_WATCH_SECONDS}s of the last injection, reminder injected")
+    try:
+        handler.injector.inject(f"{SYS_PREFIX} Your last reply text was not sent via matrix_notifier.py, so the user cannot see direct output. Please answer the user's latest message.", agent, interrupt_first=False)
+    except Exception as e:
+        logger.error(f"❌ [Router] Failed to inject reply reminder: {e}")
+
 @app.route('/awake/jobs/register', methods=['POST'])
 def awake_register():
     data = request.get_json(); return jsonify(awake.register_job(data))
@@ -772,6 +827,8 @@ def notify_proxy():
     # field already flagged success/failure, and the caller (matrix_notifier.py) already checks
     # both status_code and body status, so this just makes the HTTP semantics match reality too --
     # a defensive hardening, not a behavior change for existing callers.
+    if success:
+        _reply_watch_text_sent(data.get('agent_name'))
     return jsonify({"status": "success" if success else "failed"}), 200 if success else 502
 
 @app.route('/notify_file', methods=['POST'])
@@ -860,6 +917,8 @@ def inter_agent_message():
     # Call AtomicInjector for physical keystroke injection
     # Force interrupt_first=False, retaining User's absolute interrupt privilege, Agent messages can only queue
     success = handler.injector.inject(formatted_message, target_agent, interrupt_first=False)
+    if success:
+        _reply_watch_cancel_agent(target_agent)
     
     return jsonify({"status": "success" if success else "failed"}), 200
 
