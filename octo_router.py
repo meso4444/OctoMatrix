@@ -804,7 +804,7 @@ def _reply_watch_fire(agent, seq):
         st['timer'] = None
     logger.warning(f"⚠️ [Router] {agent} sent no text within {REPLY_WATCH_SECONDS}s of the last injection, reminder injected")
     try:
-        handler.injector.inject(f"{SYS_PREFIX} Your last reply text was not sent via matrix_notifier.py, so the user cannot see direct output. Please answer the user's latest message.", agent, interrupt_first=False)
+        handler.injector.inject(f"{SYS_PREFIX} Your last reply text was not sent via matrix_notifier.py, so the user cannot see direct output. Please answer the user's latest message or report your current status.", agent, interrupt_first=False)
     except Exception as e:
         logger.error(f"❌ [Router] Failed to inject reply reminder: {e}")
 
