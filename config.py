@@ -245,6 +245,9 @@ def get_active_agent():
 # 系統提示前綴
 SYS_PREFIX = "【重要】"
 
+# 對話原則內容(USER_MESSAGE_SOP 與 internal_matrix_rotate.py 共用)
+CONVERSATION_PRINCIPLE = "matrix_notifier.py 單筆文字訊息以600字以下為原則，字數不得已超過時以多則訊息傳送，以人性化簡潔對話風格為主，除非用戶要求詳細。"
+
 # Agent 專屬 Linux 帳號密碼 (Local 雙軌隔離用)
 AGENT_PASSWORD = str(os.environ.get("AGENT_PASSWORD", _config.get("agent_password", "octomatrix")))
 
@@ -268,7 +271,7 @@ AVATAR_RENEW_PROMPT = f"""{SYS_PREFIX}
 {SYS_PREFIX}請務必嚴格遵守上述規則進行回覆。"""
 
 USER_MESSAGE_SOP = f"""{SYS_PREFIX}
-執行以下 [SOP]: (對話原則: matrix_notifier.py 單筆文字訊息以600字以下為原則，除非要求詳細說明才可例外。)
+執行以下 [SOP]: (對話原則: {CONVERSATION_PRINCIPLE})
 [Step 0 - 共情]：執行 python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.webm 發符合當下心情的貼圖。
 [Step 1 - 辨識]：辨識 {MATRIX_USERNAME} 用戶的訊息為任務或問候，若為任務則進入Step2; 若為問候則執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}合適的問候回覆}}'，並且不執行後續Step。
 [Step 2 - 預告]：執行 python3 toolbox/matrix_notifier.py '{{向{MATRIX_USERNAME}問候，依對話原則，預告任務進行方向}}' 。
