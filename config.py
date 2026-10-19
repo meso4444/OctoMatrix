@@ -246,6 +246,9 @@ def get_active_agent():
 # System prompt prefix
 SYS_PREFIX = "[IMPORTANT]"
 
+# Conversation principle text (shared by USER_MESSAGE_SOP and internal_matrix_rotate.py)
+CONVERSATION_PRINCIPLE = "matrix_notifier.py single text messages should stay under 600 characters as a rule; if unavoidably longer, split into multiple messages. Keep a human, concise conversational style unless the user asks for detail."
+
 # Agent specific Linux account password (for local dual-track isolation)
 AGENT_PASSWORD = str(os.environ.get("AGENT_PASSWORD", _config.get("agent_password", "octomatrix")))
 
@@ -270,7 +273,7 @@ Execution Rules:
 {SYS_PREFIX} Please strictly follow the rules above to reply."""
 
 USER_MESSAGE_SOP = f"""{SYS_PREFIX}
-Execute the following [SOP]: (Conversation principle: matrix_notifier.py single text messages should stay under 600 characters as a rule, except when detailed explanation is requested.)
+Execute the following [SOP]: (Conversation principle: {CONVERSATION_PRINCIPLE})
 [Step 0 - Empathy]: Execute `python3 toolbox/matrix_notifier.py --file sticker avatar/emojis/{{mood}}.webm` to send a sticker matching your current mood.
 [Step 1 - Identify]: Identify whether {MATRIX_USERNAME}'s message is a task or a greeting. If a task, proceed to Step2; if a greeting, execute `python3 toolbox/matrix_notifier.py '{{An appropriate greeting reply to {MATRIX_USERNAME}}}'`, and do not execute subsequent Steps.
 [Step 2 - Preview]: Execute `python3 toolbox/matrix_notifier.py '{{Greet {MATRIX_USERNAME}, per the conversation principle, and preview the task's direction}}'`.
