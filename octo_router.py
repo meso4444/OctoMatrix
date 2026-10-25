@@ -891,6 +891,10 @@ def inter_agent_message():
     
     if not source or not target_agent or not message:
         return jsonify({"status": "failed", "error": "Missing required fields: 'source', 'target_agent', 'message'"}), 400
+
+    # target_agent is joined into a file path; it must exactly match an agent registered in config, otherwise reject
+    if target_agent not in [a['name'] for a in AGENTS]:
+        return jsonify({"status": "failed", "error": "Unknown target_agent"}), 400
         
     logger.info(f"🔄 [Inter-Agent] Received horizontal communication request | Source: {source} -> Target: {target_agent}")
     
@@ -946,6 +950,10 @@ def update_avatar():
         
         if not agent_name or not archive:
             return jsonify({"status": "failed", "error": "Missing agent_name or archive"}), 400
+
+        # agent_name is joined into a file path; it must exactly match an agent registered in config, otherwise reject
+        if agent_name not in [a['name'] for a in AGENTS]:
+            return jsonify({"status": "failed", "error": "Unknown agent"}), 400
             
         avatar_dir = os.path.join(AGENT_HOME_BASE, agent_name, "avatar")
         base_png_file = os.path.join(avatar_dir, "base.png")
