@@ -882,6 +882,10 @@ def inter_agent_message():
     
     if not source or not target_agent or not message:
         return jsonify({"status": "failed", "error": "Missing required fields: 'source', 'target_agent', 'message'"}), 400
+
+    # target_agent 會直接組成檔案路徑，必須是 config 已註冊的 Agent(完全相等)，否則拒絕
+    if target_agent not in [a['name'] for a in AGENTS]:
+        return jsonify({"status": "failed", "error": "Unknown target_agent"}), 400
         
     logger.info(f"🔄 [Inter-Agent] 收到橫向通訊請求 | 來源: {source} -> 目標: {target_agent}")
     
@@ -937,6 +941,10 @@ def update_avatar():
         
         if not agent_name or not archive:
             return jsonify({"status": "failed", "error": "Missing agent_name or archive"}), 400
+
+        # agent_name 會直接組成檔案路徑，必須是 config 已註冊的 Agent(完全相等)，否則拒絕
+        if agent_name not in [a['name'] for a in AGENTS]:
+            return jsonify({"status": "failed", "error": "Unknown agent"}), 400
             
         avatar_dir = os.path.join(AGENT_HOME_BASE, agent_name, "avatar")
         base_png_file = os.path.join(avatar_dir, "base.png")
