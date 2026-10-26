@@ -33,6 +33,13 @@ import threading
 
 logger = logging.getLogger(__name__)
 
+# Merge awake tasks that fire at the same time: tasks for the same target_agent arriving within the buffer window are
+# combined into one injection (the SOP is loaded only once)
+AWAKE_MERGE_WINDOW_SEC = 2          # Buffer window (seconds)
+AWAKE_BATCH_MAX_BYTES = 8192        # Max merged content per batch (UTF-8 bytes, excluding the SOP wrapped by handle()); split per task beyond this
+AWAKE_INJECT_TIMEOUT_SEC = 30       # /inject synchronous wait cap: AtomicInjector's global lock serializes, the nth call takes ~2.5+5.4*(n-1)s
+AWAKE_PROMPT_MAX_CHARS = 1000       # Per-task prompt length cap, enforced only on register/update; existing long tasks still run
+
 
 def _with_file_lock(fn):
     """Serialize read-modify-write on awake.yaml (Flask threads and the scheduler thread run concurrently)"""
@@ -106,6 +113,8 @@ class AwakeManager:
     def __init__(self, command_handler=None, image_manager=None):
         self.scheduler = BackgroundScheduler()
         self._file_lock = threading.RLock()
+        self._pending = {}
+        self._pending_lock = threading.Lock()
         self.awake_file = AWAKE_YAML_PATH
         self.load_jobs()
 
@@ -193,13 +202,12 @@ class AwakeManager:
 
     def execute_task(self, task):
         task_type = task.get('type', 'agent_command')
-        try:
-            if task_type == 'agent_command':
-                self._execute_agent_command(task)
-        finally:
-            # A date task fires only once: remove it from awake.yaml after the run (success or not) so expired tasks do not linger
-            if task.get('trigger') == 'date':
-                self._remove_date_job(task)
+        if task_type == 'agent_command' and self._task_target_and_prompt(task):
+            # Do not inject directly: queue into the agent's pending batch, merge and send when the window expires; date tasks are removed after their batch is sent
+            self._enqueue(task)
+        elif task.get('trigger') == 'date':
+            # A date task fires only once: remove it even when there is nothing to run so expired tasks do not linger
+            self._remove_date_job(task)
 
     @_with_file_lock
     def _remove_date_job(self, task):
@@ -218,25 +226,105 @@ class AwakeManager:
         except Exception as e:
             logger.error(f"[Awake] Failed to remove date task ({task_id}): {e}")
 
-    def _execute_agent_command(self, task):
-        from config import ROUTER_PORT, SYS_PREFIX
+    @staticmethod
+    def _task_target_and_prompt(task):
         target_agent = task.get('target_agent') or task.get('agent')
         prompt = task.get('prompt') or task.get('command')
-        if not target_agent or not prompt: return
+        if not target_agent or not prompt: return None
+        return target_agent, prompt
 
+    def _enqueue(self, task):
+        target_agent, prompt = self._task_target_and_prompt(task)
+        # A task whose prompt carries its own [SOP] frame is not merged: handle() skips the SOP wrap for the whole message when it sees that text, so merging would strip the SOP from the other tasks in the batch
+        if 'Execute the following [SOP]:' in prompt:
+            self._send_batch(target_agent, [task], 1, 1)
+            self._cleanup_date_tasks([task])
+            return
+        with self._pending_lock:
+            batch = self._pending.get(target_agent)
+            if batch is None:
+                self._pending[target_agent] = [task]
+                timer = threading.Timer(AWAKE_MERGE_WINDOW_SEC, self._flush, args=(target_agent,))
+                timer.daemon = True
+                timer.start()
+            else:
+                batch.append(task)
+
+    def _flush(self, target_agent):
+        with self._pending_lock:
+            tasks = self._pending.pop(target_agent, [])
+        if not tasks: return
+        tasks.sort(key=lambda t: str(t.get('id') or t.get('name')))
+        batches = self._split_batches(tasks)
+        for idx, batch in enumerate(batches, 1):
+            self._send_batch(target_agent, batch, idx, len(batches))
+            self._cleanup_date_tasks(batch)
+
+    @staticmethod
+    def _split_batches(tasks):
+        """Split cleanly per task: greedy fill in order, close the batch and open a new one when over the per-batch cap, never cut a single task; a task over the cap by itself becomes its own batch"""
+        batches, cur, cur_bytes = [], [], 300  # 300 bytes reserved for the batch header
+        for t in tasks:
+            prompt = t.get('prompt') or t.get('command')
+            entry_bytes = len(f"[99] Task {t.get('id') or t.get('name')}: {prompt}\n".encode('utf-8'))
+            if cur and cur_bytes + entry_bytes > AWAKE_BATCH_MAX_BYTES:
+                batches.append(cur)
+                cur, cur_bytes = [], 300
+            cur.append(t)
+            cur_bytes += entry_bytes
+        if cur: batches.append(cur)
+        return batches
+
+    @staticmethod
+    def _build_content(batch, idx, total):
+        if len(batch) == 1 and total == 1:
+            return f"(Awake System Command) {batch[0].get('prompt') or batch[0].get('command')}"
+        lines = [f"[{n}] Task {t.get('id') or t.get('name')}: {t.get('prompt') or t.get('command')}" for n, t in enumerate(batch, 1)]
+        if total == 1:
+            head = f"(Awake System Command) {len(batch)} awake tasks are due at the same time. Complete all of them, then report once:"
+        elif idx < total:
+            head = f"(Awake System Command) The awake tasks due at the same time are split into {total} batches. This is batch {idx}/{total} ({len(batch)} tasks). Complete all of them; more batches follow, so report once after all batches are done:"
+        else:
+            head = f"(Awake System Command) The awake tasks due at the same time are split into {total} batches. This is the last batch (batch {idx}/{total}, {len(batch)} tasks). Complete all of them, then report once:"
+        return head + "\n" + "\n".join(lines)
+
+    def _send_batch(self, target_agent, batch, idx, total):
+        from config import ROUTER_PORT
+        ids = [t.get('id') or t.get('name') for t in batch]
         # 🚀 Physical calibration: Force use of 127.0.0.1 dial
         url = f"http://127.0.0.1:{ROUTER_PORT}/inject"
         payload = {
             "source": "awake",
             "user_id": "system",
-            "content": f"(Awake System Command) {prompt}",
+            "content": self._build_content(batch, idx, total),
             "metadata": {"target_agent": target_agent}
         }
         try:
-            requests.post(url, json=payload, timeout=5)
-            logger.info(f"⏰ [Awake] Successfully awakened Agent: {target_agent}")
+            resp = requests.post(url, json=payload, timeout=AWAKE_INJECT_TIMEOUT_SEC)
+            # /inject returns HTTP 200 whether it succeeded or not; success is decided by the body's status
+            try:
+                status = resp.json().get('status')
+            except Exception:
+                status = f"unparsable(HTTP {resp.status_code})"
+            log = logger.info if status == 'success' else logger.error
+            log(f"⏰ [Awake] Inject target={target_agent} batch {idx}/{total} ids={ids} status={status}")
+        except requests.exceptions.Timeout:
+            logger.error(f"⏰ [Awake] Inject target={target_agent} batch {idx}/{total} ids={ids} status=timeout (result unknown, router may still have injected; not retrying)")
         except Exception as e:
-            logger.error(f"⏰ [Awake] Failed to awaken Agent (Internal API error): {e}")
+            logger.error(f"⏰ [Awake] Failed to awaken Agent (Internal API error) target={target_agent} batch {idx}/{total} ids={ids}: {e}")
+
+    def _cleanup_date_tasks(self, batch):
+        # A date task fires only once: remove each from awake.yaml after its batch is sent (success or not) so expired tasks do not linger
+        for t in batch:
+            if t.get('trigger') == 'date':
+                self._remove_date_job(t)
+
+    @staticmethod
+    def _check_prompt_length(task_data):
+        prompt = task_data.get('prompt') or task_data.get('command') or ''
+        if len(prompt) > AWAKE_PROMPT_MAX_CHARS:
+            return {"status": "error", "message": f"Prompt too long: {len(prompt)} characters, limit is {AWAKE_PROMPT_MAX_CHARS}. Please shorten it before registering"}
+        return None
 
     def _validate_job_data(self, task_data):
         allowed_fields = {'id', 'name', 'trigger', 'type', 'target_agent', 'agent', 'prompt', 'command', 'hour', 'minute', 'second', 'day_of_week', 'day', 'hours', 'minutes', 'seconds', 'run_time'}
@@ -278,7 +366,7 @@ class AwakeManager:
     @_with_file_lock
     def register_job(self, task_data):
         try:
-            validation_error = self._validate_job_data(task_data)
+            validation_error = self._validate_job_data(task_data) or self._check_prompt_length(task_data)
             if validation_error:
                 return validation_error
 
@@ -326,6 +414,9 @@ class AwakeManager:
             merged_job = {k: v for k, v in merged_job.items() if v is not None}
 
             validation_error = self._validate_job_data(merged_job)
+            # The length cap is checked only when this update touches the prompt; an existing long task changing other fields (e.g. time) is unaffected
+            if not validation_error and ('prompt' in update_data or 'command' in update_data):
+                validation_error = self._check_prompt_length(merged_job)
             if validation_error:
                 return validation_error
 
