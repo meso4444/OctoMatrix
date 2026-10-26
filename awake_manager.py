@@ -33,6 +33,12 @@ import threading
 
 logger = logging.getLogger(__name__)
 
+# 同時間多個喚醒任務整併:同一 target_agent 在緩衝時窗內到達的任務合成單則注入(只載入一次 SOP)
+AWAKE_MERGE_WINDOW_SEC = 2          # 緩衝時窗(秒)
+AWAKE_BATCH_MAX_BYTES = 8192        # 單批整併內容上限(UTF-8 bytes,不含 handle() 另外包上的 SOP);超過就按筆切批
+AWAKE_INJECT_TIMEOUT_SEC = 30       # /inject 同步等待上限:AtomicInjector 全域鎖串行,第 n 筆約 2.5+5.4*(n-1) 秒
+AWAKE_PROMPT_MAX_CHARS = 1000       # 單一任務 prompt 字數上限,只在註冊/更新時擋,既有超長任務照常執行
+
 
 def _with_file_lock(fn):
     """序列化對 awake.yaml 的讀-改-寫(Flask 多執行緒與排程執行緒並行)"""
@@ -105,6 +111,8 @@ class AwakeManager:
     def __init__(self, command_handler=None, image_manager=None):
         self.scheduler = BackgroundScheduler()
         self._file_lock = threading.RLock()
+        self._pending = {}
+        self._pending_lock = threading.Lock()
         self.awake_file = AWAKE_YAML_PATH
         self.load_jobs()
 
@@ -192,13 +200,12 @@ class AwakeManager:
 
     def execute_task(self, task):
         task_type = task.get('type', 'agent_command')
-        try:
-            if task_type == 'agent_command':
-                self._execute_agent_command(task)
-        finally:
-            # date 任務只會觸發一次：執行後(不論成敗)從 awake.yaml 移除，避免已過期的任務殘留
-            if task.get('trigger') == 'date':
-                self._remove_date_job(task)
+        if task_type == 'agent_command' and self._task_target_and_prompt(task):
+            # 不直接注入:放進該 agent 的待發批次,時窗到期後整併送出;date 任務在批次送出後才移除
+            self._enqueue(task)
+        elif task.get('trigger') == 'date':
+            # date 任務只會觸發一次:無可執行內容時也要移除,避免已過期的任務殘留
+            self._remove_date_job(task)
 
     @_with_file_lock
     def _remove_date_job(self, task):
@@ -217,25 +224,105 @@ class AwakeManager:
         except Exception as e:
             logger.error(f"[Awake] 清除 date 任務失敗 ({task_id}): {e}")
 
-    def _execute_agent_command(self, task):
-        from config import ROUTER_PORT, SYS_PREFIX
+    @staticmethod
+    def _task_target_and_prompt(task):
         target_agent = task.get('target_agent') or task.get('agent')
         prompt = task.get('prompt') or task.get('command')
-        if not target_agent or not prompt: return
-        
+        if not target_agent or not prompt: return None
+        return target_agent, prompt
+
+    def _enqueue(self, task):
+        target_agent, prompt = self._task_target_and_prompt(task)
+        # prompt 自帶 [SOP] 框架的任務不併入:handle() 看到該字樣整則不包 SOP,併入會讓同批其他任務失去 SOP
+        if '執行以下 [SOP]:' in prompt:
+            self._send_batch(target_agent, [task], 1, 1)
+            self._cleanup_date_tasks([task])
+            return
+        with self._pending_lock:
+            batch = self._pending.get(target_agent)
+            if batch is None:
+                self._pending[target_agent] = [task]
+                timer = threading.Timer(AWAKE_MERGE_WINDOW_SEC, self._flush, args=(target_agent,))
+                timer.daemon = True
+                timer.start()
+            else:
+                batch.append(task)
+
+    def _flush(self, target_agent):
+        with self._pending_lock:
+            tasks = self._pending.pop(target_agent, [])
+        if not tasks: return
+        tasks.sort(key=lambda t: str(t.get('id') or t.get('name')))
+        batches = self._split_batches(tasks)
+        for idx, batch in enumerate(batches, 1):
+            self._send_batch(target_agent, batch, idx, len(batches))
+            self._cleanup_date_tasks(batch)
+
+    @staticmethod
+    def _split_batches(tasks):
+        """按筆乾淨切分:依序貪婪裝入,超過單批上限就封口開新批,絕不切斷單筆;單筆本身超過上限時獨自成批"""
+        batches, cur, cur_bytes = [], [], 300  # 300 bytes 預留批次標頭
+        for t in tasks:
+            prompt = t.get('prompt') or t.get('command')
+            entry_bytes = len(f"[99] 任務 {t.get('id') or t.get('name')}: {prompt}\n".encode('utf-8'))
+            if cur and cur_bytes + entry_bytes > AWAKE_BATCH_MAX_BYTES:
+                batches.append(cur)
+                cur, cur_bytes = [], 300
+            cur.append(t)
+            cur_bytes += entry_bytes
+        if cur: batches.append(cur)
+        return batches
+
+    @staticmethod
+    def _build_content(batch, idx, total):
+        if len(batch) == 1 and total == 1:
+            return f"(喚醒系統指令) {batch[0].get('prompt') or batch[0].get('command')}"
+        lines = [f"[{n}] 任務 {t.get('id') or t.get('name')}: {t.get('prompt') or t.get('command')}" for n, t in enumerate(batch, 1)]
+        if total == 1:
+            head = f"(喚醒系統指令) 現在有 {len(batch)} 項同時到期的喚醒任務,請全部完成,完成後統一回報:"
+        elif idx < total:
+            head = f"(喚醒系統指令) 同時到期的喚醒任務共分 {total} 批,這是第 {idx}/{total} 批({len(batch)} 項),請全部完成;後面還有批次,待全部批次完成後再統一回報:"
+        else:
+            head = f"(喚醒系統指令) 同時到期的喚醒任務共分 {total} 批,這是最後一批(第 {idx}/{total} 批,{len(batch)} 項),請全部完成,完成後統一回報:"
+        return head + "\n" + "\n".join(lines)
+
+    def _send_batch(self, target_agent, batch, idx, total):
+        from config import ROUTER_PORT
+        ids = [t.get('id') or t.get('name') for t in batch]
         # 🚀 物理校準：強制使用 127.0.0.1 撥號
         url = f"http://127.0.0.1:{ROUTER_PORT}/inject"
         payload = {
             "source": "awake",
             "user_id": "system",
-            "content": f"(喚醒系統指令) {prompt}",
+            "content": self._build_content(batch, idx, total),
             "metadata": {"target_agent": target_agent}
         }
         try:
-            requests.post(url, json=payload, timeout=5)
-            logger.info(f"⏰ [Awake] 成功喚醒 Agent: {target_agent}")
+            resp = requests.post(url, json=payload, timeout=AWAKE_INJECT_TIMEOUT_SEC)
+            # /inject 不論成敗都回 HTTP 200,成功與否以 body 的 status 為準
+            try:
+                status = resp.json().get('status')
+            except Exception:
+                status = f"unparsable(HTTP {resp.status_code})"
+            log = logger.info if status == 'success' else logger.error
+            log(f"⏰ [Awake] 注入 target={target_agent} 第{idx}/{total}批 ids={ids} status={status}")
+        except requests.exceptions.Timeout:
+            logger.error(f"⏰ [Awake] 注入 target={target_agent} 第{idx}/{total}批 ids={ids} status=timeout(結果未知,router 可能仍已注入,不重試)")
         except Exception as e:
-            logger.error(f"⏰ [Awake] 喚醒 Agent 失敗 (內部 API 錯誤): {e}")
+            logger.error(f"⏰ [Awake] 喚醒 Agent 失敗 (內部 API 錯誤) target={target_agent} 第{idx}/{total}批 ids={ids}: {e}")
+
+    def _cleanup_date_tasks(self, batch):
+        # date 任務只會觸發一次:批次送出後(不論成敗)逐筆從 awake.yaml 移除,避免已過期的任務殘留
+        for t in batch:
+            if t.get('trigger') == 'date':
+                self._remove_date_job(t)
+
+    @staticmethod
+    def _check_prompt_length(task_data):
+        prompt = task_data.get('prompt') or task_data.get('command') or ''
+        if len(prompt) > AWAKE_PROMPT_MAX_CHARS:
+            return {"status": "error", "message": f"prompt 過長: {len(prompt)} 字,上限 {AWAKE_PROMPT_MAX_CHARS} 字,請精簡後再註冊"}
+        return None
 
     def _validate_job_data(self, task_data):
         allowed_fields = {'id', 'name', 'trigger', 'type', 'target_agent', 'agent', 'prompt', 'command', 'hour', 'minute', 'second', 'day_of_week', 'day', 'hours', 'minutes', 'seconds', 'run_time'}
@@ -277,7 +364,7 @@ class AwakeManager:
     @_with_file_lock
     def register_job(self, task_data):
         try:
-            validation_error = self._validate_job_data(task_data)
+            validation_error = self._validate_job_data(task_data) or self._check_prompt_length(task_data)
             if validation_error:
                 return validation_error
 
@@ -325,6 +412,9 @@ class AwakeManager:
             merged_job = {k: v for k, v in merged_job.items() if v is not None}
 
             validation_error = self._validate_job_data(merged_job)
+            # 字數上限只在這次更新動到 prompt 時檢查,既有超長任務改其他欄位(如時間)不受影響
+            if not validation_error and ('prompt' in update_data or 'command' in update_data):
+                validation_error = self._check_prompt_length(merged_job)
             if validation_error:
                 return validation_error
 
