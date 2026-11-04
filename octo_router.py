@@ -429,6 +429,32 @@ class CommandHandler:
                 with open(source_file, 'w') as f: json.dump(source_data, f)
             except: pass
 
+        # 🎙️ 語音訊息自動解析:若該 Agent 已安裝 octo-speech-recognizer skill,router 直接執行辨識,
+        # 把指令全文與 JSON 全文併入 content,一併走下方一般對話 SOP(不再要求 Agent 自己判斷要不要呼叫)。
+        # 未安裝則不做任何事,維持 gateway 組好的一般檔案提示,交由 Agent 自行處理(2026-11-04 Kenzan 裁示)。
+        if msg.source == 'telegram' and msg.metadata.get('file_type') == 'voice':
+            voice_local_path = msg.metadata.get('local_path')
+            speech_skill_path = os.path.join(AGENT_HOME_BASE, target_agent, 'skillbox', 'octo-speech-recognizer', 'octo_speech_recognizer.py')
+            if voice_local_path and os.path.exists(speech_skill_path):
+                speech_cmd = ['python3', speech_skill_path, voice_local_path, '--format', 'json']
+                try:
+                    speech_res = subprocess.run(speech_cmd, capture_output=True, text=True, timeout=30)
+                    speech_output = (speech_res.stdout or speech_res.stderr).strip() or f'(無輸出,exit code {speech_res.returncode})'
+                    content = (f"{content}\n\n"
+                               f"系統已自動執行以下指令解析這則語音:\n{' '.join(speech_cmd)}\n\n"
+                               f"指令輸出(JSON):\n{speech_output}\n\n"
+                               f"請依上述結果處理使用者的語音內容;若結果顯示 has_speech 為 false、有錯誤,或你覺得內容不合理,"
+                               f"可以自己重新執行上方指令路徑(可換參數,如 --no-tone)再次確認。")
+                except subprocess.TimeoutExpired:
+                    # 逾時:退回一般收檔提示,但額外提示 Agent 自己呼叫 skill(不是單純的一般收檔路線)
+                    content = (f"{content}\n\n"
+                               f"系統嘗試自動解析這則語音但逾時 30 秒,未取得結果。"
+                               f"請你自己執行以下指令進行語音辨識,再依結果處理使用者的內容:\n{' '.join(speech_cmd)}")
+                except Exception as e:
+                    content = (f"{content}\n\n"
+                               f"系統嘗試自動解析這則語音時發生錯誤({e})。"
+                               f"請你自己執行以下指令進行語音辨識,再依結果處理使用者的內容:\n{' '.join(speech_cmd)}")
+
         # ==========================================
         # 🛡️ 注入標準化 SOP (Matrix 訊息處理流程)
         # ==========================================
