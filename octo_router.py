@@ -433,16 +433,17 @@ class CommandHandler:
         # 把指令全文與 JSON 全文併入 content,一併走下方一般對話 SOP(不再要求 Agent 自己判斷要不要呼叫)。
         # 未安裝則不做任何事,維持 gateway 組好的一般檔案提示,交由 Agent 自行處理(2026-11-04 Kenzan 裁示)。
         voice_acked = False
-        # GHOST 重置/修復中(.rotation_flag/.fix_flag)不辨識,與一般檔案相同走下方 pending 路線
+        # GHOST 重置/修復中(.rotation_flag/.fix_flag)照常辨識,但不先回「聽見呼喚」,辨識結果隨下方 pending 路線暫存並回等待回音(與一般檔案相同)
         voice_ghost_busy = any(os.path.exists(os.path.join(AGENT_HOME_BASE, target_agent, 'octo_cyberbrain', f)) for f in ('.rotation_flag', '.fix_flag'))
-        if msg.source == 'telegram' and msg.metadata.get('file_type') == 'voice' and not voice_ghost_busy:
+        if msg.source == 'telegram' and msg.metadata.get('file_type') == 'voice':
             voice_local_path = msg.metadata.get('local_path')
             speech_skill_path = os.path.join(AGENT_HOME_BASE, target_agent, 'skillbox', 'octo-speech-recognizer', 'octo_speech_recognizer.py')
             if voice_local_path and os.path.exists(speech_skill_path):
                 speech_cmd = ['python3', speech_skill_path, voice_local_path, '--format', 'json']
                 # 辨識要等數秒,先回「聽見呼喚」與 base 貼圖,避免使用者以為沒收到
-                self._send_connected_ack(msg, target_agent, timestamp)
-                voice_acked = True
+                if not voice_ghost_busy:
+                    self._send_connected_ack(msg, target_agent, timestamp)
+                    voice_acked = True
                 try:
                     speech_res = subprocess.run(speech_cmd, capture_output=True, text=True, timeout=30)
                     speech_output = (speech_res.stdout or speech_res.stderr).strip() or f'(無輸出,exit code {speech_res.returncode})'
