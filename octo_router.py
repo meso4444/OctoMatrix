@@ -433,7 +433,9 @@ class CommandHandler:
         # 把指令全文與 JSON 全文併入 content,一併走下方一般對話 SOP(不再要求 Agent 自己判斷要不要呼叫)。
         # 未安裝則不做任何事,維持 gateway 組好的一般檔案提示,交由 Agent 自行處理(2026-11-04 Kenzan 裁示)。
         voice_acked = False
-        if msg.source == 'telegram' and msg.metadata.get('file_type') == 'voice':
+        # GHOST 重置/修復中(.rotation_flag/.fix_flag)不辨識,與一般檔案相同走下方 pending 路線
+        voice_ghost_busy = any(os.path.exists(os.path.join(AGENT_HOME_BASE, target_agent, 'octo_cyberbrain', f)) for f in ('.rotation_flag', '.fix_flag'))
+        if msg.source == 'telegram' and msg.metadata.get('file_type') == 'voice' and not voice_ghost_busy:
             voice_local_path = msg.metadata.get('local_path')
             speech_skill_path = os.path.join(AGENT_HOME_BASE, target_agent, 'skillbox', 'octo-speech-recognizer', 'octo_speech_recognizer.py')
             if voice_local_path and os.path.exists(speech_skill_path):
