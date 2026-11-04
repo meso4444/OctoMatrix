@@ -439,7 +439,9 @@ Here is the current status of {target}, please analyze...
         # whether to call it itself). If not installed, do nothing and keep the generic file prompt the
         # gateway already built, leaving it to the Agent (per Kenzan's 2026-11-04 decision).
         voice_acked = False
-        if msg.source == 'telegram' and msg.metadata.get('file_type') == 'voice':
+        # During GHOST reset/repair (.rotation_flag/.fix_flag) skip transcription; like regular files, take the pending route below
+        voice_ghost_busy = any(os.path.exists(os.path.join(AGENT_HOME_BASE, target_agent, 'octo_cyberbrain', f)) for f in ('.rotation_flag', '.fix_flag'))
+        if msg.source == 'telegram' and msg.metadata.get('file_type') == 'voice' and not voice_ghost_busy:
             voice_local_path = msg.metadata.get('local_path')
             speech_skill_path = os.path.join(AGENT_HOME_BASE, target_agent, 'skillbox', 'octo-speech-recognizer', 'octo_speech_recognizer.py')
             if voice_local_path and os.path.exists(speech_skill_path):
