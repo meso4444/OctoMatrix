@@ -433,6 +433,35 @@ Here is the current status of {target}, please analyze...
                 with open(source_file, 'w') as f: json.dump(source_data, f)
             except: pass
 
+        # 🎙️ Automatic voice transcription: if this Agent has the octo-speech-recognizer skill installed,
+        # the router runs it directly and folds the full command and the full JSON output into content,
+        # which then goes through the normal conversation SOP below (the Agent no longer has to decide
+        # whether to call it itself). If not installed, do nothing and keep the generic file prompt the
+        # gateway already built, leaving it to the Agent (per Kenzan's 2026-11-04 decision).
+        if msg.source == 'telegram' and msg.metadata.get('file_type') == 'voice':
+            voice_local_path = msg.metadata.get('local_path')
+            speech_skill_path = os.path.join(AGENT_HOME_BASE, target_agent, 'skillbox', 'octo-speech-recognizer', 'octo_speech_recognizer.py')
+            if voice_local_path and os.path.exists(speech_skill_path):
+                speech_cmd = ['python3', speech_skill_path, voice_local_path, '--format', 'json']
+                try:
+                    speech_res = subprocess.run(speech_cmd, capture_output=True, text=True, timeout=30)
+                    speech_output = (speech_res.stdout or speech_res.stderr).strip() or f'(no output, exit code {speech_res.returncode})'
+                    content = (f"{content}\n\n"
+                               f"The system already ran the following command to transcribe this voice message:\n{' '.join(speech_cmd)}\n\n"
+                               f"Command output (JSON):\n{speech_output}\n\n"
+                               f"Use this result to handle the user's voice message; if has_speech is false, there's an error, "
+                               f"or the result looks wrong, you can rerun the command above yourself (optionally with different flags, e.g. --no-tone) to check again.")
+                except subprocess.TimeoutExpired:
+                    # Timed out: fall back to the generic file prompt, but add a note telling the Agent to call the skill itself
+                    # (not the plain generic file route).
+                    content = (f"{content}\n\n"
+                               f"The system tried to automatically transcribe this voice message but timed out after 30 seconds, "
+                               f"so no result was obtained. Please run the following command yourself to transcribe it, then handle the user's message accordingly:\n{' '.join(speech_cmd)}")
+                except Exception as e:
+                    content = (f"{content}\n\n"
+                               f"The system hit an error ({e}) while trying to automatically transcribe this voice message. "
+                               f"Please run the following command yourself to transcribe it, then handle the user's message accordingly:\n{' '.join(speech_cmd)}")
+
         # 🛡️ Inject standard SOP (Matrix message processing flow)
         # ==========================================
         if msg.source in ['telegram', 'discord', 'slack', 'awake'] and 'Execute the following [SOP]:' not in content:
