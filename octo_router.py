@@ -438,15 +438,21 @@ Here is the current status of {target}, please analyze...
         # which then goes through the normal conversation SOP below (the Agent no longer has to decide
         # whether to call it itself). If not installed, do nothing and keep the generic file prompt the
         # gateway already built, leaving it to the Agent (per Kenzan's 2026-11-04 decision).
+        voice_acked = False
         if msg.source == 'telegram' and msg.metadata.get('file_type') == 'voice':
             voice_local_path = msg.metadata.get('local_path')
             speech_skill_path = os.path.join(AGENT_HOME_BASE, target_agent, 'skillbox', 'octo-speech-recognizer', 'octo_speech_recognizer.py')
             if voice_local_path and os.path.exists(speech_skill_path):
                 speech_cmd = ['python3', speech_skill_path, voice_local_path, '--format', 'json']
+                # 辨識要等數秒,先回「聽見呼喚」與 base 貼圖,避免使用者以為沒收到
+                self._send_connected_ack(msg, target_agent, timestamp)
+                voice_acked = True
                 try:
                     speech_res = subprocess.run(speech_cmd, capture_output=True, text=True, timeout=30)
                     speech_output = (speech_res.stdout or speech_res.stderr).strip() or f'(no output, exit code {speech_res.returncode})'
-                    content = (f"{content}\n\n"
+                    # 辨識成功:gateway 的檔案提示(含路徑)已在指令全文中,不重複帶入,只保留使用者說明(caption)
+                    voice_caption = content.split('\n\n', 1)[1] if '\n\n' in content else ''
+                    content = (f"{voice_caption}\n\n" if voice_caption else "") + (
                                f"The system already ran the following command to transcribe this voice message:\n{' '.join(speech_cmd)}\n\n"
                                f"Command output (JSON):\n{speech_output}\n\n"
                                f"Use this result to handle the user's voice message; if has_speech is false, there's an error, "
@@ -507,32 +513,36 @@ Message from {MATRIX_USERNAME}:
         success = self.injector.inject(final_message, target_agent, interrupt_first=(msg.source not in ['awake', 'system_flush']))
         if success:
             _reply_watch_on_inject(target_agent, msg.source)
-        if success and msg.source != 'awake':
-            self.notifier.notify(msg.source, 'matrix_connected', {'timestamp': timestamp, 'agent_name': target_agent})
-            
-            # Automatically send Agent Avatar sticker
-            avatar_dir = os.path.join(agent_dir, 'avatar')
-            base_webm = os.path.join(avatar_dir, 'base.webm')
-            base_png = os.path.join(avatar_dir, 'base.png')
-            sticker_path = None
-            if os.path.exists(base_webm):
-                sticker_path = base_webm
-            elif os.path.exists(base_png):
-                sticker_path = base_png
-            else:
-                import glob
-                webm_files = glob.glob(os.path.join(avatar_dir, '*.webm'))
-                if webm_files:
-                    sticker_path = webm_files[0]
-                else:
-                    png_files = glob.glob(os.path.join(avatar_dir, '*.png'))
-                    if png_files:
-                        sticker_path = png_files[0]
-            
-            if sticker_path:
-                self.notifier.notify_file(msg.source, sticker_path, file_type='sticker')
+        if success and not voice_acked and msg.source != 'awake':
+            self._send_connected_ack(msg, target_agent, timestamp)
 
         return success
+
+    def _send_connected_ack(self, msg, target_agent, timestamp):
+        agent_dir = os.path.join(AGENT_HOME_BASE, target_agent)
+        self.notifier.notify(msg.source, 'matrix_connected', {'timestamp': timestamp, 'agent_name': target_agent})
+        
+        # Automatically send Agent Avatar sticker
+        avatar_dir = os.path.join(agent_dir, 'avatar')
+        base_webm = os.path.join(avatar_dir, 'base.webm')
+        base_png = os.path.join(avatar_dir, 'base.png')
+        sticker_path = None
+        if os.path.exists(base_webm):
+            sticker_path = base_webm
+        elif os.path.exists(base_png):
+            sticker_path = base_png
+        else:
+            import glob
+            webm_files = glob.glob(os.path.join(avatar_dir, '*.webm'))
+            if webm_files:
+                sticker_path = webm_files[0]
+            else:
+                png_files = glob.glob(os.path.join(avatar_dir, '*.png'))
+                if png_files:
+                    sticker_path = png_files[0]
+        
+        if sticker_path:
+            self.notifier.notify_file(msg.source, sticker_path, file_type='sticker')
 
     def _send_status(self, msg: MCMessage):
         # Octo AI Agents: liveness/description/active marker only; collaboration-team info
