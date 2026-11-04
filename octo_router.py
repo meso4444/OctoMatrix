@@ -439,16 +439,17 @@ Here is the current status of {target}, please analyze...
         # whether to call it itself). If not installed, do nothing and keep the generic file prompt the
         # gateway already built, leaving it to the Agent (per Kenzan's 2026-11-04 decision).
         voice_acked = False
-        # During GHOST reset/repair (.rotation_flag/.fix_flag) skip transcription; like regular files, take the pending route below
+        # During GHOST reset/repair (.rotation_flag/.fix_flag) still transcribe, but skip the early acknowledgement; the result is held by the pending route below, which replies with the waiting message (same as regular files)
         voice_ghost_busy = any(os.path.exists(os.path.join(AGENT_HOME_BASE, target_agent, 'octo_cyberbrain', f)) for f in ('.rotation_flag', '.fix_flag'))
-        if msg.source == 'telegram' and msg.metadata.get('file_type') == 'voice' and not voice_ghost_busy:
+        if msg.source == 'telegram' and msg.metadata.get('file_type') == 'voice':
             voice_local_path = msg.metadata.get('local_path')
             speech_skill_path = os.path.join(AGENT_HOME_BASE, target_agent, 'skillbox', 'octo-speech-recognizer', 'octo_speech_recognizer.py')
             if voice_local_path and os.path.exists(speech_skill_path):
                 speech_cmd = ['python3', speech_skill_path, voice_local_path, '--format', 'json']
                 # 辨識要等數秒,先回「聽見呼喚」與 base 貼圖,避免使用者以為沒收到
-                self._send_connected_ack(msg, target_agent, timestamp)
-                voice_acked = True
+                if not voice_ghost_busy:
+                    self._send_connected_ack(msg, target_agent, timestamp)
+                    voice_acked = True
                 try:
                     speech_res = subprocess.run(speech_cmd, capture_output=True, text=True, timeout=30)
                     speech_output = (speech_res.stdout or speech_res.stderr).strip() or f'(no output, exit code {speech_res.returncode})'
