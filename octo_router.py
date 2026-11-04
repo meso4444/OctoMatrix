@@ -432,15 +432,21 @@ class CommandHandler:
         # 🎙️ 語音訊息自動解析:若該 Agent 已安裝 octo-speech-recognizer skill,router 直接執行辨識,
         # 把指令全文與 JSON 全文併入 content,一併走下方一般對話 SOP(不再要求 Agent 自己判斷要不要呼叫)。
         # 未安裝則不做任何事,維持 gateway 組好的一般檔案提示,交由 Agent 自行處理(2026-11-04 Kenzan 裁示)。
+        voice_acked = False
         if msg.source == 'telegram' and msg.metadata.get('file_type') == 'voice':
             voice_local_path = msg.metadata.get('local_path')
             speech_skill_path = os.path.join(AGENT_HOME_BASE, target_agent, 'skillbox', 'octo-speech-recognizer', 'octo_speech_recognizer.py')
             if voice_local_path and os.path.exists(speech_skill_path):
                 speech_cmd = ['python3', speech_skill_path, voice_local_path, '--format', 'json']
+                # 辨識要等數秒,先回「聽見呼喚」與 base 貼圖,避免使用者以為沒收到
+                self._send_connected_ack(msg, target_agent, timestamp)
+                voice_acked = True
                 try:
                     speech_res = subprocess.run(speech_cmd, capture_output=True, text=True, timeout=30)
                     speech_output = (speech_res.stdout or speech_res.stderr).strip() or f'(無輸出,exit code {speech_res.returncode})'
-                    content = (f"{content}\n\n"
+                    # 辨識成功:gateway 的檔案提示(含路徑)已在指令全文中,不重複帶入,只保留使用者說明(caption)
+                    voice_caption = content.split('\n\n', 1)[1] if '\n\n' in content else ''
+                    content = (f"{voice_caption}\n\n" if voice_caption else "") + (
                                f"系統已自動執行以下指令解析這則語音:\n{' '.join(speech_cmd)}\n\n"
                                f"指令輸出(JSON):\n{speech_output}\n\n"
                                f"請依上述結果處理使用者的語音內容;若結果顯示 has_speech 為 false、有錯誤,或你覺得內容不合理,"
@@ -500,32 +506,36 @@ class CommandHandler:
         success = self.injector.inject(final_message, target_agent, interrupt_first=(msg.source not in ['awake', 'reaper_idle', 'system_flush']))
         if success:
             _reply_watch_on_inject(target_agent, msg.source)
-        if success and msg.source not in ['awake', 'reaper_idle']:
-            self.notifier.notify(msg.source, 'matrix_connected', {'timestamp': timestamp, 'agent_name': target_agent})
-            
-            # 自動發送 Agent Avatar 貼圖
-            avatar_dir = os.path.join(agent_dir, 'avatar')
-            base_webm = os.path.join(avatar_dir, 'base.webm')
-            base_png = os.path.join(avatar_dir, 'base.png')
-            sticker_path = None
-            if os.path.exists(base_webm):
-                sticker_path = base_webm
-            elif os.path.exists(base_png):
-                sticker_path = base_png
-            else:
-                import glob
-                webm_files = glob.glob(os.path.join(avatar_dir, '*.webm'))
-                if webm_files:
-                    sticker_path = webm_files[0]
-                else:
-                    png_files = glob.glob(os.path.join(avatar_dir, '*.png'))
-                    if png_files:
-                        sticker_path = png_files[0]
-            
-            if sticker_path:
-                self.notifier.notify_file(msg.source, sticker_path, file_type='sticker')
+        if success and not voice_acked and msg.source not in ['awake', 'reaper_idle']:
+            self._send_connected_ack(msg, target_agent, timestamp)
 
         return success
+
+    def _send_connected_ack(self, msg, target_agent, timestamp):
+        agent_dir = os.path.join(AGENT_HOME_BASE, target_agent)
+        self.notifier.notify(msg.source, 'matrix_connected', {'timestamp': timestamp, 'agent_name': target_agent})
+        
+        # 自動發送 Agent Avatar 貼圖
+        avatar_dir = os.path.join(agent_dir, 'avatar')
+        base_webm = os.path.join(avatar_dir, 'base.webm')
+        base_png = os.path.join(avatar_dir, 'base.png')
+        sticker_path = None
+        if os.path.exists(base_webm):
+            sticker_path = base_webm
+        elif os.path.exists(base_png):
+            sticker_path = base_png
+        else:
+            import glob
+            webm_files = glob.glob(os.path.join(avatar_dir, '*.webm'))
+            if webm_files:
+                sticker_path = webm_files[0]
+            else:
+                png_files = glob.glob(os.path.join(avatar_dir, '*.png'))
+                if png_files:
+                    sticker_path = png_files[0]
+        
+        if sticker_path:
+            self.notifier.notify_file(msg.source, sticker_path, file_type='sticker')
 
     def _send_status(self, msg: MCMessage):
         # Octo AI Agents：只放存活狀態/簡介/是否活躍，協作團隊資訊改到下面獨立區塊，不再混在同一行
