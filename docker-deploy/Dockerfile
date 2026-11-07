@@ -1,4 +1,9 @@
-FROM python:3.11-slim
+# The container's Python version must match the host python3 that builds the skill cache: a skill's
+# local_libs holds packages compiled for one Python version (e.g. sherpa-onnx), and the host-built cache is
+# COPYed into the image while agent_home is bind-mounted from the host.
+# generate_config.py passes the host python3 major.minor when it writes the compose file; do not hard-code it.
+ARG PYTHON_VERSION=3.12
+FROM python:${PYTHON_VERSION}-slim
 
 # Dynamically specify the container username (default: appuser, can be overridden during build)
 ARG BUILD_USER=appuser

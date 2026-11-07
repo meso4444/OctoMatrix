@@ -58,7 +58,9 @@ def generate_docker_compose(instance, user, script_dir, router_port=12210):
                         "BUILD_USER": user,
                         "BUILD_UID": os.getuid(),
                         "BUILD_GID": os.getgid(),
-                        "INSTANCE_NAME": instance
+                        "INSTANCE_NAME": instance,
+                        # same version as the host python3 that builds the skill cache (see the Dockerfile header)
+                        "PYTHON_VERSION": f"{sys.version_info.major}.{sys.version_info.minor}"
                     }
                 },
                 "container_name": f"octo_{instance}-bot",

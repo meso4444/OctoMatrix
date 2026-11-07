@@ -87,6 +87,7 @@ phase1_build_production_image() {
     # Build image
     docker build \
         --build-arg BUILD_USER=kenzan \
+        --build-arg PYTHON_VERSION="$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')" \
         -t octo:production \
         -f "$SCRIPT_DIR/Dockerfile" \
         "$PROJECT_DIR" 2>&1 | tee "$SCRIPT_DIR/logs/build.log"
