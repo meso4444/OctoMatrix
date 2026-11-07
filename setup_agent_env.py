@@ -306,6 +306,32 @@ def wait_for_prompt(session_name, window_name, engine, max_wait=30):
 
     return False
 
+def _venv_bootstrap_script(is_docker):
+    """Return the bash snippet at the top of .init_venv.sh that creates or repairs .venv.
+    Native mode is unchanged: create it with python3 only if missing.
+    Docker mode: (1) create it with --system-site-packages so packages installed in the container system
+    (requests, flask, ...) are visible inside .venv; (2) if an existing .venv was built by a different Python
+    version than the container's (it breaks after a Python bump), rebuild it; (3) if a same-version .venv does not
+    have system-site-packages enabled, switch it on (venvs created by older versions heal themselves)."""
+    if not is_docker:
+        return (
+            'if [ ! -d ".venv" ]; then\n'
+            '    python3 -m venv .venv\n'
+            'fi\n'
+        )
+    return (
+        'SYS_PYTHON=/usr/local/bin/python3; [ -x "$SYS_PYTHON" ] || SYS_PYTHON=python3\n'
+        'if [ -d ".venv" ]; then\n'
+        '    VENV_V="$(.venv/bin/python3 -c \'import sys; print("%d.%d" % sys.version_info[:2])\' 2>/dev/null)"\n'
+        '    SYS_V="$($SYS_PYTHON -c \'import sys; print("%d.%d" % sys.version_info[:2])\')"\n'
+        '    if [ "$VENV_V" != "$SYS_V" ]; then rm -rf .venv; fi\n'
+        'fi\n'
+        'if [ ! -d ".venv" ]; then\n'
+        '    $SYS_PYTHON -m venv --system-site-packages .venv\n'
+        'fi\n'
+        'sed -i \'s/^include-system-site-packages = false/include-system-site-packages = true/\' .venv/pyvenv.cfg 2>/dev/null || true\n'
+    )
+
 def spawn_agent(agent_config, script_dir, session_name, is_first=False):
     sys.path.append(script_dir)
     from config import COLLABORATION_GROUPS, SYS_PREFIX, AGENT_PASSWORD
@@ -404,9 +430,7 @@ def spawn_agent(agent_config, script_dir, session_name, is_first=False):
     init_venv_script = os.path.join(home_path, '.init_venv.sh')
     with open(init_venv_script, 'w') as f:
         f.write(f"#!/bin/bash\n")
-        f.write(f"if [ ! -d \".venv\" ]; then\n")
-        f.write(f"    python3 -m venv .venv\n")
-        f.write(f"fi\n")
+        f.write(_venv_bootstrap_script(is_docker))
         f.write(f"if [ -n \"{main_sp_path}\" ] && [ -d \".venv\" ]; then\n")
         f.write(f"    .venv/bin/python3 -c \"import sysconfig, os; p=sysconfig.get_paths()['purelib'] + '/octo_core_overlay.pth'; [os.chmod(p, 0o666) if os.path.exists(p) else None]; open(p, 'w').write('{main_sp_path}\\\\n'); os.chmod(p, 0o444)\"\n")
         f.write(f"    python3 -c \"import os, site; user_site = site.USER_SITE; os.makedirs(user_site, exist_ok=True); p = os.path.join(user_site, 'octo_shared_venv.pth'); [os.chmod(p, 0o666) if os.path.exists(p) else None]; open(p, 'w').write('{main_sp_path}\\\\n'); os.chmod(p, 0o444)\"\n")
