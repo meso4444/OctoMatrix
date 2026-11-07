@@ -55,7 +55,9 @@ def generate_docker_compose(instance, user, script_dir, router_port=12210):
                         "BUILD_USER": user,
                         "BUILD_UID": os.getuid(),
                         "BUILD_GID": os.getgid(),
-                        "INSTANCE_NAME": instance
+                        "INSTANCE_NAME": instance,
+                        # 與主機建技能快取用的 python3 同版本(見 Dockerfile 開頭說明)
+                        "PYTHON_VERSION": f"{sys.version_info.major}.{sys.version_info.minor}"
                     }
                 },
                 "container_name": f"octo_{instance}-bot",

@@ -1,4 +1,8 @@
-FROM python:3.11-slim
+# 容器的 Python 版本必須和「建置技能快取的主機 python3」一致：技能的 local_libs 內有依 Python 版本
+# 編譯的套件(如 sherpa-onnx)，主機建好的快取會被 COPY 進映像、agent_home 也從主機掛進來。
+# 版本由 generate_config.py 產生 compose 時自動帶入(取主機 python3 的主.次版本)，不要寫死。
+ARG PYTHON_VERSION=3.12
+FROM python:${PYTHON_VERSION}-slim
 
 # 動態指定容器用戶名（預設: appuser，可在 build 時覆蓋）
 ARG BUILD_USER=appuser
