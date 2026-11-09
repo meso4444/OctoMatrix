@@ -70,12 +70,39 @@ TELEGRAM_API_BASE = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
 # 這個目錄本身是執行期可寫的，所以把這個純執行期產生的狀態檔案改放到這裡。
 OFFSET_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'agent_home', '.telegram_offset')
 
+def _safe_original_name(name):
+    """Telegram 傳來的原始檔名 → 可安全落地的檔名;無法使用時回傳 None(改用時間命名)。
+    只留檔名本身(去掉任何路徑)、濾掉控制字元、限制長度,中日韓等 Unicode 字元原樣保留。"""
+    if not name:
+        return None
+    name = os.path.basename(str(name).replace('\\', '/'))
+    name = ''.join(c for c in name if ord(c) >= 32 and ord(c) != 127).strip().strip('.')
+    base, ext = os.path.splitext(name)
+    while len((base + ext).encode('utf-8')) > 200 and base:
+        base = base[:-1]
+    return (base + ext) or None
+
+
+def _write_unique(directory, filename, content):
+    """以獨佔方式寫檔:同名已存在就改成 名稱_1.副檔名、名稱_2.副檔名,絕不覆蓋既有檔案。回傳實際路徑。"""
+    base, ext = os.path.splitext(filename)
+    for n in range(0, 1000):
+        path = os.path.join(directory, filename if n == 0 else f"{base}_{n}{ext}")
+        try:
+            with open(path, 'xb') as f:
+                f.write(content)
+            return path
+        except FileExistsError:
+            continue
+    raise FileExistsError(f"同名檔案過多: {filename}")
+
+
 class ImageManager:
     """圖片管理員：負責從各平臺下載圖片至指定 Agent 目錄"""
     def __init__(self, base_dir):
         self.base_dir = base_dir
 
-    def download_telegram_photo(self, file_id, agent_name):
+    def download_telegram_photo(self, file_id, agent_name, orig_name=None):
         try:
             agent_img_dir = os.path.join(self.base_dir, 'agent_home', agent_name, 'downloads_temp')
             os.makedirs(agent_img_dir, exist_ok=True)
@@ -87,14 +114,13 @@ class ImageManager:
 
             file_path = resp['result']['file_path']
             ext = os.path.splitext(file_path)[1] or ".jpg"
-            filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{file_id[:8]}{ext}"
-            local_path = os.path.join(agent_img_dir, filename)
+            # 有原檔名(文件、音訊、影片、動圖)就保留原檔名;照片、語音等沒有原檔名的維持時間命名
+            filename = _safe_original_name(orig_name) or f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{file_id[:8]}{ext}"
 
             # 下載實體
             download_url = f"https://api.telegram.org/file/bot{TELEGRAM_BOT_TOKEN}/{file_path}"
             content = requests.get(download_url, timeout=20).content
-            with open(local_path, 'wb') as f:
-                f.write(content)
+            local_path = _write_unique(agent_img_dir, filename, content)
 
             # telegram_gateway.py 以啟動服務的使用者身分執行，下載出來的檔案預設歸屬
             # 該使用者；但檔案最終是交給對應的 Agent（以自己的 agent_<name> OS 使用者
@@ -213,7 +239,7 @@ def process_message(msg_data):
         document = msg_data['document']
         file_id = document['file_id']
 
-        local_path = image_manager.download_telegram_photo(file_id, current_agent)
+        local_path = image_manager.download_telegram_photo(file_id, current_agent, document.get('file_name'))
         if local_path:
             caption = msg_data.get('caption', '').strip()
             doc_prompt = f"{SYS_PREFIX}請處理這個檔案，檔案位於: `{local_path}`"
@@ -229,7 +255,7 @@ def process_message(msg_data):
         audio = msg_data['audio']
         file_id = audio['file_id']
 
-        local_path = image_manager.download_telegram_photo(file_id, current_agent)
+        local_path = image_manager.download_telegram_photo(file_id, current_agent, audio.get('file_name'))
         if local_path:
             caption = msg_data.get('caption', '').strip()
             audio_prompt = f"{SYS_PREFIX}請處理這個音訊檔案，檔案位於: `{local_path}`"
@@ -261,7 +287,7 @@ def process_message(msg_data):
         video = msg_data['video']
         file_id = video['file_id']
 
-        local_path = image_manager.download_telegram_photo(file_id, current_agent)
+        local_path = image_manager.download_telegram_photo(file_id, current_agent, video.get('file_name'))
         if local_path:
             caption = msg_data.get('caption', '').strip()
             video_prompt = f"{SYS_PREFIX}請處理這個影片檔案，檔案位於: `{local_path}`"
@@ -288,7 +314,7 @@ def process_message(msg_data):
         animation = msg_data['animation']
         file_id = animation['file_id']
 
-        local_path = image_manager.download_telegram_photo(file_id, current_agent)
+        local_path = image_manager.download_telegram_photo(file_id, current_agent, animation.get('file_name'))
         if local_path:
             caption = msg_data.get('caption', '').strip()
             animation_prompt = f"{SYS_PREFIX}請處理這個動態圖片(GIF)，檔案位於: `{local_path}`"
