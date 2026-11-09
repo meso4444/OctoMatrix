@@ -75,12 +75,39 @@ TELEGRAM_API_BASE = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
 # file lives there instead.
 OFFSET_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'agent_home', '.telegram_offset')
 
+def _safe_original_name(name):
+    """Original file name sent by Telegram -> a name that is safe to save; None if unusable (fall back to the timestamp name).
+    Keeps only the bare file name (no path), drops control characters and limits the length; CJK and other Unicode characters are kept as is."""
+    if not name:
+        return None
+    name = os.path.basename(str(name).replace('\\', '/'))
+    name = ''.join(c for c in name if ord(c) >= 32 and ord(c) != 127).strip().strip('.')
+    base, ext = os.path.splitext(name)
+    while len((base + ext).encode('utf-8')) > 200 and base:
+        base = base[:-1]
+    return (base + ext) or None
+
+
+def _write_unique(directory, filename, content):
+    """Write exclusively: if the name already exists use name_1.ext, name_2.ext, ... and never overwrite an existing file. Returns the actual path."""
+    base, ext = os.path.splitext(filename)
+    for n in range(0, 1000):
+        path = os.path.join(directory, filename if n == 0 else f"{base}_{n}{ext}")
+        try:
+            with open(path, 'xb') as f:
+                f.write(content)
+            return path
+        except FileExistsError:
+            continue
+    raise FileExistsError(f"Too many files with the same name: {filename}")
+
+
 class ImageManager:
     """Image Manager: Responsible for downloading images from various platforms to specified Agent directory"""
     def __init__(self, base_dir):
         self.base_dir = base_dir
 
-    def download_telegram_photo(self, file_id, agent_name):
+    def download_telegram_photo(self, file_id, agent_name, orig_name=None):
         try:
             agent_img_dir = os.path.join(self.base_dir, 'agent_home', agent_name, 'downloads_temp')
             os.makedirs(agent_img_dir, exist_ok=True)
@@ -92,14 +119,13 @@ class ImageManager:
 
             file_path = resp['result']['file_path']
             ext = os.path.splitext(file_path)[1] or ".jpg"
-            filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{file_id[:8]}{ext}"
-            local_path = os.path.join(agent_img_dir, filename)
+            # Keep the original file name when Telegram gives one (document, audio, video, animation); photos, voice etc. have none and keep the timestamp name
+            filename = _safe_original_name(orig_name) or f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{file_id[:8]}{ext}"
 
             # Download the file
             download_url = f"https://api.telegram.org/file/bot{TELEGRAM_BOT_TOKEN}/{file_path}"
             content = requests.get(download_url, timeout=20).content
-            with open(local_path, 'wb') as f:
-                f.write(content)
+            local_path = _write_unique(agent_img_dir, filename, content)
 
             # telegram_gateway.py runs as whichever user started the service, so
             # the downloaded file is owned by that user by default; but it's
@@ -221,7 +247,7 @@ def process_message(msg_data):
         document = msg_data['document']
         file_id = document['file_id']
 
-        local_path = image_manager.download_telegram_photo(file_id, current_agent)
+        local_path = image_manager.download_telegram_photo(file_id, current_agent, document.get('file_name'))
         if local_path:
             caption = msg_data.get('caption', '').strip()
             doc_prompt = f"{SYS_PREFIX} Please process this file, file path: `{local_path}`"
@@ -237,7 +263,7 @@ def process_message(msg_data):
         audio = msg_data['audio']
         file_id = audio['file_id']
 
-        local_path = image_manager.download_telegram_photo(file_id, current_agent)
+        local_path = image_manager.download_telegram_photo(file_id, current_agent, audio.get('file_name'))
         if local_path:
             caption = msg_data.get('caption', '').strip()
             audio_prompt = f"{SYS_PREFIX} Please process this audio file, file path: `{local_path}`"
@@ -269,7 +295,7 @@ def process_message(msg_data):
         video = msg_data['video']
         file_id = video['file_id']
 
-        local_path = image_manager.download_telegram_photo(file_id, current_agent)
+        local_path = image_manager.download_telegram_photo(file_id, current_agent, video.get('file_name'))
         if local_path:
             caption = msg_data.get('caption', '').strip()
             video_prompt = f"{SYS_PREFIX} Please process this video file, file path: `{local_path}`"
@@ -296,7 +322,7 @@ def process_message(msg_data):
         animation = msg_data['animation']
         file_id = animation['file_id']
 
-        local_path = image_manager.download_telegram_photo(file_id, current_agent)
+        local_path = image_manager.download_telegram_photo(file_id, current_agent, animation.get('file_name'))
         if local_path:
             caption = msg_data.get('caption', '').strip()
             animation_prompt = f"{SYS_PREFIX} Please process this animation (GIF), file path: `{local_path}`"
