@@ -488,8 +488,17 @@ def get_agent_name():
         curr = os.path.dirname(curr)
     return None
 
-def get_source_info():
+def _core_root():
+    """專案根目錄 = 放 octo_router.py 的那層。.last_source 只由 Router 寫在這裡,
+    不採信往上途中更近處的同名檔(例如 agent 自己放進 toolbox 的覆寫檔)。"""
     curr = os.path.dirname(os.path.abspath(__file__))
+    for _ in range(6):
+        if os.path.exists(os.path.join(curr, 'octo_router.py')):
+            return curr
+        curr = os.path.dirname(curr)
+    return None
+
+def get_source_info():
     enabled_platforms = {}
     default_platform = 'telegram'
     
@@ -506,20 +515,19 @@ def get_source_info():
     except ImportError:
         pass
 
-    for _ in range(4):
-        path = os.path.join(curr, '.last_source')
-        if os.path.exists(path):
-            try:
-                import json
-                with open(path, 'r') as f:
-                    source = json.load(f)
-                    p = source.get('platform')
-                    # 如果來源平台被禁用，強制降級到預設平台
-                    if enabled_platforms and p and not enabled_platforms.get(p, False):
-                        source['platform'] = default_platform
-                    return source
-            except: pass
-        curr = os.path.dirname(curr)
+    root = _core_root()
+    path = os.path.join(root, '.last_source') if root else None
+    if path and os.path.exists(path):
+        try:
+            import json
+            with open(path, 'r') as f:
+                source = json.load(f)
+                p = source.get('platform')
+                # 如果來源平台被禁用，強制降級到預設平台
+                if enabled_platforms and p and not enabled_platforms.get(p, False):
+                    source['platform'] = default_platform
+                return source
+        except: pass
     return {'platform': default_platform}
 
 if __name__ == '__main__':
