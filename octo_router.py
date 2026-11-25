@@ -214,6 +214,16 @@ class CommandHandler:
 
         def is_cmd(c, name): return c == name or c.startswith(name + ' ')
         
+        # 記錄用戶最後所在的通道(.last_source):用戶本人從通道傳來的任何輸入(一般訊息、指令、語音、檔案、按鈕)都算,
+        # 這樣之後 Agent 的回覆與背景通知才會跟著用戶走;必須放在指令分支之前,否則 /feed、/play 這類指令會 return 而沒更新。
+        # 系統來源(awake、reaper、system_flush)不在名單內,不會寫入。
+        if msg.source in ['telegram', 'discord', 'slack']:
+            source_file = os.path.join(script_dir, '.last_source')
+            try:
+                source_data = {'platform': msg.source, 'user_id': msg.user_id, 'username': msg.username, 'timestamp': datetime.now().isoformat()}
+                with open(source_file, 'w') as f: json.dump(source_data, f)
+            except: pass
+
         # 3. 核心指令處理分支
         interfering_cmds = ['/interrupt', '/sys_refresh']
         is_interfering = cmd_content in interfering_cmds or is_cmd(cmd_content, '/inspect') or is_cmd(cmd_content, '/fix') or is_cmd(cmd_content, '/avatar_renew')
@@ -421,13 +431,6 @@ class CommandHandler:
                 self.notifier.notify(msg.source, 'custom', {'content': f"📸 <b>[{cap_target}]</b> 畫面擷取:\n<code>{output}</code>"})
             return True
 
-        # 狀態記錄與注入
-        if msg.source in ['telegram', 'discord', 'slack']:
-            source_file = os.path.join(script_dir, '.last_source')
-            try:
-                source_data = {'platform': msg.source, 'user_id': msg.user_id, 'username': msg.username, 'timestamp': datetime.now().isoformat()}
-                with open(source_file, 'w') as f: json.dump(source_data, f)
-            except: pass
 
         # 🎙️ 語音訊息自動解析:若該 Agent 已安裝 octo-speech-recognizer skill,router 直接執行辨識,
         # 把指令全文與 JSON 全文併入 content,一併走下方一般對話 SOP(不再要求 Agent 自己判斷要不要呼叫)。
