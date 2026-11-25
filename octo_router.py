@@ -215,6 +215,16 @@ class CommandHandler:
 
         def is_cmd(c, name): return c == name or c.startswith(name + ' ')
 
+        # Record the channel the user is on (.last_source): any input from the user themself on a channel (plain message, command, voice, file, button) counts,
+        # so the Agent's later replies and background notifications follow the user. It must come before the command branches, otherwise commands like /feed and /play
+        # return early without updating it. System sources (awake, reaper, system_flush) are not in the list and never write it.
+        if msg.source in ['telegram', 'discord', 'slack']:
+            source_file = os.path.join(script_dir, '.last_source')
+            try:
+                source_data = {'platform': msg.source, 'user_id': msg.user_id, 'username': msg.username, 'timestamp': datetime.now().isoformat()}
+                with open(source_file, 'w') as f: json.dump(source_data, f)
+            except: pass
+
         # 3. Core command handling branches
         interfering_cmds = ['/interrupt', '/sys_refresh']
         is_interfering = cmd_content in interfering_cmds or is_cmd(cmd_content, '/inspect') or is_cmd(cmd_content, '/fix') or is_cmd(cmd_content, '/avatar_renew')
@@ -425,13 +435,6 @@ Here is the current status of {target}, please analyze...
                 self.notifier.notify(msg.source, 'custom', {'content': f"📸 <b>[{cap_target}]</b> Screen capture:\n<code>{output}</code>"})
             return True
 
-        # Status recording and injection
-        if msg.source in ['telegram', 'discord', 'slack']:
-            source_file = os.path.join(script_dir, '.last_source')
-            try:
-                source_data = {'platform': msg.source, 'user_id': msg.user_id, 'username': msg.username, 'timestamp': datetime.now().isoformat()}
-                with open(source_file, 'w') as f: json.dump(source_data, f)
-            except: pass
 
         # 🎙️ Automatic voice transcription: if this Agent has the octo-speech-recognizer skill installed,
         # the router runs it directly and folds the full command and the full JSON output into content,
