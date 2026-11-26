@@ -1073,6 +1073,34 @@ def update_avatar():
         logger.error(f"❌ [Router] 更新 Avatar 過程中發生異常: {e}")
         return jsonify({"status": "failed", "error": str(e)}), 500
 
+def _normalize_last_source():
+    """啟動時檢查 .last_source:記錄的通道已不是啟用狀態(例如官網把訂閱從雙通道切回單通道,只改設定檔再重啟 router),
+    就改寫成目前可用的主通道,並丟掉舊通道的 user_id/channel_id,否則 matrix_notifier 會把舊通道的編號當成新通道的目標。
+    記錄的通道仍有效時不動(雙通道並存時單純重啟不會把用戶最後所在的通道重置)。"""
+    import config
+    path = os.path.join(script_dir, '.last_source')
+    try:
+        with open(path, 'r') as f:
+            src = json.load(f)
+    except Exception:
+        return
+    enabled = config.PLATFORMS_ENABLED
+    old = src.get('platform') if isinstance(src, dict) else None
+    if old and enabled.get(old):
+        return
+    primary = getattr(config, 'DEFAULT_PRIMARY_CHANNEL', 'telegram')
+    target = next((c for c in [primary] + list(enabled) if enabled.get(c)), None)
+    if not target:
+        return
+    try:
+        with open(path, 'w') as f:
+            json.dump({'platform': target, 'timestamp': datetime.now().isoformat()}, f)
+        logger.info('[Router] .last_source 的通道 {} 已停用,改為 {}'.format(old, target))
+    except OSError:
+        pass
+
+
 if __name__ == '__main__':
+    _normalize_last_source()
     awake.start()
     app.run(host=ROUTER_HOST, port=ROUTER_PORT)
