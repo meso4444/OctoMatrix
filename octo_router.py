@@ -1085,6 +1085,34 @@ def update_avatar():
         logger.error(f"❌ [Router] Exception occurred during Avatar update: {e}")
         return jsonify({"status": "failed", "error": str(e)}), 500
 
+def _normalize_last_source():
+    """At startup, check .last_source: if the recorded channel is no longer enabled (e.g. the subscription was switched from dual channel back to a single one, which only edits the config and restarts the router),
+    rewrite it to the available primary channel and drop the old channel's user_id/channel_id, otherwise matrix_notifier would use the old channel's id as the new channel's target.
+    A still-valid record is left alone (a plain restart with both channels enabled must not reset the channel the user was last on)."""
+    import config
+    path = os.path.join(script_dir, '.last_source')
+    try:
+        with open(path, 'r') as f:
+            src = json.load(f)
+    except Exception:
+        return
+    enabled = config.PLATFORMS_ENABLED
+    old = src.get('platform') if isinstance(src, dict) else None
+    if old and enabled.get(old):
+        return
+    primary = getattr(config, 'DEFAULT_PRIMARY_CHANNEL', 'telegram')
+    target = next((c for c in [primary] + list(enabled) if enabled.get(c)), None)
+    if not target:
+        return
+    try:
+        with open(path, 'w') as f:
+            json.dump({'platform': target, 'timestamp': datetime.now().isoformat()}, f)
+        logger.info('[Router] .last_source channel {} is disabled, switched to {}'.format(old, target))
+    except OSError:
+        pass
+
+
 if __name__ == '__main__':
+    _normalize_last_source()
     awake.start()
     app.run(host=ROUTER_HOST, port=ROUTER_PORT)
